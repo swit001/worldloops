@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.*
+.worldloops/
+coverage/
+*.log
+.DS_Store
