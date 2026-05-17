@@ -7,6 +7,7 @@ import { callWorldLoopsBrief } from '../brief';
 import { gmailWebhookToSignals } from '../adapters/openclawGmail';
 import { calendarEventsToSignals } from '../adapters/openclawCalendar';
 import { gogGmailToSignals, gogCalendarToSignals } from '../adapters/gogSnapshot';
+import { messagesToSignals } from '../adapters/openclawMessages';
 
 function getFlagValue(flag: string): string | undefined {
   const args = process.argv.slice(2);
@@ -29,6 +30,7 @@ async function main(): Promise<void> {
   const calendarEventInput = getFlagValue('--calendar-event');
   const gogGmailInput = getFlagValue('--gog-gmail');
   const gogCalendarInput = getFlagValue('--gog-calendar');
+  const messageReadInput = getFlagValue('--message-read');
 
   const signals: Signal[] = [];
   const sources: string[] = [];
@@ -53,13 +55,24 @@ async function main(): Promise<void> {
     sources.push('gog.calendar_snapshot');
   }
 
+  if (messageReadInput) {
+    const payload = loadJson<{ channel?: string; target?: string }>(messageReadInput);
+    signals.push(
+      ...messagesToSignals(payload, {
+        channel: payload.channel,
+        target: payload.target,
+      })
+    );
+    sources.push('openclaw.message_read');
+  }
+
   if (signals.length === 0) {
     printJson({
       ok: false,
       error: {
         code: 'MISSING_SIGNALS',
         message:
-          'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, or --gog-calendar.',
+          'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, or --message-read.',
       },
       safety: {
         externalWrite: false,

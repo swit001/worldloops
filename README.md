@@ -67,7 +67,8 @@ npm run brief:reconcile -- \
   --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
   --calendar-event scripts/fixtures/openclaw-calendar-events.json \
   --gog-gmail scripts/fixtures/gog-gmail-messages.json \
-  --gog-calendar scripts/fixtures/gog-calendar-events.json
+  --gog-calendar scripts/fixtures/gog-calendar-events.json \
+  --message-read scripts/fixtures/openclaw-message-read.json
 
 ## Public boundary
 
