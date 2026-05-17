@@ -6,3 +6,6 @@ coverage
 .worldloops
 *.log
 .DS_Store
+.vercel
+app
+index.html
