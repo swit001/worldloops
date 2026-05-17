@@ -2,11 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.callWorldLoopsBrief = callWorldLoopsBrief;
 require("dotenv/config");
+const DEFAULT_API_BASE_URL = 'https://api.worldloops.ai';
 function getApiBaseUrl() {
-    const baseUrl = process.env.WORLDLOOPS_API_BASE_URL;
-    if (!baseUrl || baseUrl.trim() === '') {
-        throw new Error('WORLDLOOPS_API_BASE_URL is required. Set it to your WorldLoops API base URL.');
-    }
+    const baseUrl = process.env.WORLDLOOPS_API_BASE_URL ?? DEFAULT_API_BASE_URL;
     return baseUrl.replace(/\/$/, '');
 }
 async function callWorldLoopsBrief(input) {

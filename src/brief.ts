@@ -1,14 +1,10 @@
 import 'dotenv/config';
 import type { Signal, WorldLoopsBriefResponse } from './types';
 
-function getApiBaseUrl(): string {
-  const baseUrl = process.env.WORLDLOOPS_API_BASE_URL;
+const DEFAULT_API_BASE_URL = 'https://api.worldloops.ai';
 
-  if (!baseUrl || baseUrl.trim() === '') {
-    throw new Error(
-      'WORLDLOOPS_API_BASE_URL is required. Set it to your WorldLoops API base URL.'
-    );
-  }
+function getApiBaseUrl(): string {
+  const baseUrl = process.env.WORLDLOOPS_API_BASE_URL ?? DEFAULT_API_BASE_URL;
 
   return baseUrl.replace(/\/$/, '');
 }

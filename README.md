@@ -40,21 +40,19 @@ WorldLoops does not modify external systems.
 
 ## Environment
 
-WorldLoops currently requires an API base URL.
+By default, WorldLoops uses the production API:
 
-Set:
+WORLDLOOPS_API_BASE_URL=https://api.worldloops.ai
+
+You do not need to set this value for the default demo flow.
+
+To use a different backend, override it with:
 
 WORLDLOOPS_API_BASE_URL=https://your-worldloops-api.example.com
 
 Optional:
 
 WORLDLOOPS_API_KEY=your_api_key
-
-When the production custom domain is finalized, the public skill will use:
-
-https://api.worldloops.ai
-
-Until then, the URL is intentionally not hardcoded.
 
 ## Example
 
