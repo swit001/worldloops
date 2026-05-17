@@ -6,6 +6,8 @@ export interface GogGmailSnapshotPayload {
   messages?: unknown[];
   items?: unknown[];
   results?: unknown[];
+  threads?: unknown[];
+  thread?: unknown;
   count?: number;
 }
 
@@ -41,18 +43,50 @@ function pickArray(payload: UnknownRecord, keys: string[]): unknown[] {
   return [];
 }
 
+function headerValue(record: UnknownRecord, name: string): string | undefined {
+  const headers = asRecord(record.payload)?.headers;
+  if (!Array.isArray(headers)) return undefined;
+
+  const found = headers.find((entry) => {
+    const header = asRecord(entry);
+    return typeof header?.name === 'string' && header.name.toLowerCase() === name.toLowerCase();
+  });
+
+  const header = asRecord(found);
+  const value = header?.value;
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+}
+
+function normalizeGmailEntries(payload: UnknownRecord): unknown[] {
+  const direct = pickArray(payload, ['messages', 'items', 'results']);
+  if (direct.length > 0) return direct;
+
+  const thread = asRecord(payload.thread);
+  if (thread) {
+    const threadMessages = pickArray(thread, ['messages']);
+    if (threadMessages.length > 0) return threadMessages;
+  }
+
+  const threads = pickArray(payload, ['threads']);
+  if (threads.length > 0) return threads;
+
+  return [];
+}
+
 export function gogGmailToSignals(payload: GogGmailSnapshotPayload): Signal[] {
   const record = payload as UnknownRecord;
-  const messages = pickArray(record, ['messages', 'items', 'results']);
+  const messages = normalizeGmailEntries(record);
 
   return messages.flatMap((entry, index): Signal[] => {
     const msg = asRecord(entry);
     if (!msg) return [];
 
-    const subject = firstString(msg, ['subject', 'title']);
-    const from = firstString(msg, ['from', 'sender']);
+    const subject = firstString(msg, ['subject', 'title']) ?? headerValue(msg, 'Subject');
+    const from = firstString(msg, ['from', 'sender']) ?? headerValue(msg, 'From');
     const snippet = firstString(msg, ['snippet', 'body', 'text', 'summary']);
-    const date = firstString(msg, ['date', 'receivedAt', 'internalDate', 'createdAt']);
+    const date =
+      firstString(msg, ['date', 'receivedAt', 'internalDate', 'createdAt']) ??
+      headerValue(msg, 'Date');
     const url = firstString(msg, ['url', 'link', 'permalink']);
 
     const parts = [

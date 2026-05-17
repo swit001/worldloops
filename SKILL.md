@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Public ClawHub skill for WorldLoops — turns work signals into governed open-loop proposals.
-version: 0.2.3
+version: 0.2.4
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops"}}
 ---

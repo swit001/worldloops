@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "WorldLoops OpenClaw skill wrapper for governed open-loop detection.",
   "main": "index.js",
   "scripts": {

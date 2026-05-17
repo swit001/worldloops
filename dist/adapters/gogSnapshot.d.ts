@@ -3,6 +3,8 @@ export interface GogGmailSnapshotPayload {
     messages?: unknown[];
     items?: unknown[];
     results?: unknown[];
+    threads?: unknown[];
+    thread?: unknown;
     count?: number;
 }
 export interface GogCalendarSnapshotPayload {
