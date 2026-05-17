@@ -39,6 +39,28 @@
         margin: 0;
         color: #33384f;
       }
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid #1e2549;
+        color: #1e2549;
+        text-decoration: none;
+        font-weight: 650;
+      }
+      a.primary {
+        background: #1e2549;
+        color: #f7f7f2;
+      }
     </style>
   </head>
   <body>
@@ -49,6 +71,10 @@
         WorldLoops observes scattered signals, normalizes them into entities,
         proposes governed transitions, and helps close open loops across apps.
       </p>
+      <div class="actions">
+        <a class="primary" href="https://github.com/swit001/worldloops">View on GitHub</a>
+        <a href="https://github.com/swit001/worldloops#readme">Read the README</a>
+      </div>
     </main>
   </body>
 </html>
