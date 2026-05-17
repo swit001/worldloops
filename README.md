@@ -2,7 +2,9 @@
 
 **OpenClaw sees the signals. WorldLoops connects the loops.**
 
-WorldLoops is an OpenClaw skill wrapper that turns connected work signals into governed open-loop proposals.
+Website: https://worldloops.ai
+
+WorldLoops is a public ClawHub skill, API wrapper, and adapter example set for turning connected work signals into governed open-loop proposals.
 
 This public repository contains:
 
