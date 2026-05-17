@@ -1,0 +1,8 @@
+.git
+node_modules
+coverage
+.env
+.env.*
+.worldloops
+*.log
+.DS_Store

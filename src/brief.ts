@@ -50,8 +50,8 @@ export async function callWorldLoopsBrief(input: {
   return {
     ...json,
     safety: {
-      externalWrite: false,
       ...(json.safety ?? {}),
+      externalWrite: false,
     },
   };
 }
