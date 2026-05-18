@@ -7,7 +7,7 @@ function assert(condition, message) {
 const apiEnv = {
   ...process.env,
   WORLDLOOPS_API_BASE_URL:
-    process.env.WORLDLOOPS_API_BASE_URL || 'https://worldloops-api.vercel.app',
+    process.env.WORLDLOOPS_API_BASE_URL || 'https://api.worldloops.ai',
 };
 
 console.log('\nsmoke:public (requires public worldloops API)\n');

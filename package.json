@@ -1,16 +1,22 @@
 {
   "name": "worldloops",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.",
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "brief:reconcile": "node dist/scripts/briefReconcile.js",
-    "smoke": "npm run build && npm run test:thread-hints",
+    "brief:daily": "node dist/scripts/briefDaily.js",
+    "discovery:run": "node dist/scripts/discoveryRun.js",
+    "notifications:init": "node dist/scripts/notificationsInit.js",
+    "notifications:show": "node dist/scripts/notificationsShow.js",
+    "notifications:set": "node dist/scripts/notificationsSet.js",
+    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications",
     "smoke:public": "node scripts/smoke-reconcile.mjs",
     "smoke:reconcile": "node scripts/smoke-reconcile.mjs",
-    "test:thread-hints": "node tests/threadHints.test.cjs"
+    "test:thread-hints": "node tests/threadHints.test.cjs",
+    "test:notifications": "node tests/notifications.test.cjs"
   },
   "keywords": [
     "openclaw",

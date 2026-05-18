@@ -28,7 +28,7 @@ From scattered signals to governed execution.
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.2.6` |
+| Latest release | `v0.2.7` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -36,8 +36,9 @@ From scattered signals to governed execution.
 | `externalWrite: false` confirmed | ✓ |
 | Safe-by-default execution posture | ✓ |
 | Open-loop detector blind spot fix | ✓ v0.2.6 |
-| Proactive discovery direction | ✓ v0.2.6 |
-| Scheduled daily brief direction | ✓ v0.2.6 |
+| Notification preference runtime | ✓ v0.2.7 |
+| Proactive discovery runtime (local) | ✓ v0.2.7 |
+| Scheduled daily brief (local) | ✓ v0.2.7 |
 
 ---
 
@@ -97,28 +98,82 @@ The user does not need to discover every loop manually. WorldLoops makes the loo
 
 ---
 
+## Notification Preferences
+
+> **Runtime MVP — v0.2.7**
+
+WorldLoops stores notification preferences locally in `.worldloops/notification_prefs.json`. Users control time, frequency, severity thresholds, and quiet hours.
+
+```bash
+# Create default preferences file
+npm run notifications:init
+
+# View current preferences
+npm run notifications:show
+
+# Set a preference by dot-path
+npm run notifications:set -- dailyBrief.time 09:00
+npm run notifications:set -- proactiveDiscovery.scanIntervalMinutes 60
+npm run notifications:set -- proactiveDiscovery.minSeverity high
+npm run notifications:set -- quietHours.enabled true
+npm run notifications:set -- quietHours.start 21:00
+npm run notifications:set -- quietHours.end 08:00
+```
+
+Supported preference fields:
+
+| Field | Default | Description |
+|---|---|---|
+| `dailyBrief.enabled` | `true` | Enable daily brief |
+| `dailyBrief.time` | `09:00` | Scheduled brief time (HH:MM) |
+| `dailyBrief.timezone` | `UTC` | Timezone label |
+| `proactiveDiscovery.enabled` | `false` | Enable proactive discovery |
+| `proactiveDiscovery.scanIntervalMinutes` | `30` | Scan interval in minutes |
+| `proactiveDiscovery.minSeverity` | `medium` | Minimum severity to surface |
+| `quietHours.enabled` | `false` | Enable quiet hours |
+| `quietHours.start` | `21:00` | Quiet period start |
+| `quietHours.end` | `08:00` | Quiet period end |
+| `eventAlerts.enabled` | `false` | Enable event alerts |
+| `channels.cli` | `true` | CLI output channel |
+
+This release does not auto-install background scheduling. Users may connect `brief:daily` to cron or launchd manually if they choose.
+
+---
+
 ## Proactive Discovery
 
-> **Direction — v0.2.6**
+> **Runtime MVP — v0.2.7**
 
-WorldLoops should not wait for the user to ask "what did I miss?" It should periodically or on signal arrival discover important signals across Gmail, Calendar, Slack, GitHub, and projects, then surface unresolved or uncertain candidates for user review.
+`discovery:run` reads notification preferences and surfaces only candidates that match the configured severity threshold. It applies duplicate suppression using `.worldloops/notification_state.json` to prevent repeated surfacing of the same candidate across runs.
 
-When a signal arrives, WorldLoops inspects it for unresolved state and surfaces open-loop candidates proactively — without a user prompt. Each candidate is presented with suggested actions:
+```bash
+npm run discovery:run -- \
+  --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
+  --gog-gmail scripts/fixtures/gog-gmail-messages.json
+```
+
+When a signal arrives, WorldLoops inspects it for unresolved state and surfaces open-loop candidates proactively. Each candidate is presented with suggested actions:
 
 - **Review** — inspect the candidate and decide
 - **Snooze** — defer for a set period
 - **Dismiss** — mark as not actionable
 - **Mark handled** — record that the loop was resolved
 
-Safe-by-default: no external writes. Proactive discovery proposes — it does not act. Full runtime implementation is planned for a future release.
+Safe-by-default: no external writes. Proactive discovery proposes — it does not act.
 
 ---
 
 ## Scheduled Daily Brief
 
-> **Direction — v0.2.6**
+> **Runtime MVP — v0.2.7**
 
-WorldLoops can be configured to surface a daily brief at a scheduled time (e.g., 9:00 AM) summarizing the most important open loops, uncertain threads, upcoming meetings, preparation items, and decisions that require user attention.
+`brief:daily` reads notification preferences and produces a daily brief output. It respects quiet hours and outputs JSON with `safety.externalWrite=false`.
+
+```bash
+npm run brief:daily -- \
+  --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
+  --calendar-event scripts/fixtures/openclaw-calendar-events.json
+```
 
 A daily brief includes:
 
@@ -128,17 +183,23 @@ A daily brief includes:
 - required user decisions
 - signals that arrived since the last brief
 
+High-severity candidates can be surfaced before the scheduled brief time by running `discovery:run` separately. Quiet hours suppress non-critical notifications.
+
 The brief is a proposal, not an execution. No external writes. User approval is required for any resulting action.
 
-To run a brief manually today:
+**Connecting to a schedule (optional):** This release does not auto-install cron or launchd. To run the daily brief automatically, add an entry to your crontab:
+
+```
+0 9 * * * cd ~/.openclaw/workspace/skills/worldloops && npm run brief:daily >> ~/.worldloops/brief.log 2>&1
+```
+
+To run a brief manually right now (using the reconcile API flow):
 
 ```bash
 npm run brief:reconcile -- \
   --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
   --calendar-event scripts/fixtures/openclaw-calendar-events.json
 ```
-
-Configurable scheduled brief runtime is planned for a future release.
 
 ---
 
@@ -363,13 +424,13 @@ This allows WorldLoops to evolve independently while remaining compatible with t
 
 ## Environment
 
-By default, WorldLoops uses the production API:
+By default, WorldLoops uses the public API:
 
 ```
-WORLDLOOPS_API_BASE_URL=https://worldloops-api.vercel.app
+https://api.worldloops.ai
 ```
 
-You do not need to set this value for the default demo flow. This is only required for `npm run smoke:public`.
+You do not need to set `WORLDLOOPS_API_BASE_URL` for the default demo flow.
 
 To use a different backend, override it:
 
@@ -405,6 +466,14 @@ It does not contain the private WorldLoops reasoning engine.
 
 ## Roadmap
 
+Added in v0.2.7:
+
+- notification preference runtime (local `.worldloops/notification_prefs.json`)
+- `notifications:init`, `notifications:show`, `notifications:set` CLI commands
+- `brief:daily` — user-scheduled daily brief with quiet hours support
+- `discovery:run` — severity-filtered proactive discovery with duplicate suppression
+- notification state (`.worldloops/notification_state.json`) for dedup across runs
+
 Added in v0.2.6:
 
 - open-loop detector blind spot fix (Re:/Fwd: external request threads)
@@ -414,8 +483,6 @@ Added in v0.2.6:
 
 Planned directions:
 
-- proactive discovery runtime (periodic + event-driven signal scanning)
-- configurable scheduled daily brief (default 9:00 AM)
 - richer open-loop detection
 - stronger signal deduplication
 - multi-source entity reconciliation
@@ -432,7 +499,7 @@ Planned directions:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.2.6`
+- Latest release: `v0.2.7`
 
 ---
 

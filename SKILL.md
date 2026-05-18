@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: 0.2.6
+version: 0.2.7
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","workflow","human-in-the-loop"]}}
 ---
@@ -48,38 +48,49 @@ npm run --silent brief:reconcile -- \
   --message-read scripts/fixtures/openclaw-message-read.json
 
 
+## Notification Preferences
+
+> **Runtime MVP — v0.2.7**
+
+WorldLoops stores notification preferences locally at `.worldloops/notification_prefs.json`. Users control time, frequency, severity thresholds, and quiet hours.
+
+Users configure the entrypoints. WorldLoops does not auto-install background scheduling.
+
+```bash
+npm run notifications:init     # create default prefs file
+npm run notifications:show     # print current prefs as JSON
+npm run notifications:set -- dailyBrief.time 09:00
+npm run notifications:set -- proactiveDiscovery.minSeverity high
+npm run notifications:set -- quietHours.enabled true
+```
+
 ## Proactive Discovery
 
-> **Direction — v0.2.6**
->
-> WorldLoops should not wait for the user to ask "what did I miss?" It discovers important signals across Gmail, Calendar, Slack, GitHub, and projects periodically or on signal arrival, then surfaces unresolved or uncertain candidates for user review.
+> **Runtime MVP — v0.2.7**
 
-When a signal arrives, WorldLoops inspects it for unresolved state and surfaces open-loop candidates proactively. Each candidate is presented with suggested actions:
+`discovery:run` reads notification preferences and surfaces only candidates that match the configured severity threshold. It applies duplicate suppression using `.worldloops/notification_state.json`.
 
-- **Review** — inspect the candidate and decide
-- **Snooze** — defer for a set period
-- **Dismiss** — mark as not actionable
-- **Mark handled** — record that the loop was resolved
+```bash
+npm run discovery:run -- --gmail-event scripts/fixtures/openclaw-gmail-webhook.json
+```
 
-Safe-by-default: no external writes. Proactive discovery proposes — it does not act.
-
-Full runtime implementation is planned for a future release.
+High-severity candidates can be surfaced before the scheduled brief. Quiet hours suppress non-critical notifications. No external writes. Discovery proposes — it does not act.
 
 ## Scheduled Daily Brief
 
-> **Direction — v0.2.6**
->
-> WorldLoops can be configured to surface a daily brief at a scheduled time (e.g., 9:00 AM) summarizing the most important open loops, uncertain threads, upcoming meetings, preparation items, and decisions that require user attention.
+> **Runtime MVP — v0.2.7**
 
-A daily brief includes:
+`brief:daily` reads notification preferences, respects quiet hours, and produces a daily brief output as JSON with `safety.externalWrite=false`.
 
-- important open loops requiring action
-- uncertain threads needing inspection
-- upcoming meetings and preparation items
-- required user decisions
-- signals that arrived since the last brief
+```bash
+npm run brief:daily -- \
+  --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
+  --calendar-event scripts/fixtures/openclaw-calendar-events.json
+```
 
-The brief is a proposal, not an execution. No external writes. User approval is required for any resulting action. Configurable scheduled brief runtime is planned for a future release.
+This release does not auto-install cron or launchd. Users may connect `brief:daily` to a scheduler manually if they choose.
+
+A daily brief includes important open loops, uncertain threads, upcoming meetings, required decisions, and signals since the last brief. The brief is a proposal, not an execution. No external writes. User approval is required for any resulting action.
 
 ## Default API
 
@@ -109,6 +120,20 @@ The skill returns safe JSON containing:
 - `source`
 - `metadata`
 
+## Updating
+
+Existing users can update with:
+
+```
+clawhub update worldloops
+```
+
+Force reinstall:
+
+```
+clawhub install worldloops --force
+```
+
 ## Important rules
 
 Do not invent missing source data.
@@ -117,5 +142,7 @@ Do not send emails.
 Do not create drafts.
 Do not create or update calendar events.
 Do not write to Slack, Gmail, Calendar, GitHub, SMS, or push channels.
+Do not implement background daemons.
+Do not auto-install cron or launchd.
 
 Return the JSON result directly.

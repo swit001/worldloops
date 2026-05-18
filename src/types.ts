@@ -27,6 +27,7 @@ export interface ProposalCandidate {
   reason: string;
   approvalRequired: boolean;
   actionHint: string;
+  severity?: MinSeverity;
 }
 
 export interface WorldLoopsBriefResponse {
@@ -45,4 +46,39 @@ export interface WorldLoopsBriefResponse {
     code: string;
     message: string;
   };
+}
+
+// Notification preference types
+
+export type MinSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface NotificationPrefs {
+  dailyBrief: {
+    enabled: boolean;
+    time: string;
+    timezone: string;
+  };
+  proactiveDiscovery: {
+    enabled: boolean;
+    scanIntervalMinutes: number;
+    minSeverity: MinSeverity;
+  };
+  quietHours: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
+  eventAlerts: {
+    enabled: boolean;
+    rules: string[];
+  };
+  channels: {
+    cli: boolean;
+  };
+}
+
+export interface NotificationState {
+  suppressedKeys: string[];
+  lastBriefAt?: string;
+  lastDiscoveryAt?: string;
 }
