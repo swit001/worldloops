@@ -492,12 +492,18 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
-### v0.3.0 — Auditable Open-Loop Runtime
+Added in v0.3.0:
 
-The next functional milestone moves WorldLoops from detection and proposal toward persistent, auditable open-loop state management.
+- Transition receipts for auditable loop history (`.worldloops/transition_receipts.json`)
+- `receipt:list` CLI command — inspect persisted receipts locally
+- `TransitionReceipt` type with `boundaryCrossed`, `externalWrite: false`, and `redactions`
+- Receipts generated automatically during `brief:reconcile` for each proposal candidate
+
+**Transition receipts** are small audit records that capture what signals were observed, what transition was proposed, what boundary was crossed, and why the loop stayed local. They let a reviewer reconstruct what happened in an open-loop transition without trusting the agent's narrative summary.
+
+### v0.3.x — Auditable Open-Loop Runtime (continued)
 
 - Persistent open-loop state management
-- Transition receipts for auditable loop history
 - Capability-scoped execution boundaries
 - Stuck-loop timeout handling
 - Severity-based adjudication policy
@@ -509,7 +515,7 @@ The next functional milestone moves WorldLoops from detection and proposal towar
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.2.8`
+- Latest release: `v0.3.0`
 
 ---
 

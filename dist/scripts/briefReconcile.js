@@ -41,6 +41,7 @@ const openclawGmail_1 = require("../adapters/openclawGmail");
 const openclawCalendar_1 = require("../adapters/openclawCalendar");
 const gogSnapshot_1 = require("../adapters/gogSnapshot");
 const openclawMessages_1 = require("../adapters/openclawMessages");
+const transitionReceipts_1 = require("../storage/transitionReceipts");
 function getFlagValue(flag) {
     const args = process.argv.slice(2);
     const idx = args.indexOf(flag);
@@ -104,6 +105,19 @@ async function main() {
         signals,
         mode: 'reconciliation',
     });
+    const candidates = result.proposalCandidates ?? [];
+    let receiptsGenerated = 0;
+    if (result.ok && candidates.length > 0) {
+        for (const candidate of candidates) {
+            const receipt = (0, transitionReceipts_1.buildTransitionReceipt)(candidate, signals, {
+                adjudicationResult: result.ok ? 'proposed' : 'api_error',
+                decision: result.ok ? 'surfaced_for_review' : null,
+                boundaryCrossed: 'local_commit',
+            });
+            (0, transitionReceipts_1.saveTransitionReceipt)(receipt);
+            receiptsGenerated++;
+        }
+    }
     printJson({
         ...result,
         mode: 'reconciliation',
@@ -112,6 +126,7 @@ async function main() {
             ...(result.metadata ?? {}),
             signalCount: signals.length,
             sources,
+            receiptsGenerated,
         },
         safety: {
             ...(result.safety ?? {}),
