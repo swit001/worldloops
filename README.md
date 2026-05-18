@@ -1,5 +1,9 @@
 # WorldLoops
 
+<p align="center">
+  <img src="./docs/assets/worldloops-crayfish-world.png" alt="WorldLoops crayfish world: Observe, Normalize, Propose, Adjudicate, Commit, Learn" width="100%" />
+</p>
+
 Agents don't need more tools.\
 They need a world to act in.
 
