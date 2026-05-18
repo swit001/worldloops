@@ -28,13 +28,16 @@ From scattered signals to governed execution.
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.2.5` |
+| Latest release | `v0.2.6` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
 | Slack live validation | passed |
 | `externalWrite: false` confirmed | ✓ |
 | Safe-by-default execution posture | ✓ |
+| Open-loop detector blind spot fix | ✓ v0.2.6 |
+| Proactive discovery direction | ✓ v0.2.6 |
+| Scheduled daily brief direction | ✓ v0.2.6 |
 
 ---
 
@@ -91,6 +94,51 @@ An email arrives. A Slack message creates an obligation. A calendar event implie
 WorldLoops observes those signals, normalizes them into world entities, and proposes governed transitions.
 
 The user does not need to discover every loop manually. WorldLoops makes the loop visible.
+
+---
+
+## Proactive Discovery
+
+> **Direction — v0.2.6**
+
+WorldLoops should not wait for the user to ask "what did I miss?" It should periodically or on signal arrival discover important signals across Gmail, Calendar, Slack, GitHub, and projects, then surface unresolved or uncertain candidates for user review.
+
+When a signal arrives, WorldLoops inspects it for unresolved state and surfaces open-loop candidates proactively — without a user prompt. Each candidate is presented with suggested actions:
+
+- **Review** — inspect the candidate and decide
+- **Snooze** — defer for a set period
+- **Dismiss** — mark as not actionable
+- **Mark handled** — record that the loop was resolved
+
+Safe-by-default: no external writes. Proactive discovery proposes — it does not act. Full runtime implementation is planned for a future release.
+
+---
+
+## Scheduled Daily Brief
+
+> **Direction — v0.2.6**
+
+WorldLoops can be configured to surface a daily brief at a scheduled time (e.g., 9:00 AM) summarizing the most important open loops, uncertain threads, upcoming meetings, preparation items, and decisions that require user attention.
+
+A daily brief includes:
+
+- important open loops requiring action
+- uncertain threads needing inspection
+- upcoming meetings and preparation items
+- required user decisions
+- signals that arrived since the last brief
+
+The brief is a proposal, not an execution. No external writes. User approval is required for any resulting action.
+
+To run a brief manually today:
+
+```bash
+npm run brief:reconcile -- \
+  --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
+  --calendar-event scripts/fixtures/openclaw-calendar-events.json
+```
+
+Configurable scheduled brief runtime is planned for a future release.
 
 ---
 
@@ -318,10 +366,10 @@ This allows WorldLoops to evolve independently while remaining compatible with t
 By default, WorldLoops uses the production API:
 
 ```
-WORLDLOOPS_API_BASE_URL=https://api.worldloops.ai
+WORLDLOOPS_API_BASE_URL=https://worldloops-api.vercel.app
 ```
 
-You do not need to set this value for the default demo flow.
+You do not need to set this value for the default demo flow. This is only required for `npm run smoke:public`.
 
 To use a different backend, override it:
 
@@ -357,8 +405,17 @@ It does not contain the private WorldLoops reasoning engine.
 
 ## Roadmap
 
+Added in v0.2.6:
+
+- open-loop detector blind spot fix (Re:/Fwd: external request threads)
+- proactive discovery direction
+- scheduled daily brief direction
+- improved ClawHub/OpenClaw metadata discoverability
+
 Planned directions:
 
+- proactive discovery runtime (periodic + event-driven signal scanning)
+- configurable scheduled daily brief (default 9:00 AM)
 - richer open-loop detection
 - stronger signal deduplication
 - multi-source entity reconciliation
@@ -375,7 +432,7 @@ Planned directions:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.2.5`
+- Latest release: `v0.2.6`
 
 ---
 

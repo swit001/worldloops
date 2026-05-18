@@ -4,8 +4,15 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-console.log('\nsmoke:reconcile\n');
+const apiEnv = {
+  ...process.env,
+  WORLDLOOPS_API_BASE_URL:
+    process.env.WORLDLOOPS_API_BASE_URL || 'https://worldloops-api.vercel.app',
+};
 
+console.log('\nsmoke:public (requires public worldloops API)\n');
+
+// --- standard multi-source reconcile ---
 const result = spawnSync(
   'npm',
   [
@@ -20,16 +27,9 @@ const result = spawnSync(
     '--gog-gmail',
     'scripts/fixtures/gog-gmail-messages.json',
     '--gog-calendar',
-    'scripts/fixtures/gog-calendar-events.json'
+    'scripts/fixtures/gog-calendar-events.json',
   ],
-  {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      WORLDLOOPS_API_BASE_URL:
-        process.env.WORLDLOOPS_API_BASE_URL || 'https://worldloops-api.vercel.app',
-    },
-  }
+  { encoding: 'utf8', env: apiEnv }
 );
 
 assert(result.status === 0, `expected exit 0\n${result.stdout}\n${result.stderr}`);
@@ -51,4 +51,40 @@ if (parsed.ok) {
 
 console.log('  PASS  public reconcile command returns stable JSON');
 console.log('  PASS  safety.externalWrite is false');
-console.log('\n2 tests — 2 passed, 0 failed\n');
+
+// --- Re: thread fixture (blind-spot regression) ---
+const reThreadResult = spawnSync(
+  'npm',
+  [
+    'run',
+    '--silent',
+    'brief:reconcile',
+    '--',
+    '--gog-gmail',
+    'scripts/fixtures/gog-gmail-re-thread.json',
+  ],
+  { encoding: 'utf8', env: apiEnv }
+);
+
+assert(
+  reThreadResult.status === 0,
+  `Re: thread fixture: expected exit 0\n${reThreadResult.stdout}\n${reThreadResult.stderr}`
+);
+
+let parsedReThread;
+try {
+  parsedReThread = JSON.parse(reThreadResult.stdout);
+} catch (err) {
+  throw new Error(`Re: thread fixture stdout is not JSON:\n${reThreadResult.stdout}\n${err}`);
+}
+
+assert(typeof parsedReThread.ok === 'boolean', 'Re: thread fixture: ok should be boolean');
+assert(
+  parsedReThread.safety?.externalWrite === false,
+  'Re: thread fixture: externalWrite should be false'
+);
+
+console.log('  PASS  Re: thread fixture runs without error');
+console.log('  PASS  Re: thread fixture: safety.externalWrite is false');
+
+console.log('\n4 tests — 4 passed, 0 failed\n');

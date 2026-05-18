@@ -1,4 +1,5 @@
 import type { Signal } from '../types';
+import { classifyThreadHint } from './threadHints';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -89,10 +90,13 @@ export function gogGmailToSignals(payload: GogGmailSnapshotPayload): Signal[] {
       headerValue(msg, 'Date');
     const url = firstString(msg, ['url', 'link', 'permalink']);
 
+    const hint = classifyThreadHint({ subject: subject ?? undefined, snippet: snippet ?? undefined });
+
     const parts = [
       subject ? `subject=${subject}` : undefined,
       from ? `from=${from}` : undefined,
       snippet ? `snippet=${snippet}` : undefined,
+      hint ? `thread_hint=${hint}` : undefined,
     ].filter((part): part is string => Boolean(part));
 
     if (parts.length === 0) return [];

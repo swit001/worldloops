@@ -1,12 +1,16 @@
 ---
 name: worldloops
-description: Public ClawHub skill for WorldLoops — turns work signals into governed open-loop proposals.
-version: 0.2.5
+description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
+version: 0.2.6
 homepage: https://github.com/swit001/worldloops
-metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops"}}
+metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","workflow","human-in-the-loop"]}}
 ---
 
 # WorldLoops for OpenClaw
+
+Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with `externalWrite: false`.
+
+WorldLoops is signal-first and promptless by design. It surfaces governed open-loop proposals for human-in-the-loop review, without waiting for a user prompt. Safe-by-default means proposal is not execution, and external writes are disabled by default.
 
 Use this skill when the user wants to detect open loops from scattered work signals and convert them into governed proposal candidates.
 
@@ -43,6 +47,39 @@ npm run --silent brief:reconcile -- \
   --gog-calendar scripts/fixtures/gog-calendar-events.json \
   --message-read scripts/fixtures/openclaw-message-read.json
 
+
+## Proactive Discovery
+
+> **Direction — v0.2.6**
+>
+> WorldLoops should not wait for the user to ask "what did I miss?" It discovers important signals across Gmail, Calendar, Slack, GitHub, and projects periodically or on signal arrival, then surfaces unresolved or uncertain candidates for user review.
+
+When a signal arrives, WorldLoops inspects it for unresolved state and surfaces open-loop candidates proactively. Each candidate is presented with suggested actions:
+
+- **Review** — inspect the candidate and decide
+- **Snooze** — defer for a set period
+- **Dismiss** — mark as not actionable
+- **Mark handled** — record that the loop was resolved
+
+Safe-by-default: no external writes. Proactive discovery proposes — it does not act.
+
+Full runtime implementation is planned for a future release.
+
+## Scheduled Daily Brief
+
+> **Direction — v0.2.6**
+>
+> WorldLoops can be configured to surface a daily brief at a scheduled time (e.g., 9:00 AM) summarizing the most important open loops, uncertain threads, upcoming meetings, preparation items, and decisions that require user attention.
+
+A daily brief includes:
+
+- important open loops requiring action
+- uncertain threads needing inspection
+- upcoming meetings and preparation items
+- required user decisions
+- signals that arrived since the last brief
+
+The brief is a proposal, not an execution. No external writes. User approval is required for any resulting action. Configurable scheduled brief runtime is planned for a future release.
 
 ## Default API
 

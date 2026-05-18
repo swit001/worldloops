@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gmailWebhookToSignals = gmailWebhookToSignals;
+const threadHints_1 = require("./threadHints");
 function asRecord(value) {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         return null;
@@ -30,11 +31,13 @@ function buildText(record, index) {
     const from = firstString(record, ['from', 'sender', 'author']);
     const snippet = firstString(record, ['snippet', 'body', 'text', 'summary', 'preview']);
     const label = firstString(record, ['label', 'labelId']);
+    const hint = (0, threadHints_1.classifyThreadHint)({ subject, snippet });
     const parts = [
         subject ? `subject=${subject}` : undefined,
         from ? `from=${from}` : undefined,
         snippet ? `snippet=${snippet}` : undefined,
         label ? `label=${label}` : undefined,
+        hint ? `thread_hint=${hint}` : undefined,
     ].filter((part) => Boolean(part));
     if (parts.length === 0)
         return undefined;

@@ -1,4 +1,5 @@
 import type { Signal } from '../types';
+import { classifyThreadHint } from './threadHints';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -41,12 +42,14 @@ function buildText(record: UnknownRecord, index: number): string | undefined {
   const from = firstString(record, ['from', 'sender', 'author']);
   const snippet = firstString(record, ['snippet', 'body', 'text', 'summary', 'preview']);
   const label = firstString(record, ['label', 'labelId']);
+  const hint = classifyThreadHint({ subject, snippet });
 
   const parts = [
     subject ? `subject=${subject}` : undefined,
     from ? `from=${from}` : undefined,
     snippet ? `snippet=${snippet}` : undefined,
     label ? `label=${label}` : undefined,
+    hint ? `thread_hint=${hint}` : undefined,
   ].filter((part): part is string => Boolean(part));
 
   if (parts.length === 0) return undefined;

@@ -1,16 +1,30 @@
 {
   "name": "worldloops",
-  "version": "0.2.5",
-  "description": "WorldLoops OpenClaw skill wrapper for governed open-loop detection.",
+  "version": "0.2.6",
+  "description": "Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.",
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "brief:reconcile": "node dist/scripts/briefReconcile.js",
-    "smoke": "npm run build && npm run smoke:reconcile",
-    "smoke:reconcile": "node scripts/smoke-reconcile.mjs"
+    "smoke": "npm run build && npm run test:thread-hints",
+    "smoke:public": "node scripts/smoke-reconcile.mjs",
+    "smoke:reconcile": "node scripts/smoke-reconcile.mjs",
+    "test:thread-hints": "node tests/threadHints.test.cjs"
   },
-  "keywords": [],
+  "keywords": [
+    "openclaw",
+    "clawhub",
+    "worldloops",
+    "agent",
+    "agentic-ai",
+    "world-model",
+    "executable-world",
+    "open-loops",
+    "workflow",
+    "human-in-the-loop",
+    "externalWrite-false"
+  ],
   "author": "",
   "license": "MIT",
   "type": "commonjs",

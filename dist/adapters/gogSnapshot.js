@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gogGmailToSignals = gogGmailToSignals;
 exports.gogCalendarToSignals = gogCalendarToSignals;
+const threadHints_1 = require("./threadHints");
 function asRecord(value) {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         return null;
@@ -65,10 +66,12 @@ function gogGmailToSignals(payload) {
         const date = firstString(msg, ['date', 'receivedAt', 'internalDate', 'createdAt']) ??
             headerValue(msg, 'Date');
         const url = firstString(msg, ['url', 'link', 'permalink']);
+        const hint = (0, threadHints_1.classifyThreadHint)({ subject: subject ?? undefined, snippet: snippet ?? undefined });
         const parts = [
             subject ? `subject=${subject}` : undefined,
             from ? `from=${from}` : undefined,
             snippet ? `snippet=${snippet}` : undefined,
+            hint ? `thread_hint=${hint}` : undefined,
         ].filter((part) => Boolean(part));
         if (parts.length === 0)
             return [];
