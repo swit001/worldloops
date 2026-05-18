@@ -6,6 +6,11 @@ export interface OpenClawMessagesPayload {
   messages?: unknown[];
   items?: unknown[];
   results?: unknown[];
+  payload?: {
+    messages?: unknown[];
+    items?: unknown[];
+    results?: unknown[];
+  };
   count?: number;
   channel?: string;
   target?: string;
@@ -47,6 +52,13 @@ function pickMessageArray(payload: OpenClawMessagesPayload): unknown[] {
   if (Array.isArray(payload.messages)) return payload.messages;
   if (Array.isArray(payload.items)) return payload.items;
   if (Array.isArray(payload.results)) return payload.results;
+
+  if (payload.payload) {
+    if (Array.isArray(payload.payload.messages)) return payload.payload.messages;
+    if (Array.isArray(payload.payload.items)) return payload.payload.items;
+    if (Array.isArray(payload.payload.results)) return payload.payload.results;
+  }
+
   return [];
 }
 

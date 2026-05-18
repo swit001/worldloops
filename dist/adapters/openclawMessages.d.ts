@@ -3,6 +3,11 @@ export interface OpenClawMessagesPayload {
     messages?: unknown[];
     items?: unknown[];
     results?: unknown[];
+    payload?: {
+        messages?: unknown[];
+        items?: unknown[];
+        results?: unknown[];
+    };
     count?: number;
     channel?: string;
     target?: string;
