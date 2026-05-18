@@ -1,22 +1,24 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: 0.2.7
+version: 0.2.8
 homepage: https://github.com/swit001/worldloops
-metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","workflow","human-in-the-loop"]}}
+metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
 
 # WorldLoops for OpenClaw
 
 Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with `externalWrite: false`.
 
-WorldLoops is signal-first and promptless by design. It surfaces governed open-loop proposals for human-in-the-loop review, without waiting for a user prompt. Safe-by-default means proposal is not execution, and external writes are disabled by default.
+Most agents answer from a snapshot. WorldLoops manages open loops as state.
 
-Use this skill when the user wants to detect open loops from scattered work signals and convert them into governed proposal candidates.
+WorldLoops is signal-first and designed to inspect work signals without waiting for a user prompt. It surfaces governed open-loop proposals for human-in-the-loop review. Safe-by-default means proposal is not execution, approval is not external write, and `externalWrite: false` is the default posture.
+
+Use this skill when the user wants to detect open loops from scattered work signals and convert them into governed proposal candidates for stateful open-loop management.
 
 WorldLoops is not a chatbot, task bot, or uncontrolled automation trigger.
 
-It is a governed world-model layer for interpreting work signals safely.
+It is a governed world-model layer for interpreting work signals safely — with an auditable runtime direction in v0.3.0.
 
 ## Safety boundary
 

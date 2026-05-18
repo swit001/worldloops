@@ -11,7 +11,7 @@ Because uncontrolled agents are too risky, and supervised agents make humans the
 
 WorldLoops is an executable world layer for OpenClaw that turns scattered work signals into governed state transitions.
 
-It observes signals from tools like Gmail, Calendar, and Slack, detects unresolved open loops, proposes what should happen next, and keeps execution safe with `externalWrite: false`.
+It can inspect signals from tools like Gmail, Calendar, and Slack, detect unresolved open loops, propose what should happen next, and keep execution safe with `externalWrite: false`.
 
 WorldLoops is not a chatbot.\
 It is not a todo app.\
@@ -23,12 +23,23 @@ From scattered signals to governed execution.
 
 ---
 
+Most agents answer from a snapshot.\
+WorldLoops manages open loops as state.
+
+Most assistants wait for the user to ask, "What did I miss?"\
+WorldLoops is designed to inspect work signals, identify unresolved responsibilities, and keep track of which loops are still open and what state they are in.
+
+From snapshot answers to stateful open-loop management.\
+Not just "What did I miss?" — but "What loops are still open, and what state are they in?"
+
+---
+
 ## Status
 
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.2.7` |
+| Latest release | `v0.2.8` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -481,16 +492,15 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
-Planned directions:
+### v0.3.0 — Auditable Open-Loop Runtime
 
-- richer open-loop detection
-- stronger signal deduplication
-- multi-source entity reconciliation
-- approval-aware action planning
-- local audit and decision history
-- configurable world policies
-- deeper OpenClaw integration
-- optional hosted runtime for teams
+The next functional milestone moves WorldLoops from detection and proposal toward persistent, auditable open-loop state management.
+
+- Persistent open-loop state management
+- Transition receipts for auditable loop history
+- Capability-scoped execution boundaries
+- Stuck-loop timeout handling
+- Severity-based adjudication policy
 
 ---
 
@@ -499,7 +509,7 @@ Planned directions:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.2.7`
+- Latest release: `v0.2.8`
 
 ---
 
