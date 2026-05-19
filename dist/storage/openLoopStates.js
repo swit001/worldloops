@@ -39,6 +39,7 @@ exports.saveOpenLoopStates = saveOpenLoopStates;
 exports.saveOpenLoopState = saveOpenLoopState;
 exports.findOpenLoopStateById = findOpenLoopStateById;
 exports.transitionOpenLoopState = transitionOpenLoopState;
+exports.selectRelevantSignalsForProposal = selectRelevantSignalsForProposal;
 exports.buildOpenLoopStateFromProposal = buildOpenLoopStateFromProposal;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
@@ -104,6 +105,16 @@ function transitionOpenLoopState(id, to, opts = {}) {
     saveOpenLoopStates(states);
     return updated;
 }
+function selectRelevantSignalsForProposal(candidate, signals) {
+    const sameSourceSignals = signals.filter((signal) => signal.source === candidate.source);
+    if (sameSourceSignals.length > 0) {
+        return sameSourceSignals;
+    }
+    if (signals.length > 0) {
+        return [signals[0]];
+    }
+    return [];
+}
 function buildOpenLoopStateFromProposal(candidate, signals) {
     const now = new Date().toISOString();
     const adjudication = (0, severityPolicy_1.adjudicateSeverity)(candidate.severity);
@@ -111,7 +122,7 @@ function buildOpenLoopStateFromProposal(candidate, signals) {
         id: crypto.randomUUID(),
         canonicalKey: candidate.idempotencyKey,
         title: candidate.actionHint || candidate.reason || candidate.entityType,
-        sourceSignals: signals.map((signal) => ({
+        sourceSignals: selectRelevantSignalsForProposal(candidate, signals).map((signal) => ({
             source: signal.source,
             text: signal.text,
             url: signal.url,

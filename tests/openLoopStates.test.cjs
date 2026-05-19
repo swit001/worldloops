@@ -12,6 +12,7 @@ const {
   loadOpenLoopStates,
   transitionOpenLoopState,
   getOpenLoopStatesPath,
+  selectRelevantSignalsForProposal,
 } = require('../dist/storage/openLoopStates');
 
 const candidate = {
@@ -33,6 +34,12 @@ const signals = [
     url: 'https://example.com/email/1',
     createdAt: '2026-05-18T00:00:00.000Z',
   },
+  {
+    source: 'calendar',
+    text: 'Unrelated calendar prep item',
+    url: 'https://example.com/calendar/1',
+    createdAt: '2026-05-18T01:00:00.000Z',
+  },
 ];
 
 const loop = buildOpenLoopStateFromProposal(candidate, signals);
@@ -44,6 +51,20 @@ assert.strictEqual(loop.adjudication.approvalRequired, true);
 assert.strictEqual(loop.adjudication.safety.externalWrite, false);
 assert.strictEqual(loop.safety.externalWrite, false);
 assert.strictEqual(loop.history.length, 1);
+assert.strictEqual(loop.sourceSignals.length, 1);
+assert.strictEqual(loop.sourceSignals[0].source, 'gmail');
+assert.strictEqual(loop.sourceSignals[0].text, 'Can you review PR #123 today?');
+
+const relevantSignals = selectRelevantSignalsForProposal(candidate, signals);
+assert.strictEqual(relevantSignals.length, 1);
+assert.strictEqual(relevantSignals[0].source, 'gmail');
+
+const fallbackSignals = selectRelevantSignalsForProposal(
+  { ...candidate, source: 'github' },
+  signals
+);
+assert.strictEqual(fallbackSignals.length, 1);
+assert.strictEqual(fallbackSignals[0].source, 'gmail');
 
 saveOpenLoopState(loop);
 

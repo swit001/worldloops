@@ -9,4 +9,5 @@ export declare function transitionOpenLoopState(id: string, to: OpenLoopStatus, 
     actor?: string | null;
     note?: string | null;
 }): OpenLoopState;
+export declare function selectRelevantSignalsForProposal(candidate: ProposalCandidate, signals: Signal[]): Signal[];
 export declare function buildOpenLoopStateFromProposal(candidate: ProposalCandidate, signals: Signal[]): OpenLoopState;

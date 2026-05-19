@@ -84,6 +84,23 @@ export function transitionOpenLoopState(
   return updated;
 }
 
+export function selectRelevantSignalsForProposal(
+  candidate: ProposalCandidate,
+  signals: Signal[]
+): Signal[] {
+  const sameSourceSignals = signals.filter((signal) => signal.source === candidate.source);
+
+  if (sameSourceSignals.length > 0) {
+    return sameSourceSignals;
+  }
+
+  if (signals.length > 0) {
+    return [signals[0]];
+  }
+
+  return [];
+}
+
 export function buildOpenLoopStateFromProposal(
   candidate: ProposalCandidate,
   signals: Signal[]
@@ -95,7 +112,7 @@ export function buildOpenLoopStateFromProposal(
     id: crypto.randomUUID(),
     canonicalKey: candidate.idempotencyKey,
     title: candidate.actionHint || candidate.reason || candidate.entityType,
-    sourceSignals: signals.map((signal) => ({
+    sourceSignals: selectRelevantSignalsForProposal(candidate, signals).map((signal) => ({
       source: signal.source,
       text: signal.text,
       url: signal.url,
