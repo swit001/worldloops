@@ -2,7 +2,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'worldloops-loop-show-'));
 process.env.WORLDLOOPS_DIR = tmpDir;
@@ -62,7 +62,7 @@ assert.strictEqual(json.loop.safety.externalWrite, false);
 assert.strictEqual(json.safety.externalWrite, false);
 assert.strictEqual(json.capabilityBoundary.externalWrite, false);
 
-const missingOutput = execFileSync(
+const missingResult = spawnSync(
   process.execPath,
   ['dist/scripts/loopShow.js', 'missing-loop-id'],
   {
@@ -74,7 +74,9 @@ const missingOutput = execFileSync(
   }
 );
 
-const missingJson = JSON.parse(missingOutput);
+assert.strictEqual(missingResult.status, 1);
+
+const missingJson = JSON.parse(missingResult.stdout);
 
 assert.strictEqual(missingJson.ok, false);
 assert.strictEqual(missingJson.error.code, 'LOOP_NOT_FOUND');
