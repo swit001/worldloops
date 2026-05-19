@@ -307,6 +307,37 @@ Current narrowing policy:
 
 This keeps local open-loop state smaller and easier to inspect while preserving `externalWrite:false`.
 
+### Open loop summary
+
+WorldLoops can summarize current open loop state counts:
+
+    npm run loop:summary
+
+Example output:
+
+    Open loop summary
+
+    total: 12
+
+    by status:
+      todo: 6
+      doing: 2
+      done: 3
+      snoozed: 0
+      escalated: 1
+
+    by severity:
+      low: 0
+      medium: 8
+      high: 3
+      critical: 1
+
+For structured JSON output:
+
+    npm run loop:summary -- --json
+
+The JSON output includes `summary.total`, `summary.byStatus`, `summary.bySeverity`, and the capability boundary with `externalWrite: false`.
+
 ### Focused loop inspection
 
 WorldLoops can show one persisted open loop in detail:
@@ -607,6 +638,11 @@ Added in v0.2.6:
 - proactive discovery direction
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
+
+Added in v0.4.5:
+
+- `loop:summary` — summarize open loop state counts by status and severity
+- `loop:summary -- --json` — structured JSON output with capability boundary
 
 Added in v0.4.4:
 

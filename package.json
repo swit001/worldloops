@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "notifications:init": "node dist/scripts/notificationsInit.js",
     "notifications:show": "node dist/scripts/notificationsShow.js",
     "notifications:set": "node dist/scripts/notificationsSet.js",
-    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy && npm run test:stuck-loops && npm run test:loop-show && npm run test:loop-list",
+    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy && npm run test:stuck-loops && npm run test:loop-show && npm run test:loop-list && npm run test:loop-summary",
     "smoke:public": "node scripts/smoke-reconcile.mjs",
     "smoke:reconcile": "node scripts/smoke-reconcile.mjs",
     "test:thread-hints": "node tests/threadHints.test.cjs",
@@ -29,7 +29,9 @@
     "test:stuck-loops": "node tests/stuckLoopPolicy.test.cjs",
     "loop:show": "node dist/scripts/loopShow.js",
     "test:loop-show": "node tests/loopShow.test.cjs",
-    "test:loop-list": "node tests/loopList.test.cjs"
+    "test:loop-list": "node tests/loopList.test.cjs",
+    "loop:summary": "node dist/scripts/loopSummary.js",
+    "test:loop-summary": "node tests/loopSummary.test.cjs"
   },
   "keywords": [
     "openclaw",
