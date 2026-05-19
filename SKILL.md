@@ -18,7 +18,7 @@ Use this skill when the user wants to detect open loops from scattered work sign
 
 WorldLoops is not a chatbot, task bot, or uncontrolled automation trigger.
 
-It is a governed world-model layer for interpreting work signals safely — with an auditable runtime direction in v0.3.0.
+It is a governed world-model layer for interpreting work signals safely — with the Auditable Open-Loop Runtime milestone completed in v0.4.0.
 
 ## Safety boundary
 
@@ -109,6 +109,21 @@ WORLDLOOPS_API_BASE_URL=https://your-worldloops-api.example.com
 Optional:
 
 WORLDLOOPS_API_KEY=your_api_key
+
+## Auditable Open-Loop Runtime
+
+Runtime MVP — v0.4.0
+
+WorldLoops now supports persistent local open-loop state, capability-scoped execution boundaries, severity-based adjudication, and stuck-loop timeout reconciliation.
+
+Useful local commands:
+
+    npm run loop:list
+    npm run loop:transition -- <loopId> doing "started local follow-up"
+    npm run capability:show
+    npm run loop:reconcile
+
+All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
 
 ## Output
 
