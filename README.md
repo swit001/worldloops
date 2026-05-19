@@ -220,9 +220,13 @@ Example:
 
     npm run brief:reconcile -- --gmail-event scripts/fixtures/openclaw-gmail-webhook.json --calendar-event scripts/fixtures/openclaw-calendar-events.json --gog-gmail scripts/fixtures/gog-gmail-messages.json --gog-calendar scripts/fixtures/gog-calendar-events.json
 
-List persisted loops:
+List persisted loops (compact table):
 
     npm run loop:list
+
+List persisted loops (full JSON):
+
+    npm run loop:list -- --json
 
 Move a loop through state:
 
@@ -603,6 +607,12 @@ Added in v0.2.6:
 - proactive discovery direction
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
+
+Added in v0.4.4:
+
+- `loop:list` now outputs a compact human-readable table by default (id, status, severity, title, source count, updatedAt)
+- `loop:list -- --json` restores the previous full JSON output
+- Empty loop list shows a friendly `No open loops found.` message
 
 Added in v0.3.0:
 
