@@ -276,6 +276,21 @@ WorldLoops maps loop severity to a local adjudication action:
 
 The policy is applied when proposal candidates are persisted as open-loop state. Each persisted loop includes an adjudication result while preserving `externalWrite:false`.
 
+### Stuck-loop timeout reconciliation
+
+WorldLoops can reconcile persisted open loops and apply local timeout policy:
+
+    npm run loop:reconcile
+
+Current policy:
+
+    todo older than 48 hours -> escalated
+    doing older than 24 hours -> escalated
+    snoozed past dueAt -> todo
+    high/critical overdue -> escalated
+
+`loop:reconcile` only transitions local open-loop state. It preserves `externalWrite:false` and does not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
 ---
 
 ## What Is an Open Loop?
@@ -568,12 +583,12 @@ Added in v0.3.0:
 - Proposal candidates generated during `brief:reconcile` are persisted as local open-loop state
 - Capability-scoped execution boundary with `capability:show`
 - Severity-based adjudication policy for `low`, `medium`, `high`, and `critical` loops
+- Stuck-loop timeout reconciliation with `loop:reconcile`
 
 **Transition receipts** are small audit records that capture what signals were observed, what transition was proposed, what boundary was crossed, and why the loop stayed local. They let a reviewer reconstruct what happened in an open-loop transition without trusting the agent's narrative summary.
 
 ### v0.3.x — Auditable Open-Loop Runtime (continued)
 
-- Stuck-loop timeout handling
 
 ---
 
