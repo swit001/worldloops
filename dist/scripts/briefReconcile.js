@@ -42,6 +42,7 @@ const openclawCalendar_1 = require("../adapters/openclawCalendar");
 const gogSnapshot_1 = require("../adapters/gogSnapshot");
 const openclawMessages_1 = require("../adapters/openclawMessages");
 const transitionReceipts_1 = require("../storage/transitionReceipts");
+const openLoopStates_1 = require("../storage/openLoopStates");
 function getFlagValue(flag) {
     const args = process.argv.slice(2);
     const idx = args.indexOf(flag);
@@ -107,7 +108,11 @@ async function main() {
     });
     const candidates = result.proposalCandidates ?? [];
     let receiptsGenerated = 0;
+    let openLoopsPersisted = 0;
+    let openLoopsAlreadyTracked = 0;
     if (result.ok && candidates.length > 0) {
+        const existingOpenLoops = (0, openLoopStates_1.loadOpenLoopStates)();
+        const existingCanonicalKeys = new Set(existingOpenLoops.map((loop) => loop.canonicalKey));
         for (const candidate of candidates) {
             const receipt = (0, transitionReceipts_1.buildTransitionReceipt)(candidate, signals, {
                 adjudicationResult: result.ok ? 'proposed' : 'api_error',
@@ -116,6 +121,15 @@ async function main() {
             });
             (0, transitionReceipts_1.saveTransitionReceipt)(receipt);
             receiptsGenerated++;
+            if (existingCanonicalKeys.has(candidate.idempotencyKey)) {
+                openLoopsAlreadyTracked++;
+            }
+            else {
+                const openLoopState = (0, openLoopStates_1.buildOpenLoopStateFromProposal)(candidate, signals);
+                (0, openLoopStates_1.saveOpenLoopState)(openLoopState);
+                existingCanonicalKeys.add(candidate.idempotencyKey);
+                openLoopsPersisted++;
+            }
         }
     }
     printJson({
@@ -127,6 +141,8 @@ async function main() {
             signalCount: signals.length,
             sources,
             receiptsGenerated,
+            openLoopsPersisted,
+            openLoopsAlreadyTracked,
         },
         safety: {
             ...(result.safety ?? {}),

@@ -9,6 +9,7 @@ import { calendarEventsToSignals } from '../adapters/openclawCalendar';
 import { gogGmailToSignals, gogCalendarToSignals } from '../adapters/gogSnapshot';
 import { messagesToSignals } from '../adapters/openclawMessages';
 import { buildTransitionReceipt, saveTransitionReceipt } from '../storage/transitionReceipts';
+import { buildOpenLoopStateFromProposal, loadOpenLoopStates, saveOpenLoopState } from '../storage/openLoopStates';
 
 function getFlagValue(flag: string): string | undefined {
   const args = process.argv.slice(2);
@@ -89,8 +90,12 @@ async function main(): Promise<void> {
 
   const candidates = result.proposalCandidates ?? [];
   let receiptsGenerated = 0;
+  let openLoopsPersisted = 0;
+  let openLoopsAlreadyTracked = 0;
 
   if (result.ok && candidates.length > 0) {
+    const existingOpenLoops = loadOpenLoopStates();
+    const existingCanonicalKeys = new Set(existingOpenLoops.map((loop) => loop.canonicalKey));
     for (const candidate of candidates) {
       const receipt = buildTransitionReceipt(candidate, signals, {
         adjudicationResult: result.ok ? 'proposed' : 'api_error',
@@ -99,6 +104,15 @@ async function main(): Promise<void> {
       });
       saveTransitionReceipt(receipt);
       receiptsGenerated++;
+
+      if (existingCanonicalKeys.has(candidate.idempotencyKey)) {
+        openLoopsAlreadyTracked++;
+      } else {
+        const openLoopState = buildOpenLoopStateFromProposal(candidate, signals);
+        saveOpenLoopState(openLoopState);
+        existingCanonicalKeys.add(candidate.idempotencyKey);
+        openLoopsPersisted++;
+      }
     }
   }
 
@@ -111,6 +125,8 @@ async function main(): Promise<void> {
       signalCount: signals.length,
       sources,
       receiptsGenerated,
+      openLoopsPersisted,
+      openLoopsAlreadyTracked,
     },
     safety: {
       ...(result.safety ?? {}),
