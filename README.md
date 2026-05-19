@@ -265,6 +265,17 @@ Denied examples:
 
 All external-write capabilities remain denied with `externalWrite:false`.
 
+### Severity-based adjudication policy
+
+WorldLoops maps loop severity to a local adjudication action:
+
+    low      -> track
+    medium   -> propose
+    high     -> require_approval
+    critical -> escalate
+
+The policy is applied when proposal candidates are persisted as open-loop state. Each persisted loop includes an adjudication result while preserving `externalWrite:false`.
+
 ---
 
 ## What Is an Open Loop?
@@ -556,13 +567,13 @@ Added in v0.3.0:
 - `loop:transition` CLI command — move loops through `todo`, `doing`, `done`, `snoozed`, and `escalated`
 - Proposal candidates generated during `brief:reconcile` are persisted as local open-loop state
 - Capability-scoped execution boundary with `capability:show`
+- Severity-based adjudication policy for `low`, `medium`, `high`, and `critical` loops
 
 **Transition receipts** are small audit records that capture what signals were observed, what transition was proposed, what boundary was crossed, and why the loop stayed local. They let a reviewer reconstruct what happened in an open-loop transition without trusting the agent's narrative summary.
 
 ### v0.3.x — Auditable Open-Loop Runtime (continued)
 
 - Stuck-loop timeout handling
-- Severity-based adjudication policy
 
 ---
 
