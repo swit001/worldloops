@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.6.0"
+version: "0.7.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -124,6 +124,54 @@ Useful local commands:
     npm run loop:reconcile
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
+## Proposal Templates Foundation
+
+New in v0.7.0 — generic proposal templates for common agent intentions.
+
+**Core principle: Proposal ≠ Execution**
+
+Templates do not execute actions. They standardize agent intent into local, reviewable proposal objects before any commit or external write is considered.
+
+### Initial templates
+
+| Template ID | Risk | Description |
+|---|---|---|
+| `file-write` | medium | Propose a file write — does not write any file |
+| `api-call` | high | Propose an API call — does not call any API |
+| `state-transition` | medium | Propose a state change — does not transition anything |
+| `human-review` | low | Propose human inspection before any commit |
+| `notification-draft` | medium | Propose a notification draft — does not send any message |
+| `escalation` | high | Propose escalation to a human owner — does not execute escalation |
+
+### Commands
+
+    npm run proposal:templates                        # human-readable template list
+    npm run proposal:templates -- --json              # structured JSON list
+    npm run proposal:create -- <template-id>          # create proposal (human-readable)
+    npm run proposal:create -- <template-id> --json   # create proposal (JSON)
+    npm run proposal:list                             # list local proposals (human-readable)
+    npm run proposal:list -- --json                   # list local proposals (JSON)
+    npm run proposal:show -- <proposal-id>            # show proposal detail (human-readable)
+    npm run proposal:show -- <proposal-id> --json     # show proposal detail (JSON)
+
+### Safety boundary
+
+All proposals are stored locally under `.worldloops/proposals.json`. No external writes. `externalWrite: false` is preserved. `requiredReview: true` is set on every proposal.
+
+Templates do not send messages, call APIs, write files, or transition state. They produce a local proposal object only.
+
+### Intentionally deferred
+
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific templates
+- `loop:update`
+
+---
 
 ## Loop Lifecycle UX
 

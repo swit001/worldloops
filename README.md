@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.6.0` |
+| Latest release | `v0.7.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,67 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v0.7.0 — Proposal Templates Foundation
+
+> **Minor release**
+
+WorldLoops now introduces generic proposal templates for common agent intentions: file writes, API calls, state transitions, human review, notification drafts, and escalation.
+
+The core principle remains:
+
+**Proposal ≠ Execution**
+
+Templates do not execute actions. They standardize agent intent into local, reviewable proposal objects before any commit or external write is considered.
+
+### Initial templates
+
+| Template ID | Category | Risk Level | Description |
+|---|---|---|---|
+| `file-write` | file_system | medium | Propose a file write or modification — does not write any file |
+| `api-call` | external_api | high | Propose an API call — does not call any API |
+| `state-transition` | state_management | medium | Propose a state change (e.g. todo → doing) — does not transition anything |
+| `human-review` | review | low | Propose human inspection before any commit |
+| `notification-draft` | communication | medium | Propose a message draft — does not send any message |
+| `escalation` | escalation | high | Propose escalation to a human owner — does not execute the escalation |
+
+All templates include: `externalWrite: false`, `requiredReview: true`, suggested checks, and example use cases.
+
+### Commands
+
+```bash
+npm run proposal:templates                         # human-readable template list
+npm run proposal:templates -- --json               # structured JSON list
+
+npm run proposal:create -- <template-id>           # create proposal (human-readable)
+npm run proposal:create -- <template-id> --json    # create proposal (JSON)
+
+npm run proposal:list                              # list local proposals (human-readable)
+npm run proposal:list -- --json                    # list local proposals (JSON)
+
+npm run proposal:show -- <proposal-id>             # show proposal detail (human-readable)
+npm run proposal:show -- <proposal-id> --json      # show proposal detail (JSON)
+```
+
+### Local-only storage
+
+All proposals are stored locally under `.worldloops/proposals.json`. No external writes. `externalWrite: false` is preserved.
+
+### Example use cases
+
+SEO audits, GEO content updates, GitHub PR reviews, sitemap updates, marketing workflows, and enterprise operations can all use this proposal pattern — but v0.7.0 keeps templates generic rather than domain-specific. Domain-specific templates are intentionally deferred.
+
+### Intentionally deferred
+
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific templates (e.g. seo-link-check, sitemap-update)
+- `loop:update`
+
+---
+
 ## v0.6.0 — Loop Lifecycle UX
 
 > **Minor release**
@@ -875,7 +936,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.6.0`
+- Latest release: `v0.7.0`
 
 ---
 
