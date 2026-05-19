@@ -10,6 +10,7 @@ import { gogGmailToSignals, gogCalendarToSignals } from '../adapters/gogSnapshot
 import { messagesToSignals } from '../adapters/openclawMessages';
 import { buildTransitionReceipt, saveTransitionReceipt } from '../storage/transitionReceipts';
 import { buildOpenLoopStateFromProposal, loadOpenLoopStates, saveOpenLoopState } from '../storage/openLoopStates';
+import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 
 function getFlagValue(flag: string): string | undefined {
   const args = process.argv.slice(2);
@@ -128,6 +129,7 @@ async function main(): Promise<void> {
       openLoopsPersisted,
       openLoopsAlreadyTracked,
     },
+    capabilityBoundary: getCapabilityBoundary(),
     safety: {
       ...(result.safety ?? {}),
       externalWrite: false,

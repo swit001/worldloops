@@ -43,6 +43,7 @@ const gogSnapshot_1 = require("../adapters/gogSnapshot");
 const openclawMessages_1 = require("../adapters/openclawMessages");
 const transitionReceipts_1 = require("../storage/transitionReceipts");
 const openLoopStates_1 = require("../storage/openLoopStates");
+const capabilityBoundary_1 = require("../policy/capabilityBoundary");
 function getFlagValue(flag) {
     const args = process.argv.slice(2);
     const idx = args.indexOf(flag);
@@ -144,6 +145,7 @@ async function main() {
             openLoopsPersisted,
             openLoopsAlreadyTracked,
         },
+        capabilityBoundary: (0, capabilityBoundary_1.getCapabilityBoundary)(),
         safety: {
             ...(result.safety ?? {}),
             externalWrite: false,

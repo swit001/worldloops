@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { loadTransitionReceipts, getTransitionReceiptsPath } from '../storage/transitionReceipts';
+import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 
 function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
@@ -13,6 +14,7 @@ function main(): void {
     path: getTransitionReceiptsPath(),
     count: receipts.length,
     receipts,
+    capabilityBoundary: getCapabilityBoundary(),
     safety: { externalWrite: false },
   });
 }

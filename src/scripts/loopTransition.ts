@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { transitionOpenLoopState } from '../storage/openLoopStates';
+import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 import type { OpenLoopStatus } from '../types/openLoopState';
 
 const VALID_STATUSES: OpenLoopStatus[] = ['todo', 'doing', 'done', 'snoozed', 'escalated'];
@@ -31,6 +32,7 @@ function main(): void {
     ok: true,
     source: 'worldloops.local',
     loop: updated,
+    capabilityBoundary: getCapabilityBoundary(),
     safety: { externalWrite: false },
   });
 }

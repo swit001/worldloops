@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const openLoopStates_1 = require("../storage/openLoopStates");
+const capabilityBoundary_1 = require("../policy/capabilityBoundary");
 const VALID_STATUSES = ['todo', 'doing', 'done', 'snoozed', 'escalated'];
 function printJson(value) {
     console.log(JSON.stringify(value, null, 2));
@@ -25,6 +26,7 @@ function main() {
         ok: true,
         source: 'worldloops.local',
         loop: updated,
+        capabilityBoundary: (0, capabilityBoundary_1.getCapabilityBoundary)(),
         safety: { externalWrite: false },
     });
 }
