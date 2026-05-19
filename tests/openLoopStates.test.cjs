@@ -39,6 +39,9 @@ const loop = buildOpenLoopStateFromProposal(candidate, signals);
 
 assert.strictEqual(loop.status, 'todo');
 assert.strictEqual(loop.severity, 'high');
+assert.strictEqual(loop.adjudication.action, 'require_approval');
+assert.strictEqual(loop.adjudication.approvalRequired, true);
+assert.strictEqual(loop.adjudication.safety.externalWrite, false);
 assert.strictEqual(loop.safety.externalWrite, false);
 assert.strictEqual(loop.history.length, 1);
 

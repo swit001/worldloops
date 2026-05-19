@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import type { ProposalCandidate, Signal } from '../types';
 import type { OpenLoopState, OpenLoopStatus } from '../types/openLoopState';
+import { adjudicateSeverity } from '../policy/severityPolicy';
 
 function getWorldLoopsDir(): string {
   return process.env.WORLDLOOPS_DIR ?? path.join(process.cwd(), '.worldloops');
@@ -88,6 +89,7 @@ export function buildOpenLoopStateFromProposal(
   signals: Signal[]
 ): OpenLoopState {
   const now = new Date().toISOString();
+  const adjudication = adjudicateSeverity(candidate.severity);
 
   return {
     id: crypto.randomUUID(),
@@ -99,8 +101,9 @@ export function buildOpenLoopStateFromProposal(
       url: signal.url,
       createdAt: signal.createdAt,
     })),
-    status: 'todo',
-    severity: candidate.severity ?? 'medium',
+    status: adjudication.shouldEscalate ? 'escalated' : 'todo',
+    severity: adjudication.severity,
+    adjudication,
     owner: null,
     dueAt: null,
     lastObservedAt: now,
@@ -109,9 +112,9 @@ export function buildOpenLoopStateFromProposal(
       {
         at: now,
         from: null,
-        to: 'todo',
+        to: adjudication.shouldEscalate ? 'escalated' : 'todo',
         actor: 'worldloops.local',
-        note: 'Created from proposal candidate',
+        note: `Created from proposal candidate; adjudication=${adjudication.action}`,
       },
     ],
     safety: {

@@ -43,6 +43,7 @@ exports.buildOpenLoopStateFromProposal = buildOpenLoopStateFromProposal;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const crypto = __importStar(require("node:crypto"));
+const severityPolicy_1 = require("../policy/severityPolicy");
 function getWorldLoopsDir() {
     return process.env.WORLDLOOPS_DIR ?? path.join(process.cwd(), '.worldloops');
 }
@@ -105,6 +106,7 @@ function transitionOpenLoopState(id, to, opts = {}) {
 }
 function buildOpenLoopStateFromProposal(candidate, signals) {
     const now = new Date().toISOString();
+    const adjudication = (0, severityPolicy_1.adjudicateSeverity)(candidate.severity);
     return {
         id: crypto.randomUUID(),
         canonicalKey: candidate.idempotencyKey,
@@ -115,8 +117,9 @@ function buildOpenLoopStateFromProposal(candidate, signals) {
             url: signal.url,
             createdAt: signal.createdAt,
         })),
-        status: 'todo',
-        severity: candidate.severity ?? 'medium',
+        status: adjudication.shouldEscalate ? 'escalated' : 'todo',
+        severity: adjudication.severity,
+        adjudication,
         owner: null,
         dueAt: null,
         lastObservedAt: now,
@@ -125,9 +128,9 @@ function buildOpenLoopStateFromProposal(candidate, signals) {
             {
                 at: now,
                 from: null,
-                to: 'todo',
+                to: adjudication.shouldEscalate ? 'escalated' : 'todo',
                 actor: 'worldloops.local',
-                note: 'Created from proposal candidate',
+                note: `Created from proposal candidate; adjudication=${adjudication.action}`,
             },
         ],
         safety: {

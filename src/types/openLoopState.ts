@@ -1,4 +1,5 @@
 import type { MinSeverity, SignalSource } from '../types';
+import type { SeverityAdjudication } from './severityPolicy';
 
 export type OpenLoopStatus = 'todo' | 'doing' | 'done' | 'snoozed' | 'escalated';
 
@@ -22,6 +23,7 @@ export interface OpenLoopState {
   }[];
   status: OpenLoopStatus;
   severity: MinSeverity;
+  adjudication: SeverityAdjudication;
   owner: string | null;
   dueAt: string | null;
   lastObservedAt: string;
