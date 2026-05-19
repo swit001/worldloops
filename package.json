@@ -12,7 +12,7 @@
     "notifications:init": "node dist/scripts/notificationsInit.js",
     "notifications:show": "node dist/scripts/notificationsShow.js",
     "notifications:set": "node dist/scripts/notificationsSet.js",
-    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy",
+    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy && npm run test:stuck-loops",
     "smoke:public": "node scripts/smoke-reconcile.mjs",
     "smoke:reconcile": "node scripts/smoke-reconcile.mjs",
     "test:thread-hints": "node tests/threadHints.test.cjs",
@@ -24,7 +24,9 @@
     "test:open-loops": "node tests/openLoopStates.test.cjs",
     "capability:show": "node dist/scripts/capabilityShow.js",
     "test:capabilities": "node tests/capabilityBoundary.test.cjs",
-    "test:severity-policy": "node tests/severityPolicy.test.cjs"
+    "test:severity-policy": "node tests/severityPolicy.test.cjs",
+    "loop:reconcile": "node dist/scripts/loopReconcile.js",
+    "test:stuck-loops": "node tests/stuckLoopPolicy.test.cjs"
   },
   "keywords": [
     "openclaw",
