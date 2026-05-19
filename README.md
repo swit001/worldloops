@@ -291,6 +291,18 @@ Current policy:
 
 `loop:reconcile` only transitions local open-loop state. It preserves `externalWrite:false` and does not write to Gmail, Calendar, Slack, GitHub, or any external system.
 
+### Narrowed source signals
+
+When proposal candidates are persisted as open-loop state, WorldLoops now stores only source-relevant signals instead of copying every observed signal into every loop.
+
+Current narrowing policy:
+
+    candidate.source match -> keep same-source signals
+    no same-source match -> keep first observed signal as fallback
+    no signals -> keep empty sourceSignals
+
+This keeps local open-loop state smaller and easier to inspect while preserving `externalWrite:false`.
+
 ---
 
 ## What Is an Open Loop?
