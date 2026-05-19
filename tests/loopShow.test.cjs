@@ -35,7 +35,9 @@ const signals = [
 const loop = buildOpenLoopStateFromProposal(candidate, signals);
 saveOpenLoopState(loop);
 
-const output = execFileSync(
+// ── human-readable output (default) ─────────────────────────────────────────
+
+const humanOutput = execFileSync(
   process.execPath,
   ['dist/scripts/loopShow.js', loop.id],
   {
@@ -47,7 +49,34 @@ const output = execFileSync(
   }
 );
 
-const json = JSON.parse(output);
+assert.throws(
+  () => JSON.parse(humanOutput),
+  'default output should not be valid JSON'
+);
+
+assert.ok(humanOutput.includes(loop.id), 'human output should include loop id');
+assert.ok(humanOutput.includes('todo'), 'human output should include status');
+assert.ok(humanOutput.includes('high'), 'human output should include severity');
+assert.ok(humanOutput.includes('gmail'), 'human output should include source');
+assert.ok(humanOutput.includes('Draft a reply'), 'human output should include title');
+assert.ok(humanOutput.includes('externalWrite'), 'human output should mention externalWrite');
+assert.ok(humanOutput.includes('false'), 'human output should show externalWrite:false');
+
+// ── --json output ────────────────────────────────────────────────────────────
+
+const jsonOutput = execFileSync(
+  process.execPath,
+  ['dist/scripts/loopShow.js', loop.id, '--json'],
+  {
+    env: {
+      ...process.env,
+      WORLDLOOPS_DIR: tmpDir,
+    },
+    encoding: 'utf8',
+  }
+);
+
+const json = JSON.parse(jsonOutput);
 
 assert.strictEqual(json.ok, true);
 assert.strictEqual(json.source, 'worldloops.local');
@@ -61,6 +90,27 @@ assert.strictEqual(json.loop.sourceSignals[0].source, 'gmail');
 assert.strictEqual(json.loop.safety.externalWrite, false);
 assert.strictEqual(json.safety.externalWrite, false);
 assert.strictEqual(json.capabilityBoundary.externalWrite, false);
+
+// ── missing loop id ──────────────────────────────────────────────────────────
+
+const noIdResult = spawnSync(
+  process.execPath,
+  ['dist/scripts/loopShow.js'],
+  {
+    env: {
+      ...process.env,
+      WORLDLOOPS_DIR: tmpDir,
+    },
+    encoding: 'utf8',
+  }
+);
+
+assert.strictEqual(noIdResult.status, 1);
+const noIdJson = JSON.parse(noIdResult.stdout);
+assert.strictEqual(noIdJson.ok, false);
+assert.strictEqual(noIdJson.error.code, 'MISSING_LOOP_ID');
+
+// ── loop not found ───────────────────────────────────────────────────────────
 
 const missingResult = spawnSync(
   process.execPath,

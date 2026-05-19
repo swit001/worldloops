@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.5.0` |
+| Latest release | `v0.6.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,86 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v0.6.0 — Loop Lifecycle UX
+
+> **Minor release**
+
+This release strengthens the loop lifecycle CLI with governed transition validation, human-readable loop inspection, a lifecycle review command, and clearer cross-session state persistence documentation. All commands remain local-only and preserve `externalWrite: false`.
+
+### Cross-session state persistence
+
+WorldLoops persists open-loop state locally to `.worldloops/open_loop_states.json`. This file survives agent restarts, shell session restarts, and machine reboots. Open loops that were detected in one session remain visible and actionable in a future session.
+
+No external database or remote memory adapter is required. State is local-only. `externalWrite: false` is preserved across all commands.
+
+To inspect persisted loops after a restart:
+
+    npm run loop:list
+    npm run loop:show -- <loopId>
+    npm run loop:review
+
+### loop:show — human-readable default
+
+`loop:show` now outputs a human-readable view by default:
+
+    npm run loop:show -- <loopId>
+
+Shows: id, status, severity, source, owner, adjudication reason, related signals, suggested action, and externalWrite boundary.
+
+For structured JSON (original format):
+
+    npm run loop:show -- <loopId> --json
+
+### loop:transition — governed state transitions
+
+`loop:transition` now validates that a transition is permitted by the lifecycle graph before committing it.
+
+Valid transitions:
+
+    todo      → doing
+    doing     → done
+    doing     → snoozed
+    doing     → escalated
+    snoozed   → todo
+    escalated → doing
+
+Both the original positional format and a new `--to` flag are supported:
+
+    npm run loop:transition -- <loopId> doing
+    npm run loop:transition -- <loopId> --to doing
+
+Invalid transitions fail safely with a structured JSON error:
+
+    { "ok": false, "error": { "code": "INVALID_LOOP_TRANSITION", "allowedTransitions": ["doing"] }, ... }
+
+Dry-run mode validates without committing:
+
+    npm run loop:transition -- <loopId> --to doing --dry-run
+
+Dry-run returns a `preview` of what would happen and does not write to local state.
+
+### loop:review
+
+New lifecycle summary command:
+
+    npm run loop:review
+
+Outputs:
+
+- total loop count
+- count by status
+- high and critical severity loops (non-done)
+- suggested focus (first active high/critical loop)
+- externalWrite: false boundary reminder
+
+For structured JSON:
+
+    npm run loop:review -- --json
+
+JSON output includes `review.total`, `review.byStatus`, `review.highSeverityLoops`, `review.suggestedFocus`, and the capability boundary with `externalWrite: false`.
+
+---
+
 ## v0.5.0 — Loop Inspection UX
 
 > **Minor release** — bundles v0.4.4, v0.4.5, and v0.4.6 into a single user-facing Loop Inspection UX milestone.
@@ -795,7 +875,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.5.0`
+- Latest release: `v0.6.0`
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.5.0"
+version: "0.6.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -125,9 +125,45 @@ Useful local commands:
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
 
+## Loop Lifecycle UX
+
+New in v0.6.0 — governed transitions, human-readable loop inspection, and lifecycle review.
+
+### Cross-session state persistence
+
+WorldLoops persists open-loop state locally to `.worldloops/open_loop_states.json`. Loops survive agent restarts and shell restarts. No external DB or remote memory adapter is needed. `externalWrite: false` is preserved across sessions.
+
+    npm run loop:list          # see all loops from any prior session
+    npm run loop:show -- <id>  # inspect a specific loop
+    npm run loop:review        # lifecycle summary
+
+### loop:show — human-readable
+
+    npm run loop:show -- <loopId>           # human-readable (default)
+    npm run loop:show -- <loopId> --json    # structured JSON
+
+### loop:transition — governed lifecycle
+
+Both formats supported:
+
+    npm run loop:transition -- <loopId> doing
+    npm run loop:transition -- <loopId> --to doing
+    npm run loop:transition -- <loopId> --to doing --dry-run
+
+Valid transitions: todo→doing, doing→done, doing→snoozed, doing→escalated, snoozed→todo, escalated→doing.
+
+Invalid transitions return `INVALID_LOOP_TRANSITION` with `allowedTransitions`.
+
+### loop:review
+
+    npm run loop:review           # human-readable lifecycle summary
+    npm run loop:review -- --json # structured JSON
+
+Outputs count by status, high-severity loops, suggested focus, and externalWrite boundary.
+
 ## Loop Inspection UX
 
-New in v0.5.0 — compact loop list, filters, and summary commands.
+Added in v0.5.0 — compact loop list, filters, and summary commands.
 
 **Compact loop list (default)**
 

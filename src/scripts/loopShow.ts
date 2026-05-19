@@ -1,19 +1,40 @@
 import { findOpenLoopStateById, loadOpenLoopStates } from '../storage/openLoopStates';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
+import type { OpenLoopState } from '../types/openLoopState';
 
 function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
 
+function printHuman(loop: OpenLoopState): void {
+  const source = loop.sourceSignals.length > 0 ? loop.sourceSignals[0].source : '(none)';
+  const owner = loop.owner ?? '(none)';
+  console.log(`Loop: ${loop.id}`);
+  console.log(`  Title:            ${loop.title}`);
+  console.log(`  Status:           ${loop.status}`);
+  console.log(`  Severity:         ${loop.severity}`);
+  console.log(`  Source:           ${source}`);
+  console.log(`  Owner:            ${owner}`);
+  console.log(`  Reason:           ${loop.adjudication.reason}`);
+  console.log(`  Signals:          ${loop.sourceSignals.length}`);
+  for (const signal of loop.sourceSignals) {
+    console.log(`    - [${signal.source}] ${signal.text}`);
+  }
+  console.log(`  Suggested action: ${loop.adjudication.action}`);
+  console.log(`  externalWrite:    false`);
+}
+
 function main(): void {
-  const [, , loopId] = process.argv;
+  const args = process.argv.slice(2);
+  const jsonMode = args.includes('--json');
+  const loopId = args.find((a) => !a.startsWith('--'));
 
   if (!loopId) {
     printJson({
       ok: false,
       error: {
         code: 'MISSING_LOOP_ID',
-        message: 'Usage: npm run loop:show -- <loopId>',
+        message: 'Usage: npm run loop:show -- <loopId> [--json]',
       },
       safety: { externalWrite: false },
     });
@@ -44,27 +65,31 @@ function main(): void {
     process.exit(1);
   }
 
-  printJson({
-    ok: true,
-    source: 'worldloops.local',
-    loop: {
-      id: loop.id,
-      canonicalKey: loop.canonicalKey,
-      title: loop.title,
-      status: loop.status,
-      severity: loop.severity,
-      owner: loop.owner,
-      dueAt: loop.dueAt,
-      lastObservedAt: loop.lastObservedAt,
-      updatedAt: loop.updatedAt,
-      adjudication: loop.adjudication,
-      sourceSignals: loop.sourceSignals,
-      history: loop.history,
-      safety: loop.safety,
-    },
-    capabilityBoundary: getCapabilityBoundary(),
-    safety: { externalWrite: false },
-  });
+  if (jsonMode) {
+    printJson({
+      ok: true,
+      source: 'worldloops.local',
+      loop: {
+        id: loop.id,
+        canonicalKey: loop.canonicalKey,
+        title: loop.title,
+        status: loop.status,
+        severity: loop.severity,
+        owner: loop.owner,
+        dueAt: loop.dueAt,
+        lastObservedAt: loop.lastObservedAt,
+        updatedAt: loop.updatedAt,
+        adjudication: loop.adjudication,
+        sourceSignals: loop.sourceSignals,
+        history: loop.history,
+        safety: loop.safety,
+      },
+      capabilityBoundary: getCapabilityBoundary(),
+      safety: { externalWrite: false },
+    });
+  } else {
+    printHuman(loop);
+  }
 }
 
 main();
