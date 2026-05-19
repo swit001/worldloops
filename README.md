@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.2.8` |
+| Latest release | `v0.4.6` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -227,6 +227,41 @@ List persisted loops (compact table):
 List persisted loops (full JSON):
 
     npm run loop:list -- --json
+
+Filter loops by status:
+
+    npm run loop:list -- --status todo
+    npm run loop:list -- --status doing
+    npm run loop:list -- --status done
+    npm run loop:list -- --status snoozed
+    npm run loop:list -- --status escalated
+
+Filter loops by severity:
+
+    npm run loop:list -- --severity low
+    npm run loop:list -- --severity medium
+    npm run loop:list -- --severity high
+    npm run loop:list -- --severity critical
+
+Combine filters (AND semantics):
+
+    npm run loop:list -- --status todo --severity high
+
+Filters work with --json:
+
+    npm run loop:list -- --status todo --json
+    npm run loop:list -- --severity high --json
+    npm run loop:list -- --status escalated --severity critical --json
+
+If no loops match, the output is a friendly empty state:
+
+    No open loops matched the selected filters.
+
+For --json with no matches:
+
+    { "ok": true, "loops": [], "filters": { "status": "todo", "severity": "high" }, "count": 0, ... }
+
+Invalid filter values fail safely with a structured JSON error.
 
 Move a loop through state:
 
@@ -638,6 +673,15 @@ Added in v0.2.6:
 - proactive discovery direction
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
+
+Added in v0.4.6:
+
+- `loop:list -- --status <value>` — filter compact output by loop status
+- `loop:list -- --severity <value>` — filter compact output by loop severity
+- Filters combine with AND semantics (`--status todo --severity high`)
+- Filters work with `--json`; filtered JSON output includes a `filters` field
+- Friendly empty state when no loops match: `No open loops matched the selected filters.`
+- Invalid filter values fail safely with a structured JSON error (`INVALID_STATUS_FILTER`, `INVALID_SEVERITY_FILTER`)
 
 Added in v0.4.5:
 
