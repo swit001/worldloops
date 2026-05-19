@@ -237,6 +237,34 @@ Open loops currently support:
 
 All state is local. These commands preserve `externalWrite: false`; they do not write to Gmail, Calendar, Slack, GitHub, or any external system.
 
+### Capability-scoped execution boundary
+
+WorldLoops exposes its safe-by-default capability boundary through:
+
+    npm run capability:show
+
+The boundary explicitly separates allowed local/read-only capabilities from denied external-write capabilities.
+
+Allowed examples:
+
+- read input signals
+- generate briefs
+- generate proposal candidates
+- persist local transition receipts
+- persist local open-loop state
+- transition local open-loop state
+
+Denied examples:
+
+- send email
+- create email drafts
+- send Slack messages
+- create calendar events
+- modify GitHub
+- write to any external system
+
+All external-write capabilities remain denied with `externalWrite:false`.
+
 ---
 
 ## What Is an Open Loop?
@@ -527,12 +555,12 @@ Added in v0.3.0:
 - `loop:list` CLI command — inspect persisted open loops locally
 - `loop:transition` CLI command — move loops through `todo`, `doing`, `done`, `snoozed`, and `escalated`
 - Proposal candidates generated during `brief:reconcile` are persisted as local open-loop state
+- Capability-scoped execution boundary with `capability:show`
 
 **Transition receipts** are small audit records that capture what signals were observed, what transition was proposed, what boundary was crossed, and why the loop stayed local. They let a reviewer reconstruct what happened in an open-loop transition without trusting the agent's narrative summary.
 
 ### v0.3.x — Auditable Open-Loop Runtime (continued)
 
-- Capability-scoped execution boundaries
 - Stuck-loop timeout handling
 - Severity-based adjudication policy
 
