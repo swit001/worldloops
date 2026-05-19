@@ -212,6 +212,31 @@ npm run brief:reconcile -- \
   --calendar-event scripts/fixtures/openclaw-calendar-events.json
 ```
 
+### Persistent open-loop state
+
+`brief:reconcile` does more than print a snapshot brief. When proposal candidates are returned, WorldLoops persists them as local open-loop state in `.worldloops/open_loop_states.json`.
+
+Example:
+
+    npm run brief:reconcile -- --gmail-event scripts/fixtures/openclaw-gmail-webhook.json --calendar-event scripts/fixtures/openclaw-calendar-events.json --gog-gmail scripts/fixtures/gog-gmail-messages.json --gog-calendar scripts/fixtures/gog-calendar-events.json
+
+List persisted loops:
+
+    npm run loop:list
+
+Move a loop through state:
+
+    npm run loop:transition -- <loopId> doing "started local follow-up"
+    npm run loop:transition -- <loopId> done "completed locally"
+
+Open loops currently support:
+
+    todo -> doing -> done
+    todo -> snoozed
+    todo -> escalated
+
+All state is local. These commands preserve `externalWrite: false`; they do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
 ---
 
 ## What Is an Open Loop?
@@ -498,12 +523,15 @@ Added in v0.3.0:
 - `receipt:list` CLI command — inspect persisted receipts locally
 - `TransitionReceipt` type with `boundaryCrossed`, `externalWrite: false`, and `redactions`
 - Receipts generated automatically during `brief:reconcile` for each proposal candidate
+- Persistent open-loop state management (`.worldloops/open_loop_states.json`)
+- `loop:list` CLI command — inspect persisted open loops locally
+- `loop:transition` CLI command — move loops through `todo`, `doing`, `done`, `snoozed`, and `escalated`
+- Proposal candidates generated during `brief:reconcile` are persisted as local open-loop state
 
 **Transition receipts** are small audit records that capture what signals were observed, what transition was proposed, what boundary was crossed, and why the loop stayed local. They let a reviewer reconstruct what happened in an open-loop transition without trusting the agent's narrative summary.
 
 ### v0.3.x — Auditable Open-Loop Runtime (continued)
 
-- Persistent open-loop state management
 - Capability-scoped execution boundaries
 - Stuck-loop timeout handling
 - Severity-based adjudication policy
