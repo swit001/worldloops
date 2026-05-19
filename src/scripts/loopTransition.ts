@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { transitionOpenLoopState } from '../storage/openLoopStates';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 import type { OpenLoopStatus } from '../types/openLoopState';

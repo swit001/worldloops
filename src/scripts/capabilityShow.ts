@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 
 function main(): void {

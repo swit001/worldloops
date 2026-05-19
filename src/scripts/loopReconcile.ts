@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { loadOpenLoopStates, transitionOpenLoopState } from '../storage/openLoopStates';
 import { evaluateStuckLoop, getDefaultStuckLoopPolicyConfig } from '../policy/stuckLoopPolicy';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';

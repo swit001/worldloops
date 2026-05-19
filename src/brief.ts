@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import type { Signal, WorldLoopsBriefResponse } from './types';
 
 const DEFAULT_API_BASE_URL = 'https://api.worldloops.ai';

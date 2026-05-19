@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { loadOpenLoopStates, getOpenLoopStatesPath } from '../storage/openLoopStates';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 

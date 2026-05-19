@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -48,9 +48,6 @@
   "author": "",
   "license": "MIT",
   "type": "commonjs",
-  "dependencies": {
-    "dotenv": "^16.4.7"
-  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2"

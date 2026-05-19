@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
 const transitionReceipts_1 = require("../storage/transitionReceipts");
 const capabilityBoundary_1 = require("../policy/capabilityBoundary");
 function printJson(value) {

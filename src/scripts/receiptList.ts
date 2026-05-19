@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { loadTransitionReceipts, getTransitionReceiptsPath } from '../storage/transitionReceipts';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 

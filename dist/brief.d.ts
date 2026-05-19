@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import type { Signal, WorldLoopsBriefResponse } from './types';
 export declare function callWorldLoopsBrief(input: {
     signals: Signal[];
