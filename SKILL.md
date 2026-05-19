@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.2.8"
+version: "0.5.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -124,6 +124,49 @@ Useful local commands:
     npm run loop:reconcile
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
+## Loop Inspection UX
+
+New in v0.5.0 — compact loop list, filters, and summary commands.
+
+**Compact loop list (default)**
+
+    npm run loop:list
+
+Outputs a compact table: id, status, severity, title, source count, updatedAt.
+
+**Full JSON output**
+
+    npm run loop:list -- --json
+
+**Filter by status**
+
+    npm run loop:list -- --status todo
+    npm run loop:list -- --status doing
+    npm run loop:list -- --status done
+    npm run loop:list -- --status snoozed
+    npm run loop:list -- --status escalated
+
+**Filter by severity**
+
+    npm run loop:list -- --severity low
+    npm run loop:list -- --severity medium
+    npm run loop:list -- --severity high
+    npm run loop:list -- --severity critical
+
+Filters combine with AND semantics and work with --json. Invalid filter values fail safely.
+
+**Loop summary**
+
+    npm run loop:summary
+
+Summarizes open-loop state counts by status and severity.
+
+    npm run loop:summary -- --json
+
+Structured JSON output with externalWrite:false in the capability boundary.
+
+All Loop Inspection UX commands are local-only. externalWrite remains false.
 
 ## Output
 

@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.4.6` |
+| Latest release | `v0.5.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,81 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v0.5.0 — Loop Inspection UX
+
+> **Minor release** — bundles v0.4.4, v0.4.5, and v0.4.6 into a single user-facing Loop Inspection UX milestone.
+
+This release makes it meaningfully easier to inspect, filter, and summarize persisted open-loop state from the CLI. All commands remain local-only and preserve `externalWrite: false`.
+
+### Compact loop list
+
+`loop:list` now outputs a compact human-readable table by default:
+
+    npm run loop:list
+
+Columns: id, status, severity, title, source count, updatedAt.
+An empty loop store shows a friendly `No open loops found.` message.
+
+### loop:list --json
+
+Restore full JSON output when needed:
+
+    npm run loop:list -- --json
+
+### loop:list --status \<status\>
+
+Filter the compact list (or JSON output) by loop status:
+
+    npm run loop:list -- --status todo
+    npm run loop:list -- --status doing
+    npm run loop:list -- --status done
+    npm run loop:list -- --status snoozed
+    npm run loop:list -- --status escalated
+
+### loop:list --severity \<severity\>
+
+Filter by loop severity:
+
+    npm run loop:list -- --severity low
+    npm run loop:list -- --severity medium
+    npm run loop:list -- --severity high
+    npm run loop:list -- --severity critical
+
+Filters combine with AND semantics and work with `--json`. No loops matched returns a friendly message or an empty `loops` array with a `filters` field. Invalid filter values fail safely with a structured JSON error.
+
+### loop:summary
+
+Summarize current open-loop state counts by status and severity:
+
+    npm run loop:summary
+
+Example output:
+
+    Open loop summary
+
+    total: 12
+
+    by status:
+      todo: 6
+      doing: 2
+      done: 3
+      snoozed: 0
+      escalated: 1
+
+    by severity:
+      low: 0
+      medium: 8
+      high: 3
+      critical: 1
+
+### loop:summary --json
+
+Structured JSON output including `summary.total`, `summary.byStatus`, `summary.bySeverity`, and the capability boundary with `externalWrite: false`:
+
+    npm run loop:summary -- --json
+
+---
+
 Added in v0.4.6:
 
 - `loop:list -- --status <value>` — filter compact output by loop status
@@ -720,7 +795,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.3.0`
+- Latest release: `v0.5.0`
 
 ---
 
