@@ -303,6 +303,27 @@ Current narrowing policy:
 
 This keeps local open-loop state smaller and easier to inspect while preserving `externalWrite:false`.
 
+### Focused loop inspection
+
+WorldLoops can show one persisted open loop in detail:
+
+    npm run loop:show -- <loopId>
+
+The focused view includes:
+
+- id
+- canonicalKey
+- title
+- status
+- severity
+- adjudication
+- sourceSignals
+- history
+- safety.externalWrite
+- capabilityBoundary
+
+If the loop ID is missing or not found, WorldLoops returns a safe JSON error and available loop IDs for inspection.
+
 ---
 
 ## What Is an Open Loop?
