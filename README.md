@@ -1,5 +1,7 @@
 # WorldLoops
 
+## Agent Execution Guard — by WorldLoops
+
 <p align="center">
   <img src="./docs/assets/worldloops-crayfish-world.png" alt="WorldLoops crayfish world: Observe, Normalize, Propose, Adjudicate, Commit, Learn" width="100%" />
 </p>
@@ -39,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.1.0` |
+| Latest release | `v1.1.1` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -752,6 +754,33 @@ It does not contain the private WorldLoops reasoning engine.
 
 ---
 
+## v1.1.1 — ClawHub Positioning Patch
+
+> **Documentation / metadata release** — no runtime behavior changes.
+
+WorldLoops is now positioned more clearly for ClawHub discovery as:
+
+**Agent Execution Guard — by WorldLoops**
+
+This patch clarifies WorldLoops as a safe-by-default execution governance layer for AI agents.
+
+Core chain:
+
+Signals → Loops → Proposals → Decisions → Plans → Contracts
+
+Core principles:
+
+- Proposal ≠ Execution
+- Approval ≠ Execution
+- Plan ≠ Execution
+- Contract ≠ External Write
+
+The safety boundary remains unchanged:
+
+externalWrite:false
+
+---
+
 ## v1.1.0 — Adapter SDK Foundation
 
 Bring your own connector. WorldLoops provides the contract.
@@ -1337,7 +1366,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.1.0`
+- Latest release: `v1.1.1`
 
 ---
 

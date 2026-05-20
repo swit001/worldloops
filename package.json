@@ -1,7 +1,7 @@
 {
   "name": "worldloops",
-  "version": "1.1.0",
-  "description": "Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.",
+  "version": "1.1.1",
+  "description": "Safe-by-default execution governance for AI agents. Turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -84,7 +84,12 @@
     "safe-by-default",
     "externalWrite-false",
     "auditable-runtime",
-    "stateful-loop-management"
+    "stateful-loop-management",
+    "agent-execution-guard",
+    "execution-governance",
+    "execution-contracts",
+    "proposal-engine",
+    "workflow-governance"
   ],
   "author": "",
   "license": "MIT",

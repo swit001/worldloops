@@ -1,14 +1,27 @@
 ---
 name: worldloops
-description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "1.0.0"
+description: Safe-by-default execution governance for AI agents. Turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving externalWrite:false.
+version: "1.1.1"
 homepage: https://github.com/swit001/worldloops
-metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
+metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"\ud83c\udf10","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
 
-# WorldLoops for OpenClaw
+# Agent Execution Guard — by WorldLoops
 
-Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with `externalWrite: false`.
+Agent Execution Guard is powered by WorldLoops.
+
+WorldLoops is a safe-by-default execution governance layer for AI agents. It turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving `externalWrite:false`.
+
+Core chain:
+
+Signals → Loops → Proposals → Decisions → Plans → Contracts
+
+Core principles:
+
+Proposal ≠ Execution
+Approval ≠ Execution
+Plan ≠ Execution
+Contract ≠ External Write
 
 Most agents answer from a snapshot. WorldLoops manages open loops as state.
 
