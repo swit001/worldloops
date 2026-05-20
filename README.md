@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.9.0` |
+| Latest release | `v1.0.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,75 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v1.0.0 — Safe Execution Contracts
+
+WorldLoops now turns local execution plans into safe execution contracts.
+
+The core principles remain:
+
+Proposal ≠ Execution\
+Approval ≠ Execution\
+Plan ≠ Execution\
+Contract ≠ External Write
+
+A planned execution plan can become a local safe execution contract, but the contract does not execute anything. It defines the boundary, preconditions, required approvals, rollback availability, and audit readiness before any future execution layer is considered.
+
+### Commands
+
+```bash
+npm run contract:create -- <plan-id>          # create contract from planned execution plan
+npm run contract:create -- <plan-id> --json   # JSON output
+npm run contract:list                          # list all execution contracts (human-readable)
+npm run contract:list -- --json               # structured JSON list
+npm run contract:show -- <contract-id>        # show contract detail (human-readable)
+npm run contract:show -- <contract-id> --json # structured JSON detail
+npm run contract:review                       # execution contract review summary
+npm run contract:review -- --json             # structured JSON review
+```
+
+### Contract status
+
+- `draft` — contract defined locally, no execution has occurred
+
+### Execution boundary
+
+All contracts carry an `executionBoundary` that explicitly lists denied capabilities:
+
+- `sendEmail`
+- `createEmailDraft`
+- `sendSlackMessage`
+- `createCalendarEvent`
+- `modifyGitHub`
+- `writeExternalSystem`
+
+`allowedBoundary` is `local_commit`. `externalWrite` is `false`.
+
+### Execution contract storage
+
+Contracts are stored locally under `.worldloops/execution_contracts.json`. `WORLDLOOPS_DIR` overrides the storage root. No external writes.
+
+### The safe pre-execution chain
+
+Signals become loops.\
+Loops become proposals.\
+Proposals become decisions.\
+Decisions become plans.\
+Plans become contracts.\
+Execution remains governed.
+
+### Intentionally deferred
+
+- Actual execution
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific contracts
+- `loop:update`
+
+---
+
 ## v0.9.0 — Execution Plan Preview
 
 WorldLoops now turns approved local proposals into local execution plans.
@@ -1132,7 +1201,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.9.0`
+- Latest release: `v1.0.0`
 
 ---
 

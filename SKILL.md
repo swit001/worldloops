@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.9.0"
+version: "1.0.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -124,6 +124,59 @@ Useful local commands:
     npm run loop:reconcile
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
+## Safe Execution Contracts
+
+New in v1.0.0 — planned execution plans can be converted into local safe execution contracts.
+
+**Core principles:**
+
+- Proposal ≠ Execution
+- Approval ≠ Execution
+- Plan ≠ Execution
+- Contract ≠ External Write
+
+A planned execution plan can become a contract, but the contract does not execute anything. It defines the execution boundary, preconditions, required approvals, rollback availability, and audit readiness before any future execution layer is considered.
+
+### Contract commands
+
+    npm run contract:create -- <plan-id>          # create contract from planned execution plan
+    npm run contract:create -- <plan-id> --json   # JSON output
+    npm run contract:list                          # list all execution contracts (human-readable)
+    npm run contract:list -- --json               # structured JSON list
+    npm run contract:show -- <contract-id>        # show contract detail (human-readable)
+    npm run contract:show -- <contract-id> --json # structured JSON detail
+    npm run contract:review                       # execution contract review summary
+    npm run contract:review -- --json             # structured JSON review
+
+### Contract status
+
+- `draft` — contract defined locally, no execution has occurred
+
+### Execution boundary
+
+All contracts carry an `executionBoundary` with `externalWrite: false` and `allowedBoundary: local_commit`. Denied capabilities include: `sendEmail`, `createEmailDraft`, `sendSlackMessage`, `createCalendarEvent`, `modifyGitHub`, `writeExternalSystem`.
+
+### Contract storage
+
+Contracts are stored locally under `.worldloops/execution_contracts.json`. `WORLDLOOPS_DIR` overrides the storage root. No external writes.
+
+### Safety boundary
+
+`externalWrite: false` preserved. No external writes. All state is local. Contract ≠ External Write.
+
+### Intentionally deferred
+
+- Actual execution
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific contracts
+- `loop:update`
+
+---
 
 ## Execution Plan Preview
 
