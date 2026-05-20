@@ -41,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.3.0` |
+| Latest release | `v1.4.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -395,6 +395,100 @@ The focused view includes:
 - capabilityBoundary
 
 If the loop ID is missing or not found, WorldLoops returns a safe JSON error and available loop IDs for inspection.
+
+---
+
+## World State Integrity Layer
+
+> **Tooling release — v1.4.0** — diagnostic only, no repair, no external writes.
+
+The problem is not only many agents. It is many writes against the same world.
+
+As WorldLoops accumulates state across loops, proposals, plans, contracts, and receipts, local state can drift. Files may be written by multiple agents, replayed across sessions, or partially migrated. The World State Integrity Layer surfaces these problems before they become invisible failures.
+
+`state:check` and `receipts:verify` are read-only diagnostic commands. They inspect local `.worldloops` state files and report issues without modifying anything. No repair is performed in v1.4.0.
+
+This helps both single-agent and multi-agent workflows maintain local state safety.
+
+### state:check
+
+Inspect all local `.worldloops` state files for integrity issues:
+
+```bash
+npm run state:check
+npm run state:check -- --json
+```
+
+Checks:
+
+| Check | Severity |
+|---|---|
+| Malformed JSON in any state file | error |
+| File shape mismatch (expected array or object) | error |
+| Duplicate loop ids | error |
+| Duplicate proposal ids | error |
+| Duplicate plan ids | error |
+| Duplicate contract ids | error |
+| Duplicate `idempotencyKey` values in proposals | error |
+| `externalWrite` not false in proposals, plans, contracts, or receipts | error |
+| Execution plans referencing missing proposals | error |
+| Execution contracts referencing missing plans | error |
+| Decision receipts referencing missing proposals | error |
+| Transition receipts referencing unresolved proposals | warning |
+| `notification_prefs.json` shape mismatch | warning |
+
+Example output (passing):
+
+```
+WorldLoops state:check
+======================
+
+Files checked: 6
+Issues:        0
+Warnings:      0
+
+Status: PASSED
+externalWrite: false
+```
+
+Example `--json` output:
+
+```json
+{
+  "ok": true,
+  "status": "passed",
+  "summary": {
+    "filesChecked": 6,
+    "issues": 0,
+    "warnings": 0
+  },
+  "issues": [],
+  "safety": { "externalWrite": false }
+}
+```
+
+### receipts:verify
+
+Focused integrity check for receipt files only:
+
+```bash
+npm run receipts:verify
+npm run receipts:verify -- --json
+```
+
+Checks `transition_receipts.json` and `proposal_decision_receipts.json` for:
+
+- malformed receipt files
+- duplicate receipt ids
+- `externalWrite` invariant violations
+- invalid `boundaryCrossed` values
+- missing referenced proposal ids when proposals file is present
+
+### Diagnostic only
+
+`state:check` and `receipts:verify` are read-only. They do not modify `.worldloops` files. No repair is performed in v1.4.0.
+
+Both commands exit with code `0` if no errors are found (warnings are allowed) and code `1` if any error-level issues are found.
 
 ---
 
@@ -859,6 +953,49 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.4.0 — World State Integrity Layer
+
+> **Tooling release** — diagnostic only, no external writes, no repair.
+
+### Core message
+
+The problem is not only many agents. It is many writes against the same world.
+
+### What's new
+
+- **`state:check` CLI** — inspect all local `.worldloops` state files for malformed JSON, shape mismatches, duplicate ids, duplicate `idempotencyKey` values, `externalWrite` violations, and broken cross-references between plans, contracts, proposals, and receipts
+- **`receipts:verify` CLI** — focused receipt-file integrity check covering `transition_receipts.json` and `proposal_decision_receipts.json`; reports duplicate ids, `externalWrite` violations, invalid `boundaryCrossed` values, and missing proposal references
+- **`src/state/checkWorldState.ts`** — core integrity checker module; exports `checkWorldState()` and `checkReceipts()` for programmatic use
+- **`--json` flag** — structured JSON output for both commands with `ok`, `status`, `summary`, `issues`, and `safety.externalWrite: false`
+- **`test:state-integrity`** — new test suite covering: empty state, valid state, malformed JSON, duplicate ids, duplicate idempotency keys, `externalWrite` violations, missing proposal/plan references, and CLI exit codes
+- **`test:receipts-verify`** — new test suite covering: valid receipts, malformed files, duplicate ids, `externalWrite` violations, invalid `boundaryCrossed`, and missing proposal references
+- **Both tests included in `smoke`** — all integrity tests run together in one command
+- **README** — "World State Integrity Layer" section with command reference, checks table, and example output
+
+### Validated flow for v1.4.0
+
+```bash
+npm run state:check
+npm run state:check -- --json
+npm run receipts:verify
+npm run receipts:verify -- --json
+npm run test:state-integrity
+npm run test:receipts-verify
+npm run smoke
+```
+
+### Constraints
+
+- No external writes
+- No repair or modification of `.worldloops` files
+- No background daemons or cron
+- `externalWrite: false` preserved everywhere
+- Both commands are read-only
+- Existing v1.3.0 adapter:test behavior unchanged
+- All existing smoke tests pass
 
 ---
 
@@ -1597,7 +1734,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.3.0`
+- Latest release: `v1.4.0`
 
 ---
 

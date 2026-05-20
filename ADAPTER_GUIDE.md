@@ -479,6 +479,19 @@ Returns:
 
 ---
 
+## Inspecting Adapter-Generated State
+
+Loops and proposals generated from adapter signals are stored in the same local `.worldloops` state files as all other WorldLoops state. You can inspect them with `state:check` and `receipts:verify`:
+
+```bash
+npm run state:check
+npm run receipts:verify
+```
+
+`state:check` will detect any malformed JSON, duplicate ids, `externalWrite` violations, or broken cross-references in loops and proposals created by adapter-driven reconciliation. This applies equally to single-agent and multi-agent workflows where multiple adapters may be writing to the same world.
+
+---
+
 ## Smoke Tests
 
 The test suite verifies adapter validation behavior:
