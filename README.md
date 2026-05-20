@@ -41,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.1.2` |
+| Latest release | `v1.2.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -508,6 +508,51 @@ Adapter signals preserve `externalWrite: false` throughout. The `externalWrite: 
 
 ---
 
+## Submit a Community Adapter
+
+If your tool can read a signal, it can join the WorldLoops runtime.
+
+A community adapter is a validated `AdapterSignal` fixture that shows how your connector maps into the WorldLoops input contract. No code changes required. No connector is added. No external writes occur.
+
+### Adapter status labels
+
+| Label | Meaning |
+|---|---|
+| `core` | Shipped with WorldLoops. Maintained by the WorldLoops team. |
+| `community` | Submitted by an external developer. Maintained by the submitter. |
+| `experimental` | Submitted for preview or feedback. Not yet validated for production use. |
+
+### Included community fixtures
+
+Community fixtures live in `examples/adapters/community/`:
+
+| File | source | sourceType |
+|---|---|---|
+| `community/linear-issue.example.json` | `linear` | `issue` |
+| `community/notion-task.example.json` | `notion` | `task` |
+
+### How to submit
+
+1. Create your fixture file in `examples/adapters/community/<source>-<sourceType>.example.json`
+2. Set `externalWrite: false`, include all five required fields, and set `metadata.adapterStatus` to `"community"`
+3. Validate it:
+
+```bash
+npm run adapter:validate -- examples/adapters/community/your-source-type.example.json
+```
+
+4. Run the community test suite:
+
+```bash
+npm run test:adapter-community
+```
+
+5. Open a pull request using the adapter submission template (`.github/PULL_REQUEST_TEMPLATE/adapter_submission.md`)
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full submission checklist and [ADAPTER_GUIDE.md](./ADAPTER_GUIDE.md) for fixture naming conventions, payload mapping examples, and the validation test template.
+
+---
+
 ## What Is an Open Loop?
 
 An open loop is a work signal that implies unfinished responsibility. It is not just a task. It is a state that has not been resolved.
@@ -766,6 +811,48 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.2.0 — Community Adapter Submission
+
+> **Community / documentation release** — no runtime behavior changes.
+
+This release makes it easy for external developers to submit WorldLoops-compatible adapter fixtures safely.
+
+### Core message
+
+If your tool can read a signal, it can join the WorldLoops runtime.
+
+### What's new
+
+- **`CONTRIBUTING.md`** — adapter submission guide with full checklist, fixture naming convention, step-by-step submission flow, and PR template instructions
+- **`examples/adapters/community/`** — new directory for community-submitted adapter fixtures
+- **Community fixtures** — two example fixtures showing how external connectors map into the AdapterSignal contract:
+  - `community/linear-issue.example.json` — blocked Linear issue with priority metadata
+  - `community/notion-task.example.json` — stalled Notion task with due date metadata
+- **`.github/PULL_REQUEST_TEMPLATE/adapter_submission.md`** — PR template for community adapter submissions with validation checklist
+- **Adapter status labels** — three labels for categorizing adapters: `core`, `community`, `experimental`; `AdapterStatus` TypeScript type exported from `src/types/adapterSignal.ts`
+- **`test:adapter-community`** — new smoke test that auto-discovers and validates every `.example.json` file in `examples/adapters/community/`
+- **ADAPTER_GUIDE.md** — updated with community adapter section, fixture naming convention, validation test template, and status labels reference
+- **README** — "Submit a Community Adapter" section with submission steps and status labels table
+
+### Validated flow for community adapters
+
+```bash
+npm run adapter:validate -- examples/adapters/community/linear-issue.example.json
+npm run test:adapter-community
+```
+
+### Constraints
+
+- No new connectors
+- No new execution behavior
+- No external writes
+- `externalWrite: false` preserved
+- Community adapters are examples and validation fixtures only
+- Existing v1.1.x adapter flow unchanged
+- All existing smoke tests pass
 
 ---
 
@@ -1418,7 +1505,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.1.2`
+- Latest release: `v1.2.0`
 
 ---
 

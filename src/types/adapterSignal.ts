@@ -12,3 +12,6 @@ export interface AdapterSignal {
 export type AdapterSignalValidationResult =
   | { ok: true; signal: AdapterSignal }
   | { ok: false; errors: string[] };
+
+/** Categorizes whether an adapter is maintained by WorldLoops or the community. */
+export type AdapterStatus = 'core' | 'community' | 'experimental';

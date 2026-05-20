@@ -319,6 +319,97 @@ When WorldLoops accepts a valid `AdapterSignal`, it bridges it into the same int
 
 ---
 
+## Adapter Status Labels
+
+WorldLoops uses three adapter status labels to categorize fixtures and connectors:
+
+| Label | Meaning |
+|---|---|
+| `core` | Shipped with WorldLoops. Maintained by the WorldLoops team. |
+| `community` | Submitted by an external developer. Maintained by the submitter. |
+| `experimental` | Submitted for preview or feedback. Not yet validated for production use. |
+
+The label is not a required field in the `AdapterSignal` contract. For community fixtures, include it in the `metadata` field:
+
+```json
+{
+  "metadata": {
+    "adapterStatus": "community"
+  }
+}
+```
+
+The `AdapterStatus` TypeScript type is exported from `src/types/adapterSignal.ts` for tooling use.
+
+---
+
+## Community Adapters
+
+Community adapters are `AdapterSignal` fixtures submitted by external developers. They live in `examples/adapters/community/` and must pass `adapter:validate` before submission.
+
+Community adapters are **examples and validation fixtures only**. They do not add connectors, external writes, or runtime behavior.
+
+### Included community fixtures
+
+| File | source | sourceType | Notes |
+|---|---|---|---|
+| `community/linear-issue.example.json` | `linear` | `issue` | Blocked issue with priority metadata |
+| `community/notion-task.example.json` | `notion` | `task` | Stalled task with due date metadata |
+
+To validate all community examples:
+
+```bash
+npm run adapter:validate -- examples/adapters/community/linear-issue.example.json
+npm run adapter:validate -- examples/adapters/community/notion-task.example.json
+```
+
+### Fixture naming convention
+
+Community fixtures follow this naming pattern:
+
+```
+examples/adapters/community/<source>-<sourceType>.example.json
+```
+
+Rules:
+- Lowercase, hyphen-separated
+- `.example.json` suffix
+- One file per source+sourceType combination
+
+### Validation test template
+
+Copy this template to add a new community adapter test:
+
+```javascript
+const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
+const { validateAdapterSignal } = require('../dist/adapter/validateAdapterSignal');
+
+const fixture = JSON.parse(
+  fs.readFileSync(
+    path.resolve(__dirname, '../examples/adapters/community/your-source-type.example.json'),
+    'utf8'
+  )
+);
+
+const result = validateAdapterSignal(fixture);
+assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+assert.strictEqual(result.signal.externalWrite, false);
+assert.strictEqual(result.signal.source, 'your-source');
+assert.strictEqual(result.signal.sourceType, 'your-type');
+
+console.log('your-source adapter test passed');
+```
+
+The existing `tests/adapterCommunity.test.cjs` automatically discovers and validates every `.example.json` file in `examples/adapters/community/` — no additional test file is required for new community fixtures.
+
+### How to submit a community adapter
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full submission guide and PR checklist.
+
+---
+
 ## Smoke Tests
 
 The test suite verifies adapter validation behavior:
@@ -327,6 +418,7 @@ The test suite verifies adapter validation behavior:
 npm run test:adapter-signal          # core validator and bridge logic
 npm run test:adapter-signal-proposal # proposal persistence and idempotency
 npm run test:adapter-signal-invalid  # invalid example fixtures are correctly rejected
+npm run test:adapter-community       # all community adapter fixtures pass adapter:validate
 ```
 
 To run the full suite:
