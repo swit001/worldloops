@@ -41,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.1.1` |
+| Latest release | `v1.1.2` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -404,6 +404,8 @@ Bring your own connector. WorldLoops provides the contract.
 
 WorldLoops does not need direct access to Gmail, Slack, GitHub, Calendar, Linear, Notion, or internal systems. If an OpenClaw skill, agent, connector, or internal tool can read a signal, it can pass that signal into WorldLoops using the AdapterSignal contract. WorldLoops then turns valid signals into governed open loops while preserving `externalWrite: false`.
 
+See [ADAPTER_GUIDE.md](./ADAPTER_GUIDE.md) for the full guide, including payload mapping examples, invalid signal examples, idempotency behavior, and the internal bridge.
+
 ### The AdapterSignal contract
 
 An `AdapterSignal` is a simple JSON object with five required fields:
@@ -456,6 +458,7 @@ npm run adapter:validate -- examples/adapters/slack-message.json
 npm run brief:reconcile -- --adapter-signal examples/adapters/slack-message.json
 npm run loop:list
 npm run proposal:list
+npm run proposal:show -- <proposalId>
 ```
 
 The `--adapter-signal` flag validates the signal before reconciliation. If validation fails, reconciliation is aborted with clear errors. If validation passes, the signal is bridged into the existing WorldLoops reconciliation pipeline — the same flow used by all other sources.
@@ -466,6 +469,8 @@ When reconciliation surfaces proposal candidates, they are persisted to the loca
 
 Example fixtures are included in `examples/adapters/`:
 
+**Valid examples** — pass `adapter:validate`:
+
 | File | source | sourceType |
 |---|---|---|
 | `slack-message.json` | `slack` | `message` |
@@ -475,6 +480,16 @@ Example fixtures are included in `examples/adapters/`:
 | `generic-signal.json` | `linear` | `issue` |
 
 The `generic-signal.json` fixture demonstrates that `source` is open-ended — any connector, internal tool, or agent that can read a signal can adapt it. Sources not in the `slack | gmail | calendar | github | manual` set are bridged to `manual` inside WorldLoops.
+
+**Invalid examples** — fail `adapter:validate` with structured errors:
+
+| File | Error |
+|---|---|
+| `invalid-external-write.json` | `externalWrite` must be `false` |
+| `invalid-missing-required-field.json` | `observedAt` is required |
+| `invalid-date.json` | `observedAt` must be an ISO 8601 timestamp |
+
+Each invalid example exits with a non-zero code and returns a structured JSON error response. See [ADAPTER_GUIDE.md](./ADAPTER_GUIDE.md) for details.
 
 ### The adapter bridge
 
@@ -751,6 +766,43 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.1.2 — Adapter Docs & Examples Polish
+
+> **Documentation / examples release** — no runtime behavior changes.
+
+This release makes the Adapter SDK easy to copy, test, and extend.
+
+### What's new
+
+- **Invalid adapter examples** — three new fixtures in `examples/adapters/` that demonstrate validator rejection:
+  - `invalid-external-write.json` — `externalWrite: true` is rejected
+  - `invalid-missing-required-field.json` — missing `observedAt` is rejected
+  - `invalid-date.json` — human-readable date string is rejected
+- **ADAPTER_GUIDE.md** — dedicated adapter guide with: minimal field reference, valid and invalid examples, payload mapping from Slack/Gmail/Calendar/GitHub/Linear, `externalWrite: false` safety explanation, idempotency behavior, and the full copy-paste flow from validation to proposal inspection
+- **README** — updated "Bring Your Own Connector" section with link to ADAPTER_GUIDE.md, invalid examples table, and `proposal:show` in the full validated flow
+- **`test:adapter-signal-invalid`** — new smoke test that reads each invalid example file and asserts it fails `adapter:validate` with a structured error
+
+### Full validated flow
+
+```bash
+npm run adapter:validate -- examples/adapters/slack-message.json
+npm run brief:reconcile -- --adapter-signal examples/adapters/slack-message.json
+npm run loop:list
+npm run proposal:list
+npm run proposal:show -- <proposalId>
+```
+
+### Constraints
+
+- No new connectors
+- No new execution behavior
+- No external writes
+- `externalWrite: false` preserved
+- Existing v1.1.0 adapter flow unchanged
+- All existing smoke tests pass
 
 ---
 
@@ -1366,7 +1418,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.1.1`
+- Latest release: `v1.1.2`
 
 ---
 
