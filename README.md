@@ -41,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.2.0` |
+| Latest release | `v1.3.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -465,6 +465,48 @@ The `--adapter-signal` flag validates the signal before reconciliation. If valid
 
 When reconciliation surfaces proposal candidates, they are persisted to the local proposal store (`.worldloops/proposals.json`) alongside any open loops. Running the same adapter signal again will not create duplicate proposals — the pipeline checks `idempotencyKey` before writing.
 
+### Test an adapter
+
+Before submitting a community adapter, run the compatibility test to confirm it passes the full local pipeline:
+
+```bash
+npm run adapter:test -- examples/adapters/slack-message.json
+npm run adapter:test -- examples/adapters/community/linear-issue.example.json
+```
+
+Example output:
+
+```
+Adapter compatibility report
+
+file: examples/adapters/slack-message.json
+validate: passed
+reconcile: passed
+openLoopPersisted: true
+proposalPersisted: true
+idempotency: passed
+externalWrite: false
+```
+
+`adapter:test` checks six criteria:
+
+| Check | Meaning |
+|---|---|
+| `validate` | AdapterSignal passes schema and contract validation |
+| `reconcile` | Signal produces at least one open loop and proposal locally |
+| `openLoopPersisted` | Open loop was written to local state |
+| `proposalPersisted` | Proposal was written to local state |
+| `idempotency` | Running the same signal twice does not create duplicates |
+| `externalWrite` | Always `false` — no external writes occur |
+
+For structured output:
+
+```bash
+npm run adapter:test -- examples/adapters/slack-message.json --json
+```
+
+`adapter:test` is local-only. It runs in an isolated temporary directory and does not write to your `.worldloops/` project state. `externalWrite: false` is preserved throughout.
+
 ### Adapter signal fixtures
 
 Example fixtures are included in `examples/adapters/`:
@@ -541,13 +583,19 @@ Community fixtures live in `examples/adapters/community/`:
 npm run adapter:validate -- examples/adapters/community/your-source-type.example.json
 ```
 
-4. Run the community test suite:
+4. Run the compatibility test:
+
+```bash
+npm run adapter:test -- examples/adapters/community/your-source-type.example.json
+```
+
+5. Run the community test suite:
 
 ```bash
 npm run test:adapter-community
 ```
 
-5. Open a pull request using the adapter submission template (`.github/PULL_REQUEST_TEMPLATE/adapter_submission.md`)
+6. Open a pull request using the adapter submission template (`.github/PULL_REQUEST_TEMPLATE/adapter_submission.md`)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full submission checklist and [ADAPTER_GUIDE.md](./ADAPTER_GUIDE.md) for fixture naming conventions, payload mapping examples, and the validation test template.
 
@@ -811,6 +859,50 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.3.0 — Adapter Test Harness
+
+> **Tooling release** — no external writes, no new connectors.
+
+This release makes adapter compatibility testable with one command.
+
+### Core message
+
+Test your adapter before submitting it.
+
+### What's new
+
+- **`adapter:test` CLI** — validate an `AdapterSignal` fixture and run it through the safe local reconciliation flow, then report whether it passed all six compatibility criteria
+- **Six-point compatibility report** — `validate`, `reconcile`, `openLoopPersisted`, `proposalPersisted`, `idempotency`, `externalWrite`
+- **`--json` flag** — structured JSON output for programmatic use
+- **Idempotency check** — runs the same signal twice and confirms no duplicate open loops or proposals are created
+- **Isolated execution** — `adapter:test` runs in a temporary directory; does not write to your `.worldloops/` project state
+- **`test:adapter-test`** — new test suite covering: valid core adapter, valid community adapter, invalid `externalWrite`, invalid date, `--json` output, and idempotency
+- **`test:adapter-test` included in `smoke`** — all adapter tests run together in one command
+- **README** — "Test an Adapter" section with example output and compatibility criteria table
+- **ADAPTER_GUIDE.md** — "Adapter Compatibility Report" section with pass/fail criteria for community submissions
+
+### Validated flow for v1.3.0
+
+```bash
+npm run adapter:test -- examples/adapters/slack-message.json
+npm run adapter:test -- examples/adapters/community/linear-issue.example.json
+npm run adapter:test -- examples/adapters/invalid-external-write.json
+npm run adapter:test -- examples/adapters/slack-message.json --json
+npm run test:adapter-test
+npm run smoke
+```
+
+### Constraints
+
+- No new connectors
+- No external writes
+- `externalWrite: false` preserved everywhere
+- `adapter:test` is local-only — isolated temporary directory, never touches `.worldloops/`
+- Existing v1.1.x and v1.2.0 flows unchanged
+- All existing smoke tests pass
 
 ---
 
@@ -1505,7 +1597,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.2.0`
+- Latest release: `v1.3.0`
 
 ---
 

@@ -410,6 +410,75 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full submission guide and PR ch
 
 ---
 
+## Adapter Compatibility Report
+
+Before submitting a community adapter, run `adapter:test` to confirm your fixture passes the full local pipeline:
+
+```bash
+npm run adapter:test -- examples/adapters/community/your-source-type.example.json
+```
+
+Example output for a passing adapter:
+
+```
+Adapter compatibility report
+
+file: examples/adapters/community/your-source-type.example.json
+validate: passed
+reconcile: passed
+openLoopPersisted: true
+proposalPersisted: true
+idempotency: passed
+externalWrite: false
+```
+
+### Pass/fail criteria
+
+| Check | Pass | Fail |
+|---|---|---|
+| `validate` | AdapterSignal passes all five required fields and contract rules | Missing required field, `externalWrite: true`, or invalid `observedAt` format |
+| `reconcile` | Signal produces an open loop and a proposal locally | No open loop or proposal produced |
+| `openLoopPersisted` | Open loop was written to local state | Reconciliation did not produce a loop |
+| `proposalPersisted` | Proposal was written to local state | Reconciliation did not produce a proposal |
+| `idempotency` | Running the same signal twice creates zero duplicate loops or proposals | Second run creates additional entries for the same key |
+| `externalWrite` | Always `false` | Never fails — this is a guarantee, not a check |
+
+If any check fails, the command exits with a non-zero code and shows which check failed and why.
+
+### JSON output
+
+For programmatic use or CI integration:
+
+```bash
+npm run adapter:test -- examples/adapters/community/your-source-type.example.json --json
+```
+
+Returns:
+
+```json
+{
+  "ok": true,
+  "report": {
+    "file": "...",
+    "validate": "passed",
+    "reconcile": "passed",
+    "openLoopPersisted": true,
+    "proposalPersisted": true,
+    "idempotency": "passed",
+    "externalWrite": false
+  },
+  "safety": { "externalWrite": false }
+}
+```
+
+`ok: false` is returned when any check fails, allowing CI pipelines to gate on this field.
+
+### Safety
+
+`adapter:test` is local-only. It runs in an isolated temporary directory and never writes to your `.worldloops/` project state. `externalWrite: false` is preserved throughout.
+
+---
+
 ## Smoke Tests
 
 The test suite verifies adapter validation behavior:
@@ -419,6 +488,7 @@ npm run test:adapter-signal          # core validator and bridge logic
 npm run test:adapter-signal-proposal # proposal persistence and idempotency
 npm run test:adapter-signal-invalid  # invalid example fixtures are correctly rejected
 npm run test:adapter-community       # all community adapter fixtures pass adapter:validate
+npm run test:adapter-test            # adapter:test compatibility report checks
 ```
 
 To run the full suite:
