@@ -1,38 +1,36 @@
 # WorldLoops
 
-## Agent Execution Guard — by WorldLoops
+AI can answer your questions.
 
-<p align="center">
-  <img src="./docs/assets/worldloops-crayfish-world.png" alt="WorldLoops crayfish world: Observe, Normalize, Propose, Adjudicate, Commit, Learn" width="100%" />
-</p>
+But what about the things it still needs to remember, track, review, or safely finish?
 
-Agents don't need more tools.\
-They need a world to act in.
+WorldLoops finds unfinished responsibilities across email, calendar, chat, documents, and work tools — then turns them into open loops with clear states.
 
-Because uncontrolled agents are too risky, and supervised agents make humans the bottleneck.
+Nothing is sent.\
+Nothing is changed.\
+Nothing is executed without approval.
 
-WorldLoops is an executable world layer for OpenClaw that turns scattered work signals into governed state transitions.
+## Try the 5-minute demo
 
-It can inspect signals from tools like Gmail, Calendar, and Slack, detect unresolved open loops, propose what should happen next, and keep execution safe with `externalWrite: false`.
+```bash
+clawhub install worldloops --force
+cd ~/.openclaw/workspace/skills/worldloops
+npm run wow
+npm run doctor
+```
 
-WorldLoops is not a chatbot.\
-It is not a todo app.\
-It is not another trigger-based automation.
+Expected result:
 
-It is a small world model for agentic work execution.
-
-From scattered signals to governed execution.
+```
+6 open loops found
+0 external writes
+Everything is local and reviewable
+```
 
 ---
 
-Most agents answer from a snapshot.\
-WorldLoops manages open loops as state.
-
-Most assistants wait for the user to ask, "What did I miss?"\
-WorldLoops is designed to inspect work signals, identify unresolved responsibilities, and keep track of which loops are still open and what state they are in.
-
-From snapshot answers to stateful open-loop management.\
-Not just "What did I miss?" — but "What loops are still open, and what state are they in?"
+For developers, WorldLoops is a local, safe-by-default world state layer for agent execution.\
+Signals become loops. Loops become proposals. Proposals become decisions. Decisions become plans. Plans become contracts. Execution remains governed.
 
 ---
 
@@ -41,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.5.0` |
+| Latest release | `v1.6.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |

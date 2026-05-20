@@ -1,11 +1,15 @@
 {
   "name": "worldloops",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Safe-by-default execution governance for AI agents. Turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
+    "wow": "node dist/scripts/demoWow.js",
+    "demo:wow": "node dist/scripts/demoWow.js",
+    "doctor": "node dist/scripts/doctor.js",
+    "wow:developer": "node dist/scripts/wowDeveloper.js",
     "brief:reconcile": "node dist/scripts/briefReconcile.js",
     "brief:daily": "node dist/scripts/briefDaily.js",
     "discovery:run": "node dist/scripts/discoveryRun.js",
