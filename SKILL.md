@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.8.0"
+version: "0.9.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -124,6 +124,66 @@ Useful local commands:
     npm run loop:reconcile
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
+## Execution Plan Preview
+
+New in v0.9.0 — approved proposals can be converted into local execution plan previews.
+
+**Core principles:**
+
+- Proposal ≠ Execution
+- Approval ≠ Execution
+- Plan ≠ Execution
+
+An approved proposal can become a plan, but the plan does not execute anything. It produces a local, inspectable, auditable preview of what execution would require.
+
+### Plan commands
+
+    npm run plan:create -- <proposal-id>          # create execution plan from approved proposal
+    npm run plan:create -- <proposal-id> --json   # JSON output
+    npm run plan:list                             # list all execution plans (human-readable)
+    npm run plan:list -- --json                   # structured JSON list
+    npm run plan:show -- <plan-id>                # show plan detail (human-readable)
+    npm run plan:show -- <plan-id> --json         # structured JSON detail
+    npm run plan:review                           # execution plan review summary
+    npm run plan:review -- --json                 # structured JSON review
+
+### Plan statuses
+
+- `planned` — local preview generated, no execution has occurred
+
+### Execution plan steps
+
+Steps are generated generically from the proposal's templateId and category. All steps carry `externalWrite: false`.
+
+Minimum steps:
+1. Review approved proposal (`review`)
+2. Check capability boundary (`boundary_check`)
+3. Prepare dry-run preview (`prepare`)
+4. Mark receipt-ready (`receipt_ready`)
+
+High-risk and critical-risk proposals include an additional `dry_run` step.
+
+### Execution plan storage
+
+Plans are stored locally under `.worldloops/execution_plans.json`. `WORLDLOOPS_DIR` overrides the storage root. No external writes.
+
+### Safety boundary
+
+`externalWrite: false` preserved. No external writes. All state is local. Plan ≠ Execution.
+
+### Intentionally deferred
+
+- Actual execution
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific execution plans
+- `loop:update`
+
+---
 
 ## Proposal Review Decisions
 

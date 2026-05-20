@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.8.0` |
+| Latest release | `v0.9.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,112 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v0.9.0 — Execution Plan Preview
+
+WorldLoops now turns approved local proposals into local execution plans.
+
+The core principles remain:
+
+**Proposal ≠ Execution**\
+**Approval ≠ Execution**\
+**Plan ≠ Execution**
+
+An approved proposal can become a plan, but the plan does not execute anything. It only creates a local, inspectable, auditable preview of what execution would require.
+
+### Commands
+
+```bash
+npm run plan:create -- <proposal-id>
+npm run plan:create -- <proposal-id> --json
+npm run plan:list
+npm run plan:list -- --json
+npm run plan:show -- <plan-id>
+npm run plan:show -- <plan-id> --json
+npm run plan:review
+npm run plan:review -- --json
+```
+
+### plan:create
+
+Converts an approved proposal into a local execution plan preview. Only approved proposals can be converted. Proposed, rejected, snoozed, and escalated proposals are refused with a structured error.
+
+Returns `PROPOSAL_NOT_FOUND` if the proposal id does not exist.
+Returns `PROPOSAL_NOT_APPROVED` if the proposal status is not `approved`.
+
+Generated steps are derived generically from the proposal's `templateId` and `category`. Minimum steps:
+
+1. Review approved proposal (`review`)
+2. Check capability boundary (`boundary_check`)
+3. Prepare dry-run preview (`prepare`)
+4. Mark receipt-ready (`receipt_ready`)
+
+High-risk and critical-risk proposals receive an additional `dry_run` validation step before `receipt_ready`.
+
+All steps carry `externalWrite: false`.
+
+### plan:list
+
+Lists all local execution plans. Human-readable by default, JSON with `--json`.
+
+Empty state outputs: `No execution plans found.`
+
+### plan:show
+
+Shows full detail for a single execution plan including all steps. Human-readable by default, JSON with `--json`.
+
+Returns `EXECUTION_PLAN_NOT_FOUND` with `availablePlanIds` if not found.
+
+### plan:review
+
+Summarizes all local execution plans: total count, count by status, high-risk plans, and suggested focus. Human-readable by default, JSON with `--json`.
+
+Empty state JSON:
+
+```json
+{
+  "ok": true,
+  "source": "worldloops.local",
+  "review": {
+    "total": 0,
+    "byStatus": { "planned": 0 },
+    "highRiskPlans": [],
+    "suggestedFocus": null
+  },
+  "safety": { "externalWrite": false }
+}
+```
+
+### Execution plan storage
+
+Execution plans are stored locally under:
+
+    .worldloops/execution_plans.json
+
+`WORLDLOOPS_DIR` overrides the storage root. No external writes.
+
+### Safety boundary
+
+- `externalWrite: false` preserved
+- No external writes
+- Plans do not execute proposal contents
+- All state is local
+- Plan ≠ Execution
+
+This release prepares WorldLoops for a future safe execution contract without crossing into external writes.
+
+### Intentionally deferred
+
+- Actual execution
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific execution plans
+- `loop:update`
+
+---
+
 ## v0.8.0 — Proposal Review Decisions
 
 WorldLoops now turns local proposals into reviewable decisions.
@@ -1026,7 +1132,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.8.0`
+- Latest release: `v0.9.0`
 
 ---
 
