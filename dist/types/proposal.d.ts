@@ -14,4 +14,5 @@ export interface Proposal {
     createdAt: string;
     updatedAt: string;
     source: 'worldloops.local';
+    idempotencyKey?: string;
 }

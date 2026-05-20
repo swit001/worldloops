@@ -7,8 +7,11 @@ import { gmailWebhookToSignals } from '../adapters/openclawGmail';
 import { calendarEventsToSignals } from '../adapters/openclawCalendar';
 import { gogGmailToSignals, gogCalendarToSignals } from '../adapters/gogSnapshot';
 import { messagesToSignals } from '../adapters/openclawMessages';
+import { validateAdapterSignal } from '../adapter/validateAdapterSignal';
+import { toWorldLoopsSignal } from '../adapter/toWorldLoopsSignal';
 import { buildTransitionReceipt, saveTransitionReceipt } from '../storage/transitionReceipts';
 import { buildOpenLoopStateFromProposal, loadOpenLoopStates, saveOpenLoopState } from '../storage/openLoopStates';
+import { buildProposalFromCandidate, findProposalByIdempotencyKey, saveProposal } from '../storage/proposals';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
 
 function getFlagValue(flag: string): string | undefined {
@@ -33,6 +36,7 @@ async function main(): Promise<void> {
   const gogGmailInput = getFlagValue('--gog-gmail');
   const gogCalendarInput = getFlagValue('--gog-calendar');
   const messageReadInput = getFlagValue('--message-read');
+  const adapterSignalInput = getFlagValue('--adapter-signal');
 
   const signals: Signal[] = [];
   const sources: string[] = [];
@@ -68,13 +72,32 @@ async function main(): Promise<void> {
     sources.push('openclaw.message_read');
   }
 
+  if (adapterSignalInput) {
+    const raw = loadJson<unknown>(adapterSignalInput);
+    const validation = validateAdapterSignal(raw);
+    if (!validation.ok) {
+      printJson({
+        ok: false,
+        error: {
+          code: 'INVALID_ADAPTER_SIGNAL',
+          message: 'Adapter signal validation failed. Fix the errors below before reconciling.',
+          errors: validation.errors,
+        },
+        safety: { externalWrite: false },
+      });
+      process.exit(1);
+    }
+    signals.push(toWorldLoopsSignal(validation.signal));
+    sources.push('adapter.signal');
+  }
+
   if (signals.length === 0) {
     printJson({
       ok: false,
       error: {
         code: 'MISSING_SIGNALS',
         message:
-          'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, or --message-read.',
+          'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.',
       },
       safety: {
         externalWrite: false,
@@ -92,6 +115,8 @@ async function main(): Promise<void> {
   let receiptsGenerated = 0;
   let openLoopsPersisted = 0;
   let openLoopsAlreadyTracked = 0;
+  let proposalsPersisted = 0;
+  let proposalsAlreadyTracked = 0;
 
   if (result.ok && candidates.length > 0) {
     const existingOpenLoops = loadOpenLoopStates();
@@ -113,6 +138,14 @@ async function main(): Promise<void> {
         existingCanonicalKeys.add(candidate.idempotencyKey);
         openLoopsPersisted++;
       }
+
+      if (findProposalByIdempotencyKey(candidate.idempotencyKey)) {
+        proposalsAlreadyTracked++;
+      } else {
+        const proposal = buildProposalFromCandidate(candidate);
+        saveProposal(proposal);
+        proposalsPersisted++;
+      }
     }
   }
 
@@ -127,6 +160,8 @@ async function main(): Promise<void> {
       receiptsGenerated,
       openLoopsPersisted,
       openLoopsAlreadyTracked,
+      proposalsPersisted,
+      proposalsAlreadyTracked,
     },
     capabilityBoundary: getCapabilityBoundary(),
     safety: {

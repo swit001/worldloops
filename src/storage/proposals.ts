@@ -1,6 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as crypto from 'node:crypto';
+import type { ProposalCandidate } from '../types';
 import type { Proposal } from '../types/proposal';
+import type { ProposalTemplateId } from '../types/proposalTemplate';
+import { PROPOSAL_TEMPLATES } from '../data/proposalTemplates';
 
 function getWorldLoopsDir(): string {
   return process.env.WORLDLOOPS_DIR ?? path.join(process.cwd(), '.worldloops');
@@ -36,4 +40,35 @@ export function findProposalById(id: string): Proposal | null {
 
 export function listProposals(): Proposal[] {
   return loadProposals();
+}
+
+export function findProposalByIdempotencyKey(key: string): Proposal | null {
+  return loadProposals().find((p) => p.idempotencyKey === key) ?? null;
+}
+
+function candidateToTemplateId(candidate: ProposalCandidate): ProposalTemplateId {
+  if (candidate.severity === 'critical' || candidate.severity === 'high') return 'escalation';
+  return 'state-transition';
+}
+
+export function buildProposalFromCandidate(candidate: ProposalCandidate): Proposal {
+  const templateId = candidateToTemplateId(candidate);
+  const template = PROPOSAL_TEMPLATES.find((t) => t.id === templateId)!;
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    templateId: template.id,
+    title: candidate.actionHint || candidate.reason || candidate.entityType,
+    intent: candidate.reason,
+    category: template.category,
+    riskLevel: template.riskLevel,
+    requiredReview: true,
+    externalWrite: false,
+    checks: template.suggestedChecks,
+    status: 'proposed',
+    createdAt: now,
+    updatedAt: now,
+    source: 'worldloops.local',
+    idempotencyKey: candidate.idempotencyKey,
+  };
 }

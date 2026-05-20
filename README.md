@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.0.0` |
+| Latest release | `v1.1.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -396,6 +396,101 @@ If the loop ID is missing or not found, WorldLoops returns a safe JSON error and
 
 ---
 
+## Bring Your Own Connector
+
+Bring your own connector. WorldLoops provides the contract.
+
+WorldLoops does not need direct access to Gmail, Slack, GitHub, Calendar, Linear, Notion, or internal systems. If an OpenClaw skill, agent, connector, or internal tool can read a signal, it can pass that signal into WorldLoops using the AdapterSignal contract. WorldLoops then turns valid signals into governed open loops while preserving `externalWrite: false`.
+
+### The AdapterSignal contract
+
+An `AdapterSignal` is a simple JSON object with five required fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `source` | string | Source identifier (e.g. `slack`, `gmail`, `github`, `linear`, `notion`) |
+| `sourceType` | string | Signal type within source (e.g. `message`, `thread`, `event`, `pr`, `issue`) |
+| `externalWrite` | `false` | Must be `false` — WorldLoops does not accept signals that imply external writes |
+| `text` | string | The signal content WorldLoops will normalize into an open-loop candidate |
+| `observedAt` | string | ISO 8601 timestamp when the signal was observed (e.g. `2026-05-19T10:30:00.000Z`) |
+
+Optional fields: `url`, `summary`, `metadata`.
+
+### Validate an adapter signal
+
+```bash
+npm run adapter:validate -- examples/adapters/slack-message.json
+```
+
+Expected output for a valid signal:
+
+```
+Valid WorldLoops Adapter Signal
+source: slack
+sourceType: message
+externalWrite: false
+```
+
+If required fields are missing, `observedAt` is not a valid ISO 8601 timestamp, or `externalWrite` is not `false`, the command returns `ok: false` with structured validation errors and exits with a non-zero code.
+
+Example failure output:
+
+```json
+{
+  "ok": false,
+  "errors": [
+    "sourceType: required, must be a non-empty string",
+    "externalWrite: must be false — AdapterSignal does not permit external writes",
+    "observedAt: required, must be an ISO 8601 timestamp string"
+  ],
+  "safety": { "externalWrite": false }
+}
+```
+
+### Pass an adapter signal into the reconcile pipeline
+
+```bash
+npm run adapter:validate -- examples/adapters/slack-message.json
+npm run brief:reconcile -- --adapter-signal examples/adapters/slack-message.json
+npm run loop:list
+npm run proposal:list
+```
+
+The `--adapter-signal` flag validates the signal before reconciliation. If validation fails, reconciliation is aborted with clear errors. If validation passes, the signal is bridged into the existing WorldLoops reconciliation pipeline — the same flow used by all other sources.
+
+When reconciliation surfaces proposal candidates, they are persisted to the local proposal store (`.worldloops/proposals.json`) alongside any open loops. Running the same adapter signal again will not create duplicate proposals — the pipeline checks `idempotencyKey` before writing.
+
+### Adapter signal fixtures
+
+Example fixtures are included in `examples/adapters/`:
+
+| File | source | sourceType |
+|---|---|---|
+| `slack-message.json` | `slack` | `message` |
+| `gmail-thread.json` | `gmail` | `thread` |
+| `calendar-event.json` | `calendar` | `event` |
+| `github-pr.json` | `github` | `pr` |
+| `generic-signal.json` | `linear` | `issue` |
+
+The `generic-signal.json` fixture demonstrates that `source` is open-ended — any connector, internal tool, or agent that can read a signal can adapt it. Sources not in the `slack | gmail | calendar | github | manual` set are bridged to `manual` inside WorldLoops.
+
+### The adapter bridge
+
+WorldLoops maps `AdapterSignal` into the internal `Signal` type:
+
+- `source` → maps directly if it matches a known `SignalSource`, otherwise falls back to `manual`
+- `text` → maps to `text`
+- `observedAt` → maps to `createdAt`
+- `url` → maps to `url` (optional)
+
+No internal runtime model is created. `AdapterSignal` is a public input contract that bridges into the same pipeline used by all existing sources.
+
+### Safety
+
+Adapter signals preserve `externalWrite: false` throughout. The `externalWrite: false` field is required in the `AdapterSignal` contract itself — the validator rejects any signal where it is missing or set to any other value.
+
+---
+
 ## What Is an Open Loop?
 
 An open loop is a work signal that implies unfinished responsibility. It is not just a task. It is a state that has not been resolved.
@@ -654,6 +749,47 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.1.0 — Adapter SDK Foundation
+
+Bring your own connector. WorldLoops provides the contract.
+
+WorldLoops now allows external developers to bring their own connector outputs and pass them into the reconciliation pipeline using the `AdapterSignal` public input contract.
+
+### What's new
+
+- **`AdapterSignal` type** — public TypeScript type and JSON schema for adapter input signals
+- **`validateAdapterSignal(input)`** — local validation with structured error output; validates required fields, ISO 8601 timestamps, and `externalWrite: false`
+- **`toWorldLoopsSignal(AdapterSignal)`** — bridge from `AdapterSignal` into the existing internal `Signal` type; no parallel runtime model
+- **`adapter:validate` CLI** — validate any `AdapterSignal` JSON file before passing it into WorldLoops
+- **`--adapter-signal <path>` flag** — added to `brief:reconcile`; validates before reconciliation and aborts with clear errors if invalid
+- **Proposal persistence** — proposal candidates from adapter-signal reconciliation are written to the existing local proposal store (`.worldloops/proposals.json`); idempotent — re-running the same signal does not create duplicate proposals; inspectable with `proposal:list` and `proposal:show`
+- **Example fixtures** — `examples/adapters/` includes `slack-message.json`, `gmail-thread.json`, `calendar-event.json`, `github-pr.json`, and `generic-signal.json`
+
+### Commands
+
+```bash
+npm run adapter:validate -- examples/adapters/slack-message.json
+npm run brief:reconcile -- --adapter-signal examples/adapters/slack-message.json
+npm run loop:list
+npm run proposal:list
+```
+
+### Safety boundary
+
+- `externalWrite: false` required in the `AdapterSignal` contract
+- Validation rejects any signal missing `externalWrite: false` before it reaches the pipeline
+- No new connectors, external writes, or runtime side effects
+- `AdapterSignal` is a public input contract — it bridges into the existing pipeline, not a fork of it
+
+### Intentionally deferred
+
+- Connector libraries or SDK packages
+- Multi-signal adapter batches
+- Adapter registry
+- External writes
 
 ---
 
@@ -1201,7 +1337,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v1.0.0`
+- Latest release: `v1.1.0`
 
 ---
 

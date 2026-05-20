@@ -38,8 +38,12 @@ exports.loadProposals = loadProposals;
 exports.saveProposal = saveProposal;
 exports.findProposalById = findProposalById;
 exports.listProposals = listProposals;
+exports.findProposalByIdempotencyKey = findProposalByIdempotencyKey;
+exports.buildProposalFromCandidate = buildProposalFromCandidate;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
+const crypto = __importStar(require("node:crypto"));
+const proposalTemplates_1 = require("../data/proposalTemplates");
 function getWorldLoopsDir() {
     return process.env.WORLDLOOPS_DIR ?? path.join(process.cwd(), '.worldloops');
 }
@@ -69,5 +73,34 @@ function findProposalById(id) {
 }
 function listProposals() {
     return loadProposals();
+}
+function findProposalByIdempotencyKey(key) {
+    return loadProposals().find((p) => p.idempotencyKey === key) ?? null;
+}
+function candidateToTemplateId(candidate) {
+    if (candidate.severity === 'critical' || candidate.severity === 'high')
+        return 'escalation';
+    return 'state-transition';
+}
+function buildProposalFromCandidate(candidate) {
+    const templateId = candidateToTemplateId(candidate);
+    const template = proposalTemplates_1.PROPOSAL_TEMPLATES.find((t) => t.id === templateId);
+    const now = new Date().toISOString();
+    return {
+        id: crypto.randomUUID(),
+        templateId: template.id,
+        title: candidate.actionHint || candidate.reason || candidate.entityType,
+        intent: candidate.reason,
+        category: template.category,
+        riskLevel: template.riskLevel,
+        requiredReview: true,
+        externalWrite: false,
+        checks: template.suggestedChecks,
+        status: 'proposed',
+        createdAt: now,
+        updatedAt: now,
+        source: 'worldloops.local',
+        idempotencyKey: candidate.idempotencyKey,
+    };
 }
 //# sourceMappingURL=proposals.js.map
