@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.6.1 — Landing & README Simplification
+
+WorldLoops v1.6.1 simplifies the GitHub README and ClawHub landing page around the current 5-Minute Wow Experience.
+
+This release makes WorldLoops easier to understand for first-time users by focusing on:
+
+- what WorldLoops does
+- why open loops matter
+- how to try the demo
+- what makes it different from normal assistants
+- the safety boundary
+- current useful commands
+
+No runtime behavior changed.
+
+### Safety
+
+- No external writes
+- No connectors added
+- No command behavior changed
+- `externalWrite:false` posture preserved
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run smoke
+npm run wow
+npm run doctor
+npm run wow:developer
+npm run state:check
+npm run receipts:verify
+```
+
+---
+
 ## v1.6.0 — 5-Minute Wow Experience
 
 WorldLoops v1.6.0 introduces a first-run experience designed to make the value of open-loop management clear in under five minutes.

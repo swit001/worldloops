@@ -1,7 +1,7 @@
 {
   "name": "worldloops",
-  "version": "1.6.0",
-  "description": "Safe-by-default execution governance for AI agents. Turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving externalWrite:false.",
+  "version": "1.6.1",
+  "description": "Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
