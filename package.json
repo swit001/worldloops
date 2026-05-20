@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Safe-by-default execution governance for AI agents. Turns signals into loops, proposals, decisions, plans, and safe execution contracts while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,9 @@
     "adapter:test": "node dist/scripts/adapterTest.js",
     "state:check": "node dist/scripts/stateCheck.js",
     "receipts:verify": "node dist/scripts/receiptsVerify.js",
-    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy && npm run test:stuck-loops && npm run test:loop-show && npm run test:loop-list && npm run test:loop-summary && npm run test:loop-transition && npm run test:loop-review && npm run test:proposal-templates && npm run test:proposal-create && npm run test:proposal-list && npm run test:proposal-show && npm run test:proposal-decide && npm run test:proposal-review && npm run test:proposal-receipts && npm run test:plan-create && npm run test:plan-list && npm run test:plan-show && npm run test:plan-review && npm run test:contract-create && npm run test:contract-list && npm run test:contract-show && npm run test:contract-review && npm run test:adapter-signal && npm run test:adapter-signal-proposal && npm run test:adapter-signal-invalid && npm run test:adapter-community && npm run test:adapter-test && npm run test:state-integrity && npm run test:receipts-verify",
+    "state:repair": "node dist/scripts/stateRepair.js",
+    "state:repair:list": "node dist/scripts/stateRepairList.js",
+    "smoke": "npm run build && npm run test:thread-hints && npm run test:notifications && npm run test:receipts && npm run test:open-loops && npm run test:capabilities && npm run test:severity-policy && npm run test:stuck-loops && npm run test:loop-show && npm run test:loop-list && npm run test:loop-summary && npm run test:loop-transition && npm run test:loop-review && npm run test:proposal-templates && npm run test:proposal-create && npm run test:proposal-list && npm run test:proposal-show && npm run test:proposal-decide && npm run test:proposal-review && npm run test:proposal-receipts && npm run test:plan-create && npm run test:plan-list && npm run test:plan-show && npm run test:plan-review && npm run test:contract-create && npm run test:contract-list && npm run test:contract-show && npm run test:contract-review && npm run test:adapter-signal && npm run test:adapter-signal-proposal && npm run test:adapter-signal-invalid && npm run test:adapter-community && npm run test:adapter-test && npm run test:state-integrity && npm run test:receipts-verify && npm run test:state-repair",
     "smoke:public": "node scripts/smoke-reconcile.mjs",
     "smoke:reconcile": "node scripts/smoke-reconcile.mjs",
     "test:thread-hints": "node tests/threadHints.test.cjs",
@@ -75,7 +77,8 @@
     "test:adapter-community": "node tests/adapterCommunity.test.cjs",
     "test:adapter-test": "node tests/adapterTest.test.cjs",
     "test:state-integrity": "node tests/stateCheck.test.cjs",
-    "test:receipts-verify": "node tests/receiptsVerify.test.cjs"
+    "test:receipts-verify": "node tests/receiptsVerify.test.cjs",
+    "test:state-repair": "node tests/stateRepair.test.cjs"
   },
   "keywords": [
     "openclaw",

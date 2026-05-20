@@ -5,7 +5,11 @@ function printJson(value) {
     console.log(JSON.stringify(value, null, 2));
 }
 function severityLabel(severity) {
-    return severity === 'error' ? 'ERROR' : 'WARN ';
+    if (severity === 'error')
+        return 'ERROR';
+    if (severity === 'info')
+        return 'INFO ';
+    return 'WARN ';
 }
 function printHuman(result) {
     console.log('WorldLoops receipts:verify');
@@ -14,6 +18,7 @@ function printHuman(result) {
     console.log(`Files checked: ${result.summary.filesChecked}`);
     console.log(`Issues:        ${result.summary.issues}`);
     console.log(`Warnings:      ${result.summary.warnings}`);
+    console.log(`Repaired:      ${result.summary.repaired}`);
     if (result.issues.length > 0) {
         console.log('');
         console.log('Issues:');

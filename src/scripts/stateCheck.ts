@@ -6,7 +6,9 @@ function printJson(value: unknown): void {
 }
 
 function severityLabel(severity: string): string {
-  return severity === 'error' ? 'ERROR' : 'WARN ';
+  if (severity === 'error') return 'ERROR';
+  if (severity === 'info') return 'INFO ';
+  return 'WARN ';
 }
 
 function printHuman(result: ReturnType<typeof checkWorldState>): void {
@@ -16,6 +18,7 @@ function printHuman(result: ReturnType<typeof checkWorldState>): void {
   console.log(`Files checked: ${result.summary.filesChecked}`);
   console.log(`Issues:        ${result.summary.issues}`);
   console.log(`Warnings:      ${result.summary.warnings}`);
+  console.log(`Repaired:      ${result.summary.repaired}`);
 
   if (result.issues.length > 0) {
     console.log('');

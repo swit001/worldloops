@@ -1,6 +1,6 @@
 export interface IntegrityIssue {
     code: string;
-    severity: 'error' | 'warning';
+    severity: 'error' | 'warning' | 'info';
     file: string;
     message: string;
     referenceId?: string;
@@ -12,6 +12,7 @@ export interface IntegrityResult {
         filesChecked: number;
         issues: number;
         warnings: number;
+        repaired: number;
     };
     issues: IntegrityIssue[];
     safety: {

@@ -41,7 +41,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v1.4.0` |
+| Latest release | `v1.5.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -486,9 +486,122 @@ Checks `transition_receipts.json` and `proposal_decision_receipts.json` for:
 
 ### Diagnostic only
 
-`state:check` and `receipts:verify` are read-only. They do not modify `.worldloops` files. No repair is performed in v1.4.0.
+`state:check` and `receipts:verify` are read-only. They do not modify `.worldloops` files.
 
 Both commands exit with code `0` if no errors are found (warnings are allowed) and code `1` if any error-level issues are found.
+
+---
+
+## Recovery & Audit Hardening
+
+> **Tooling release — v1.5.0** — local, auditable repair. Detect first. Repair only with explicit intent.
+
+`state:repair` adds the next safe layer on top of `state:check`: the ability to preview and apply non-destructive, receipt-backed repairs to selected world state integrity issues.
+
+### state:repair
+
+```bash
+npm run state:repair                      # default: dry-run
+npm run state:repair -- --dry-run         # preview planned repairs, no files modified
+npm run state:repair -- --dry-run --json  # structured JSON output
+npm run state:repair -- --apply           # apply non-destructive metadata annotations
+npm run state:repair -- --apply --json    # apply and return structured JSON
+```
+
+**Repair is local-only and non-destructive.** In every mode, `externalWrite: false` is preserved. No state entries are deleted. No business entities are created. No external systems are contacted.
+
+**Default behavior:** If neither `--dry-run` nor `--apply` is provided, the command defaults to `--dry-run` and clearly states that no files were modified.
+
+#### Supported repair actions
+
+| Issue | Repair code | Action |
+|---|---|---|
+| Transition receipt references missing proposal | `MARK_ORPHAN_RECEIPT` | Adds `_worldloopsRepair` metadata to the receipt |
+| Decision receipt references missing proposal | `MARK_ORPHAN_RECEIPT` | Adds `_worldloopsRepair` metadata to the receipt |
+| Plan references missing proposal | `MARK_PLAN_UNRESOLVED_PROPOSAL` | Adds `_worldloopsRepair` metadata to the plan |
+| Contract references missing plan | `MARK_CONTRACT_UNRESOLVED_PLAN` | Adds `_worldloopsRepair` metadata to the contract |
+| Duplicate `idempotencyKey` in proposals | `FLAG_DUPLICATE_IDEMPOTENCY_KEY` | Flagged in repair receipt (no file modification) |
+
+#### Non-repairable issues
+
+The following issues are reported as `non_repairable` in v1.5.0 and require manual intervention:
+
+- Malformed JSON
+- Invalid file shape
+- `externalWrite: true` invariant violations
+- Invalid `boundaryCrossed` values
+
+#### Example dry-run output
+
+```
+WorldLoops state:repair
+=======================
+
+Mode:                  dry-run
+Issues observed:       2
+Repairable issues:     2
+Non-repairable issues: 0
+Repairs planned:       2
+
+Repairs:
+  [PLANNED      ] MARK_ORPHAN_RECEIPT
+    File:    .worldloops/transition_receipts.json
+    Message: Transition receipt "tr-1" references missing proposal "prop-gone". Marked as orphan.
+    Ref:     tr-1
+
+No files were modified. This was a dry-run.
+externalWrite: false
+```
+
+#### Example `--json` output shape
+
+```json
+{
+  "ok": true,
+  "mode": "dry_run",
+  "summary": {
+    "issuesObserved": 2,
+    "repairableIssues": 2,
+    "nonRepairableIssues": 0,
+    "repairsPlanned": 2,
+    "repairsApplied": 0
+  },
+  "repairs": [
+    {
+      "code": "MARK_ORPHAN_RECEIPT",
+      "status": "planned",
+      "file": ".worldloops/transition_receipts.json",
+      "referenceId": "tr-1",
+      "message": "Transition receipt \"tr-1\" references missing proposal \"prop-gone\". Marked as orphan."
+    }
+  ],
+  "receipt": {
+    "id": "repair-...",
+    "createdAt": "...",
+    "externalWrite": false
+  },
+  "safety": {
+    "externalWrite": false
+  }
+}
+```
+
+#### Repair receipts
+
+Every `--apply` run creates a repair receipt stored in `.worldloops/repair_receipts.json`. Each receipt records the repair id, timestamp, mode, summary, and the full list of repairs applied. Receipts accumulate across runs and are never deleted.
+
+### state:repair:list
+
+```bash
+npm run state:repair:list
+npm run state:repair:list -- --json
+```
+
+Lists all repair receipts stored in `.worldloops/repair_receipts.json`. Use this to audit what repairs have been applied and when.
+
+### No automatic repair
+
+`state:repair` does not run automatically. It is always invoked explicitly. `state:check` and `receipts:verify` remain read-only diagnostics and are unaffected by `state:repair`.
 
 ---
 
@@ -953,6 +1066,56 @@ It does not contain the private WorldLoops reasoning engine.
 **Public:** signal types, adapter examples, schemas, fixtures, API wrapper
 
 **Private:** open-loop detection logic, cross-source scoring, canonicalization, proposal generation internals, learning and governance internals
+
+---
+
+## v1.5.0 — Recovery & Audit Hardening
+
+> **Tooling release** — local, auditable repair, no external writes, no automatic repair.
+
+### Core message
+
+Detect first. Repair only with explicit intent.
+
+### What's new
+
+- **`state:repair` CLI** — preview and apply non-destructive, receipt-backed repairs to selected world state integrity issues; supports `--dry-run`, `--apply`, and `--json` flags; defaults to `--dry-run` if no flag is given
+- **`state:repair:list` CLI** — list all repair receipts stored in `.worldloops/repair_receipts.json`
+- **`src/state/repairWorldState.ts`** — core repair planning and apply module; exports `repairWorldState()` and `loadRepairReceipts()` for programmatic use
+- **Supported repair actions** — `MARK_ORPHAN_RECEIPT`, `MARK_PLAN_UNRESOLVED_PROPOSAL`, `MARK_CONTRACT_UNRESOLVED_PLAN`, `FLAG_DUPLICATE_IDEMPOTENCY_KEY`
+- **Non-repairable reporting** — malformed JSON, invalid file shape, `externalWrite` violations, and invalid `boundaryCrossed` values are reported as `non_repairable`
+- **Repair receipts** — every `--apply` run creates a receipt in `.worldloops/repair_receipts.json` recording what was detected, planned, and applied
+- **`--json` flag** — structured output for both commands with `ok`, `mode`, `summary`, `repairs`, `receipt`, and `safety.externalWrite: false`
+- **`test:state-repair`** — new test suite covering: dry-run does not modify files, apply creates repair receipt, apply marks orphans without deleting, duplicate idempotencyKey flagged, malformed JSON is non-repairable, externalWrite violation is non-repairable, repair:list, JSON output, and post-repair compatibility with state:check and receipts:verify
+- **`test:state-repair` included in `smoke`** — runs together with all existing integrity tests
+- **README** — "Recovery & Audit Hardening" section with command reference, repair table, and example output
+
+### Validated flow for v1.5.0
+
+```bash
+npm run state:repair
+npm run state:repair -- --dry-run
+npm run state:repair -- --dry-run --json
+npm run state:repair -- --apply
+npm run state:repair -- --apply --json
+npm run state:repair:list
+npm run state:check
+npm run receipts:verify
+npm run test:state-repair
+npm run smoke
+```
+
+### Constraints
+
+- No external writes
+- No automatic repair
+- No deletion of state files or state entries
+- No creation of missing business entities
+- `externalWrite: false` preserved everywhere
+- Repairs are local-only and auditable through repair receipts
+- Existing v1.4.0 `state:check` and `receipts:verify` behavior unchanged
+- Existing v1.3.0 `adapter:test` behavior unchanged
+- All existing smoke tests pass
 
 ---
 

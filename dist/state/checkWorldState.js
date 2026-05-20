@@ -192,11 +192,12 @@ function idSet(items) {
 function buildResult(issues, filesChecked) {
     const errorCount = issues.filter((i) => i.severity === 'error').length;
     const warningCount = issues.filter((i) => i.severity === 'warning').length;
+    const repairedCount = issues.filter((i) => i.severity === 'info').length;
     const ok = errorCount === 0;
     return {
         ok,
         status: ok ? 'passed' : 'failed',
-        summary: { filesChecked, issues: errorCount, warnings: warningCount },
+        summary: { filesChecked, issues: errorCount, warnings: warningCount, repaired: repairedCount },
         issues,
         safety: { externalWrite: false },
     };
@@ -325,13 +326,25 @@ function checkWorldState(options) {
                 const obj = item;
                 const pid = obj['proposalId'];
                 if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
-                    issues.push({
-                        code: 'RECEIPT_MISSING_PROPOSAL',
-                        severity: 'warning',
-                        file: transReceiptsFile,
-                        message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references proposal "${pid}" which was not found`,
-                        referenceId: pid,
-                    });
+                    const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
+                    if (alreadyRepaired) {
+                        issues.push({
+                            code: 'REPAIRED_ORPHAN_RECEIPT',
+                            severity: 'info',
+                            file: transReceiptsFile,
+                            message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}" but has been marked orphaned by state:repair`,
+                            referenceId: typeof obj['id'] === 'string' ? obj['id'] : undefined,
+                        });
+                    }
+                    else {
+                        issues.push({
+                            code: 'RECEIPT_MISSING_PROPOSAL',
+                            severity: 'warning',
+                            file: transReceiptsFile,
+                            message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references proposal "${pid}" which was not found`,
+                            referenceId: pid,
+                        });
+                    }
                 }
             }
         }
@@ -355,13 +368,25 @@ function checkWorldState(options) {
                 const obj = item;
                 const pid = obj['proposalId'];
                 if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
-                    issues.push({
-                        code: 'RECEIPT_MISSING_PROPOSAL',
-                        severity: 'error',
-                        file: decReceiptsFile,
-                        message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}"`,
-                        referenceId: pid,
-                    });
+                    const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
+                    if (alreadyRepaired) {
+                        issues.push({
+                            code: 'REPAIRED_ORPHAN_RECEIPT',
+                            severity: 'info',
+                            file: decReceiptsFile,
+                            message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}" but has been marked orphaned by state:repair`,
+                            referenceId: typeof obj['id'] === 'string' ? obj['id'] : undefined,
+                        });
+                    }
+                    else {
+                        issues.push({
+                            code: 'RECEIPT_MISSING_PROPOSAL',
+                            severity: 'error',
+                            file: decReceiptsFile,
+                            message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}"`,
+                            referenceId: pid,
+                        });
+                    }
                 }
             }
         }
@@ -423,13 +448,25 @@ function checkReceipts(options) {
                 const obj = item;
                 const pid = obj['proposalId'];
                 if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
-                    issues.push({
-                        code: 'RECEIPT_MISSING_PROPOSAL',
-                        severity: 'warning',
-                        file: transFile,
-                        message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references proposal "${pid}" which was not found`,
-                        referenceId: pid,
-                    });
+                    const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
+                    if (alreadyRepaired) {
+                        issues.push({
+                            code: 'REPAIRED_ORPHAN_RECEIPT',
+                            severity: 'info',
+                            file: transFile,
+                            message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}" but has been marked orphaned by state:repair`,
+                            referenceId: typeof obj['id'] === 'string' ? obj['id'] : undefined,
+                        });
+                    }
+                    else {
+                        issues.push({
+                            code: 'RECEIPT_MISSING_PROPOSAL',
+                            severity: 'warning',
+                            file: transFile,
+                            message: `Transition receipt "${String(obj['id'] ?? 'unknown')}" references proposal "${pid}" which was not found`,
+                            referenceId: pid,
+                        });
+                    }
                 }
             }
         }
@@ -453,13 +490,25 @@ function checkReceipts(options) {
                 const obj = item;
                 const pid = obj['proposalId'];
                 if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
-                    issues.push({
-                        code: 'RECEIPT_MISSING_PROPOSAL',
-                        severity: 'error',
-                        file: decFile,
-                        message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}"`,
-                        referenceId: pid,
-                    });
+                    const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
+                    if (alreadyRepaired) {
+                        issues.push({
+                            code: 'REPAIRED_ORPHAN_RECEIPT',
+                            severity: 'info',
+                            file: decFile,
+                            message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}" but has been marked orphaned by state:repair`,
+                            referenceId: typeof obj['id'] === 'string' ? obj['id'] : undefined,
+                        });
+                    }
+                    else {
+                        issues.push({
+                            code: 'RECEIPT_MISSING_PROPOSAL',
+                            severity: 'error',
+                            file: decFile,
+                            message: `Decision receipt "${String(obj['id'] ?? 'unknown')}" references missing proposal "${pid}"`,
+                            referenceId: pid,
+                        });
+                    }
                 }
             }
         }
