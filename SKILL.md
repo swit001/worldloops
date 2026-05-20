@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Executable world layer for OpenClaw that detects open loops, proposes governed transitions, and keeps agent execution safe with externalWrite:false.
-version: "0.7.0"
+version: "0.8.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management"]}}
 ---
@@ -124,6 +124,49 @@ Useful local commands:
     npm run loop:reconcile
 
 All of these commands preserve externalWrite:false and do not write to Gmail, Calendar, Slack, GitHub, or any external system.
+
+## Proposal Review Decisions
+
+New in v0.8.0 — proposals can now receive local review decisions.
+
+**Core principles:**
+
+- Proposal ≠ Execution
+- Approval ≠ Execution
+
+A proposal can be approved, rejected, snoozed, or escalated. None of these decisions execute an external action. They update local proposal state and create local decision receipts only.
+
+### Decision commands
+
+    npm run proposal:decide -- <proposal-id> approve
+    npm run proposal:decide -- <proposal-id> reject
+    npm run proposal:decide -- <proposal-id> snooze
+    npm run proposal:decide -- <proposal-id> escalate
+    npm run proposal:decide -- <proposal-id> repropose   # snoozed/escalated → proposed
+    npm run proposal:review                              # human-readable review summary
+    npm run proposal:review -- --json                    # structured JSON review
+    npm run proposal:receipts                            # list decision receipts
+    npm run proposal:receipts -- --json                  # structured JSON receipts
+
+### Decision statuses
+
+- `proposed` — awaiting a decision
+- `approved` — approved by reviewer (does not execute anything)
+- `rejected` — rejected, proposal kept locally
+- `snoozed` — deferred, can be re-proposed
+- `escalated` — escalated, can be re-proposed
+
+Terminal states: `approved` and `rejected` cannot be transitioned in v0.8.0.
+
+### Decision receipts
+
+Receipts are stored locally under `.worldloops/proposal_decision_receipts.json`. Each receipt includes proposalId, templateId, decision, previousStatus, newStatus, actor, note, boundaryCrossed, externalWrite, createdAt, and source.
+
+### Safety boundary
+
+`externalWrite: false` preserved. No external writes. All state is local.
+
+---
 
 ## Proposal Templates Foundation
 

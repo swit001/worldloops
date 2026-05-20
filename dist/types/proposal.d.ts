@@ -1,5 +1,5 @@
 import type { ProposalTemplateId, ProposalRiskLevel, ProposalTemplateCategory } from './proposalTemplate';
-export type ProposalStatus = 'proposed';
+export type ProposalStatus = 'proposed' | 'approved' | 'rejected' | 'snoozed' | 'escalated';
 export interface Proposal {
     id: string;
     templateId: ProposalTemplateId;

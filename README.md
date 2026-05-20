@@ -39,7 +39,7 @@ Not just "What did I miss?" — but "What loops are still open, and what state a
 | Item | Status |
 |---|---|
 | Public ClawHub skill | ✓ |
-| Latest release | `v0.7.0` |
+| Latest release | `v0.8.0` |
 | Clean install tested | ✓ |
 | Gmail live validation | passed |
 | Google Calendar live validation | passed |
@@ -674,6 +674,96 @@ Added in v0.2.6:
 - scheduled daily brief direction
 - improved ClawHub/OpenClaw metadata discoverability
 
+## v0.8.0 — Proposal Review Decisions
+
+WorldLoops now turns local proposals into reviewable decisions.
+
+The core principles remain:
+
+**Proposal ≠ Execution**\
+**Approval ≠ Execution**
+
+A proposal can be approved, rejected, snoozed, or escalated, but none of these decisions execute an external action. They only update local proposal state and create local decision receipts.
+
+### Commands
+
+```bash
+npm run proposal:decide -- <proposal-id> approve
+npm run proposal:decide -- <proposal-id> reject
+npm run proposal:decide -- <proposal-id> snooze
+npm run proposal:decide -- <proposal-id> escalate
+npm run proposal:review
+npm run proposal:review -- --json
+npm run proposal:receipts
+npm run proposal:receipts -- --json
+```
+
+### Decision statuses
+
+| Status | Meaning |
+|---|---|
+| `proposed` | Initial state — awaiting a decision |
+| `approved` | Approved by a reviewer — does not execute anything |
+| `rejected` | Rejected — proposal remains locally, not deleted |
+| `snoozed` | Deferred — can be re-proposed with `repropose` |
+| `escalated` | Escalated — can be re-proposed with `repropose` |
+
+Valid transitions:
+
+```
+proposed  → approved
+proposed  → rejected
+proposed  → snoozed
+proposed  → escalated
+snoozed   → proposed  (decision: repropose)
+escalated → proposed  (decision: repropose)
+```
+
+Terminal states: `approved` and `rejected` cannot be transitioned in v0.8.0.
+
+### Decision receipts
+
+Decision receipts are stored locally under `.worldloops/proposal_decision_receipts.json`. Each receipt captures:
+
+- receipt id
+- proposal id
+- template id
+- decision
+- previous status
+- new status
+- actor (`worldloops.local`)
+- note (optional)
+- `boundaryCrossed: local_commit`
+- `externalWrite: false`
+- `createdAt`
+- `source: worldloops.local`
+
+Receipts are local-only. They never imply external execution.
+
+### Safety boundary
+
+- `externalWrite: false` preserved
+- No external writes
+- Proposals remain stored locally under `.worldloops/proposals.json`
+- Approval does not execute proposal contents
+- Rejection does not delete proposals
+- All state is local
+
+This release strengthens the Adjudicate layer: agents can propose, humans can decide, and execution remains separate.
+
+### Intentionally deferred
+
+- Actual execution after approval
+- Rollback mechanism
+- Whitelist auto-approval
+- External writes
+- External DB or state adapter
+- Connector expansion
+- Domain-specific templates or decisions
+- `loop:update`
+
+---
+
 ## v0.7.0 — Proposal Templates Foundation
 
 > **Minor release**
@@ -936,7 +1026,7 @@ Added in v0.3.0:
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai
 - ClawHub: worldloops
-- Latest release: `v0.7.0`
+- Latest release: `v0.8.0`
 
 ---
 
