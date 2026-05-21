@@ -120,18 +120,19 @@ Sources:
 
 Open loops:
 
-⚠️ Gmail — Follow-up needed
-From: Alex Kim
-Subject: Updated proposal
-Why: follow-up or reply request detected
-Evidence: "Need a response before EOD."
-Action: Draft a reply or follow-up
+⚠️ Gmail — Review requested
+From: Test Reviewer <reviewer@example.com>
+Subject: 등록하신 문서를 다시 검토해주세요.
+Why: review request detected
+Evidence: "등록하신 문서를 다시 검토해주세요. 수정이 필요한 부분이 있습니다."
+Action: Review the submitted document or reply if needed
 Adjudication: requires_approval
 
-📅 Calendar — No actionable loop detected
-Checked: 1 event
-Event: Weekly sync
-Reason: no prep, deadline, approval, or follow-up language detected
+📅 Calendar — Important context
+Event: Flight to 서울 (KE 24)
+When: 2026-05-21T12:40:00.000Z
+Location: SFO
+Reason: travel event detected, no action proposed
 
 💬 Slack — Action requested
 From: Dana
@@ -146,6 +147,27 @@ externalWrite:false
 No email, draft, calendar event, Slack message, or external change made.
 
 Daily Brief schedule: 09:00 local time — Delivery channel: local
+```
+
+### Example output — Gmail no-action with samples
+
+```
+📧 Gmail — No actionable loop detected
+Checked: 3 messages
+Sample:
+- From: deals@shop.example.com / Subject: 50% off this weekend only — limited offer!
+- From: noreply@digest.example.com / Subject: Your daily digest — top stories
+Reason: no reply, deadline, approval, review, or follow-up request detected
+Note: messages appear informational or promotional
+```
+
+### Example output — Slack not connected
+
+```
+⬜ Slack — not connected
+Reason: no Slack payload found
+Next: configure OpenClaw channels.slack, then save payload to:
+.worldloops/inbox/openclaw-slack-live.json
 ```
 
 ### Example output — payloads not connected yet

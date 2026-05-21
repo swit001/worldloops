@@ -11,6 +11,73 @@ import type { ProposalCandidate } from './types';
 
 export const DEFAULT_INBOX_DIR = '.worldloops/inbox';
 
+const KOREAN_ACTION_PHRASES = [
+  '검토해주세요', '확인해주세요', '다시 검토', '회신 부탁드립니다',
+  '답변 부탁드립니다', '승인 부탁드립니다', '공유 부탁드립니다',
+  '보내주세요', '수정해주세요', '확인 요청', '검토 요청',
+  '요청드립니다', '부탁드립니다',
+];
+
+const PROMOTIONAL_INDICATORS = [
+  'unsubscribe', 'discount', '% off', 'sale ends', 'limited offer',
+  'promo code', 'special offer', 'free shipping', 'daily digest',
+  'newsletter', 'weekly digest', 'opt out', 'manage preferences',
+];
+
+const TRAVEL_CONTEXT_KEYWORDS = [
+  'flight', 'travel', 'hotel', 'airport', 'workshop',
+  'board meeting', 'interview', 'customer meeting', 'executive meeting',
+  '항공', '비행편', '출장', '호텔',
+];
+
+function hasKoreanActionPhrase(text: string): boolean {
+  return KOREAN_ACTION_PHRASES.some(phrase => text.includes(phrase));
+}
+
+function isPromotionalText(text: string): boolean {
+  const lower = text.toLowerCase();
+  return PROMOTIONAL_INDICATORS.some(phrase => lower.includes(phrase));
+}
+
+function isTravelContextEvent(title?: string, description?: string): boolean {
+  const combined = `${title ?? ''} ${description ?? ''}`.toLowerCase();
+  return TRAVEL_CONTEXT_KEYWORDS.some(kw => combined.includes(kw.toLowerCase()));
+}
+
+function detectLocalCandidate(sourceId: SourceId, evidence: EvidenceData): ProposalCandidate | null {
+  if (sourceId === 'gmail') {
+    const textToCheck = [evidence.subject ?? '', evidence.snippet ?? ''].join(' ');
+    if (hasKoreanActionPhrase(textToCheck)) {
+      return {
+        idempotencyKey: `local-gmail-korean-review`,
+        entityType: 'email',
+        source: 'gmail',
+        currentState: 'unread',
+        proposedState: 'reviewed',
+        reason: 'review request detected',
+        approvalRequired: true,
+        actionHint: 'Review the submitted document or reply if needed',
+      };
+    }
+  }
+  if (sourceId === 'slack') {
+    const text = evidence.text ?? '';
+    if (hasKoreanActionPhrase(text)) {
+      return {
+        idempotencyKey: `local-slack-korean-review`,
+        entityType: 'message',
+        source: 'slack',
+        currentState: 'unread',
+        proposedState: 'reviewed',
+        reason: 'review request detected',
+        approvalRequired: true,
+        actionHint: 'Review the message and reply if needed',
+      };
+    }
+  }
+  return null;
+}
+
 export const SOURCES = [
   { id: 'gmail' as const, file: 'openclaw-gmail-live.json', label: 'Gmail', emoji: '⚠️' },
   { id: 'calendar' as const, file: 'openclaw-calendar-live.json', label: 'Calendar', emoji: '📅' },
@@ -154,6 +221,17 @@ export function buildSummaryLines(
       return lines;
     }
 
+    // Calendar important context — travel/flight events
+    if (sourceId === 'calendar' && isTravelContextEvent(evidence.title, evidence.description)) {
+      lines.push(`📅 ${label} — Important context`);
+      if (evidence.title) lines.push(`Event: ${evidence.title}`);
+      if (evidence.start) lines.push(`When: ${evidence.start}`);
+      if (evidence.location) lines.push(`Location: ${evidence.location}`);
+      lines.push(`Reason: travel event detected, no action proposed`);
+      if (details && evidence.eventId) lines.push(`eventId: ${evidence.eventId}`);
+      return lines;
+    }
+
     const noActionEmoji = sourceId === 'gmail' ? '📧' :
                           sourceId === 'calendar' ? '📅' : '💬';
 
@@ -180,7 +258,14 @@ export function buildSummaryLines(
     }
 
     if (sourceId === 'gmail') {
-      lines.push(`Reason: no reply, deadline, approval, or follow-up request detected`);
+      lines.push(`Reason: no reply, deadline, approval, review, or follow-up request detected`);
+      const promoText = [
+        evidence.snippet ?? '',
+        ...(evidence.sampleMessages ?? []).map(m => `${m.from ?? ''} ${m.subject ?? ''}`),
+      ].join(' ');
+      if (isPromotionalText(promoText)) {
+        lines.push(`Note: messages appear informational or promotional`);
+      }
     } else {
       lines.push(`Reason: no prep, deadline, approval, or follow-up language detected`);
     }
@@ -206,8 +291,10 @@ export function buildSummaryLines(
 
   let headerLabel: string;
   let activeEmoji: string;
-  if (sourceId === 'gmail') { headerLabel = 'Follow-up needed'; activeEmoji = '⚠️'; }
-  else if (sourceId === 'calendar') { headerLabel = 'Prep needed'; activeEmoji = '📅'; }
+  if (sourceId === 'gmail') {
+    headerLabel = (first.reason && /review/i.test(first.reason)) ? 'Review requested' : 'Follow-up needed';
+    activeEmoji = '⚠️';
+  } else if (sourceId === 'calendar') { headerLabel = 'Prep needed'; activeEmoji = '📅'; }
   else { headerLabel = 'Action requested'; activeEmoji = '💬'; }
 
   lines.push(`${activeEmoji} ${label} — ${headerLabel}`);
@@ -336,7 +423,11 @@ export async function processSource(
   try {
     const signal = toWorldLoopsSignal(validation.signal);
     const result = await callWorldLoopsBrief({ signals: [signal], mode: 'reconciliation' });
-    const candidates = result.proposalCandidates ?? [];
+    let candidates = result.proposalCandidates ?? [];
+    if (candidates.length === 0) {
+      const localCandidate = detectLocalCandidate(sourceId, evidence);
+      if (localCandidate) candidates = [localCandidate];
+    }
     return {
       id: sourceId, label, emoji, file, found: true, ok: result.ok, candidates,
       summaryLines: buildSummaryLines(sourceId, label, emoji, candidates, evidence, details),

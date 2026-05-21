@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.9.3 — Live Daily Brief Detection Polish
+
+v1.9.3 improves live Daily Brief detection with Korean action phrase support, neutral Gmail no-action summaries, Calendar important context for travel events, clearer Calendar zero-event output, and better Slack setup guidance while preserving externalWrite:false.
+
+### New
+
+- Korean action phrase detection for Gmail and Slack: phrases such as `검토해주세요`, `확인해주세요`, `다시 검토`, `회신 부탁드립니다`, and others produce actionable classification with `Review requested` header and `review request detected` reason
+- Calendar important context: travel/flight events (flight, travel, hotel, airport, workshop, board meeting, interview, customer meeting, executive meeting, 항공, 비행편, 출장, 호텔) shown as `📅 Calendar — Important context` with `Reason: travel event detected, no action proposed`; not marked `requires_approval`
+- Promotional suppression: Gmail no-action reason updated to include `review`; messages with promotional content (unsubscribe, discount, newsletter, daily digest, etc.) add a `Note: messages appear informational or promotional` line
+- Gmail no-action reason updated: `no reply, deadline, approval, review, or follow-up request detected`
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — added `KOREAN_ACTION_PHRASES`, `PROMOTIONAL_INDICATORS`, `TRAVEL_CONTEXT_KEYWORDS` constants; `hasKoreanActionPhrase`, `isPromotionalText`, `isTravelContextEvent`, `detectLocalCandidate` helpers; local candidate detection in `processSource` when API returns empty candidates; `buildSummaryLines` updated for travel context branch, promotional note, review header, and updated no-action Gmail reason
+- `package.json` — version 1.9.2 → 1.9.3
+- `SKILL.md` — version 1.9.2 → 1.9.3; Daily Brief examples updated with Korean detection, travel context, Gmail no-action sample
+- `README.md` — Daily Brief example updated with v1.9.3 detection features
+- `CHANGELOG.md` — this entry
+- `tests/guardDaily.test.cjs` — new assertions for Korean Gmail/Slack detection, promotional no-action, Calendar travel context, fixture file presence, v1.9.3 version and changelog checks
+
+### New fixtures
+
+- `scripts/fixtures/inbox-korean-gmail/` — Gmail with Korean review phrase `다시 검토해주세요`
+- `scripts/fixtures/inbox-promo-gmail/` — Gmail with promotional messages only (no Korean phrases)
+- `scripts/fixtures/inbox-travel-calendar/` — Calendar with flight/travel event
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+Korean detection is local phrase matching only — no AI inference.
+`externalWrite:false` preserved throughout.
+
+---
+
 ## v1.9.2 — Attributable Compact Daily Brief
 
 v1.9.2 adds attributable compact Daily Brief output. Gmail items now show sender and subject, Calendar items show event and time, and Slack items show sender/channel context. No-action sources use neutral wording, missing Slack gives setup guidance, and --details provides deeper source identifiers when available.

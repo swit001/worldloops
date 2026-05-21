@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.2"
+version: "1.9.3"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -240,18 +240,19 @@ Sources:
 
 Open loops:
 
-⚠️ Gmail — Follow-up needed
-From: Alex Kim
-Subject: Updated proposal
-Why: follow-up or reply request detected
-Evidence: "Need a response before EOD."
-Action: Draft a reply or follow-up
+⚠️ Gmail — Review requested
+From: Test Reviewer <reviewer@example.com>
+Subject: 등록하신 문서를 다시 검토해주세요.
+Why: review request detected
+Evidence: "등록하신 문서를 다시 검토해주세요. 수정이 필요한 부분이 있습니다."
+Action: Review the submitted document or reply if needed
 Adjudication: requires_approval
 
-📅 Calendar — No actionable loop detected
-Checked: 1 event
-Event: Weekly sync
-Reason: no prep, deadline, approval, or follow-up language detected
+📅 Calendar — Important context
+Event: Flight to 서울 (KE 24)
+When: 2026-05-21T12:40:00.000Z
+Location: SFO
+Reason: travel event detected, no action proposed
 
 💬 Slack — Action requested
 From: Dana
@@ -267,6 +268,28 @@ No email, draft, calendar event, Slack message, or external change made.
 
 Daily Brief schedule: 09:00 local time — Delivery channel: local
 To change: npm run brief:preferences:set -- --time HH:MM
+```
+
+### Example output — Gmail no-action with samples
+
+```
+📧 Gmail — No actionable loop detected
+Checked: 3 messages
+Sample:
+- From: deals@shop.example.com / Subject: 50% off this weekend only — limited offer!
+- From: noreply@digest.example.com / Subject: Your daily digest — top stories
+- From: rewards@points.example.com / Subject: You earned 50 reward points
+Reason: no reply, deadline, approval, review, or follow-up request detected
+Note: messages appear informational or promotional
+```
+
+### Example output — Slack not connected
+
+```
+⬜ Slack — not connected
+Reason: no Slack payload found
+Next: configure OpenClaw channels.slack, then save payload to:
+.worldloops/inbox/openclaw-slack-live.json
 ```
 
 ### Example output — payloads not connected yet
