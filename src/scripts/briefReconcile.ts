@@ -13,6 +13,7 @@ import { buildTransitionReceipt, saveTransitionReceipt } from '../storage/transi
 import { buildOpenLoopStateFromProposal, loadOpenLoopStates, saveOpenLoopState } from '../storage/openLoopStates';
 import { buildProposalFromCandidate, findProposalByIdempotencyKey, saveProposal } from '../storage/proposals';
 import { getCapabilityBoundary } from '../policy/capabilityBoundary';
+import { printMessengerOutput } from '../output/messengerFormat';
 
 function getFlagValue(flag: string): string | undefined {
   const args = process.argv.slice(2);
@@ -20,6 +21,7 @@ function getFlagValue(flag: string): string | undefined {
   if (idx === -1 || idx + 1 >= args.length) return undefined;
   return args[idx + 1];
 }
+
 
 function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
@@ -31,6 +33,7 @@ function loadJson<T>(filePath: string): T {
 }
 
 async function main(): Promise<void> {
+  const outputFormat = getFlagValue('--format') ?? 'json';
   const gmailEventInput = getFlagValue('--gmail-event');
   const calendarEventInput = getFlagValue('--calendar-event');
   const gogGmailInput = getFlagValue('--gog-gmail');
@@ -76,15 +79,28 @@ async function main(): Promise<void> {
     const raw = loadJson<unknown>(adapterSignalInput);
     const validation = validateAdapterSignal(raw);
     if (!validation.ok) {
-      printJson({
-        ok: false,
-        error: {
-          code: 'INVALID_ADAPTER_SIGNAL',
-          message: 'Adapter signal validation failed. Fix the errors below before reconciling.',
-          errors: validation.errors,
-        },
-        safety: { externalWrite: false },
-      });
+      if (outputFormat === 'messenger') {
+        console.log('');
+        console.log('🦞 WorldLoops Guard');
+        console.log('');
+        console.log('❌ Invalid adapter signal');
+        console.log(validation.errors.join('\n'));
+        console.log('');
+        console.log('✅ Safe');
+        console.log('externalWrite: false');
+        console.log('No external system changed.');
+        console.log('');
+      } else {
+        printJson({
+          ok: false,
+          error: {
+            code: 'INVALID_ADAPTER_SIGNAL',
+            message: 'Adapter signal validation failed. Fix the errors below before reconciling.',
+            errors: validation.errors,
+          },
+          safety: { externalWrite: false },
+        });
+      }
       process.exit(1);
     }
     signals.push(toWorldLoopsSignal(validation.signal));
@@ -92,17 +108,30 @@ async function main(): Promise<void> {
   }
 
   if (signals.length === 0) {
-    printJson({
-      ok: false,
-      error: {
-        code: 'MISSING_SIGNALS',
-        message:
-          'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.',
-      },
-      safety: {
-        externalWrite: false,
-      },
-    });
+    if (outputFormat === 'messenger') {
+      console.log('');
+      console.log('🦞 WorldLoops Guard');
+      console.log('');
+      console.log('❌ No signals provided');
+      console.log('Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.');
+      console.log('');
+      console.log('✅ Safe');
+      console.log('externalWrite: false');
+      console.log('No external system changed.');
+      console.log('');
+    } else {
+      printJson({
+        ok: false,
+        error: {
+          code: 'MISSING_SIGNALS',
+          message:
+            'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.',
+        },
+        safety: {
+          externalWrite: false,
+        },
+      });
+    }
     process.exit(1);
   }
 
@@ -155,39 +184,64 @@ async function main(): Promise<void> {
     }
   }
 
-  printJson({
-    ...result,
-    mode: 'reconciliation',
-    source: 'worldloops.public',
-    metadata: {
-      ...(result.metadata ?? {}),
-      signalCount: signals.length,
-      sources,
+  if (outputFormat === 'messenger') {
+    printMessengerOutput({
+      ok: result.ok,
+      candidates,
+      openLoopCount: result.openLoops?.length ?? candidates.length,
       receiptsGenerated,
-      openLoopsPersisted,
-      openLoopsAlreadyTracked,
       proposalsPersisted,
       proposalsAlreadyTracked,
-    },
-    capabilityBoundary: getCapabilityBoundary(),
-    safety: {
-      ...(result.safety ?? {}),
-      externalWrite: false,
-    },
-  });
+    });
+  } else {
+    printJson({
+      ...result,
+      mode: 'reconciliation',
+      source: 'worldloops.public',
+      metadata: {
+        ...(result.metadata ?? {}),
+        signalCount: signals.length,
+        sources,
+        receiptsGenerated,
+        openLoopsPersisted,
+        openLoopsAlreadyTracked,
+        proposalsPersisted,
+        proposalsAlreadyTracked,
+      },
+      capabilityBoundary: getCapabilityBoundary(),
+      safety: {
+        ...(result.safety ?? {}),
+        externalWrite: false,
+      },
+    });
+  }
 }
 
 main().catch((err: unknown) => {
-  printJson({
-    ok: false,
-    error: {
-      code: 'WORLDLOOPS_PUBLIC_BRIEF_FAILED',
-      message: err instanceof Error ? err.message : String(err),
-    },
-    safety: {
-      externalWrite: false,
-    },
-  });
+  const outputFormat = getFlagValue('--format') ?? 'json';
+  if (outputFormat === 'messenger') {
+    console.log('');
+    console.log('🦞 WorldLoops Guard');
+    console.log('');
+    console.log('❌ Reconcile failed');
+    console.log(err instanceof Error ? err.message : String(err));
+    console.log('');
+    console.log('✅ Safe');
+    console.log('externalWrite: false');
+    console.log('No external system changed.');
+    console.log('');
+  } else {
+    printJson({
+      ok: false,
+      error: {
+        code: 'WORLDLOOPS_PUBLIC_BRIEF_FAILED',
+        message: err instanceof Error ? err.message : String(err),
+      },
+      safety: {
+        externalWrite: false,
+      },
+    });
+  }
 
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "doctor:mobile": "node dist/scripts/doctorMobile.js",
     "wow:developer": "node dist/scripts/wowDeveloper.js",
     "brief:reconcile": "node dist/scripts/briefReconcile.js",
+    "brief:messenger": "node dist/scripts/briefMessenger.js",
     "brief:daily": "node dist/scripts/briefDaily.js",
     "discovery:run": "node dist/scripts/discoveryRun.js",
     "notifications:init": "node dist/scripts/notificationsInit.js",
@@ -86,7 +87,8 @@
     "test:receipts-verify": "node tests/receiptsVerify.test.cjs",
     "test:state-repair": "node tests/stateRepair.test.cjs",
     "test:wow-mobile": "node tests/demoWowMobile.test.cjs",
-    "test:doctor-mobile": "node tests/doctorMobile.test.cjs"
+    "test:doctor-mobile": "node tests/doctorMobile.test.cjs",
+    "test:messenger": "node tests/briefMessenger.test.cjs"
   },
   "keywords": [
     "openclaw",

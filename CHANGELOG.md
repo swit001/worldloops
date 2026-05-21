@@ -1,5 +1,70 @@
 # Changelog
 
+## v1.6.4 — Messenger-Friendly Output Hotfix
+
+WorldLoops v1.6.4 adds a messenger-friendly output mode for the real signal governance demo.
+
+This is not Telegram-specific. The fix applies to all messenger-style channels: Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat surfaces.
+
+### Problem
+
+- `brief:reconcile` produced raw JSON — unreadable in messenger interfaces
+- No fast demo command existed for messenger channels
+- SKILL.md had no fast-path instruction to run the demo without workspace search
+
+### Changes
+
+- Added `--format messenger` flag to `brief:reconcile`
+- Added `brief:messenger` npm alias (always uses messenger format)
+- Messenger output is concise and human-readable: loop count, source, severity, state, proposal, adjudication, receipt, safety boundary
+- Updated `SKILL.md` with a "Fast Messenger Demo" section — skill agents run the command immediately without searching the workspace
+- Updated `README.md` with messenger-friendly language
+
+### Messenger output shape
+
+```
+🦞 WorldLoops Guard
+
+1 open loop detected
+
+🚨 High — Gmail callback requested
+State: open
+
+Proposal:
+Review claim context and decide whether to call back or prepare a written response.
+
+Adjudication:
+requires_approval
+
+Receipt:
+local proposal recorded
+
+✅ Safe
+externalWrite: false
+No email sent. No external system changed.
+```
+
+### New commands
+
+```bash
+npm run brief:reconcile -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json --format messenger
+npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
+```
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run brief:reconcile -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json --format messenger
+npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
+npm run receipts:verify
+npm run state:check
+npm run test:messenger
+```
+
+---
+
 ## v1.6.3 — Receipt Alignment & Real Signal Fixtures
 
 WorldLoops v1.6.3 fixes receipt/proposal reference alignment for real AdapterSignal reconciliation and adds real Gmail signal fixtures.

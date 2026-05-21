@@ -46,6 +46,7 @@ const transitionReceipts_1 = require("../storage/transitionReceipts");
 const openLoopStates_1 = require("../storage/openLoopStates");
 const proposals_1 = require("../storage/proposals");
 const capabilityBoundary_1 = require("../policy/capabilityBoundary");
+const messengerFormat_1 = require("../output/messengerFormat");
 function getFlagValue(flag) {
     const args = process.argv.slice(2);
     const idx = args.indexOf(flag);
@@ -61,6 +62,7 @@ function loadJson(filePath) {
     return JSON.parse(fs.readFileSync(resolved, 'utf8'));
 }
 async function main() {
+    const outputFormat = getFlagValue('--format') ?? 'json';
     const gmailEventInput = getFlagValue('--gmail-event');
     const calendarEventInput = getFlagValue('--calendar-event');
     const gogGmailInput = getFlagValue('--gog-gmail');
@@ -97,31 +99,59 @@ async function main() {
         const raw = loadJson(adapterSignalInput);
         const validation = (0, validateAdapterSignal_1.validateAdapterSignal)(raw);
         if (!validation.ok) {
-            printJson({
-                ok: false,
-                error: {
-                    code: 'INVALID_ADAPTER_SIGNAL',
-                    message: 'Adapter signal validation failed. Fix the errors below before reconciling.',
-                    errors: validation.errors,
-                },
-                safety: { externalWrite: false },
-            });
+            if (outputFormat === 'messenger') {
+                console.log('');
+                console.log('🦞 WorldLoops Guard');
+                console.log('');
+                console.log('❌ Invalid adapter signal');
+                console.log(validation.errors.join('\n'));
+                console.log('');
+                console.log('✅ Safe');
+                console.log('externalWrite: false');
+                console.log('No external system changed.');
+                console.log('');
+            }
+            else {
+                printJson({
+                    ok: false,
+                    error: {
+                        code: 'INVALID_ADAPTER_SIGNAL',
+                        message: 'Adapter signal validation failed. Fix the errors below before reconciling.',
+                        errors: validation.errors,
+                    },
+                    safety: { externalWrite: false },
+                });
+            }
             process.exit(1);
         }
         signals.push((0, toWorldLoopsSignal_1.toWorldLoopsSignal)(validation.signal));
         sources.push('adapter.signal');
     }
     if (signals.length === 0) {
-        printJson({
-            ok: false,
-            error: {
-                code: 'MISSING_SIGNALS',
-                message: 'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.',
-            },
-            safety: {
-                externalWrite: false,
-            },
-        });
+        if (outputFormat === 'messenger') {
+            console.log('');
+            console.log('🦞 WorldLoops Guard');
+            console.log('');
+            console.log('❌ No signals provided');
+            console.log('Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.');
+            console.log('');
+            console.log('✅ Safe');
+            console.log('externalWrite: false');
+            console.log('No external system changed.');
+            console.log('');
+        }
+        else {
+            printJson({
+                ok: false,
+                error: {
+                    code: 'MISSING_SIGNALS',
+                    message: 'Provide at least one input: --gmail-event, --calendar-event, --gog-gmail, --gog-calendar, --message-read, or --adapter-signal.',
+                },
+                safety: {
+                    externalWrite: false,
+                },
+            });
+        }
         process.exit(1);
     }
     const result = await (0, brief_1.callWorldLoopsBrief)({
@@ -170,38 +200,65 @@ async function main() {
             }
         }
     }
-    printJson({
-        ...result,
-        mode: 'reconciliation',
-        source: 'worldloops.public',
-        metadata: {
-            ...(result.metadata ?? {}),
-            signalCount: signals.length,
-            sources,
+    if (outputFormat === 'messenger') {
+        (0, messengerFormat_1.printMessengerOutput)({
+            ok: result.ok,
+            candidates,
+            openLoopCount: result.openLoops?.length ?? candidates.length,
             receiptsGenerated,
-            openLoopsPersisted,
-            openLoopsAlreadyTracked,
             proposalsPersisted,
             proposalsAlreadyTracked,
-        },
-        capabilityBoundary: (0, capabilityBoundary_1.getCapabilityBoundary)(),
-        safety: {
-            ...(result.safety ?? {}),
-            externalWrite: false,
-        },
-    });
+        });
+    }
+    else {
+        printJson({
+            ...result,
+            mode: 'reconciliation',
+            source: 'worldloops.public',
+            metadata: {
+                ...(result.metadata ?? {}),
+                signalCount: signals.length,
+                sources,
+                receiptsGenerated,
+                openLoopsPersisted,
+                openLoopsAlreadyTracked,
+                proposalsPersisted,
+                proposalsAlreadyTracked,
+            },
+            capabilityBoundary: (0, capabilityBoundary_1.getCapabilityBoundary)(),
+            safety: {
+                ...(result.safety ?? {}),
+                externalWrite: false,
+            },
+        });
+    }
 }
 main().catch((err) => {
-    printJson({
-        ok: false,
-        error: {
-            code: 'WORLDLOOPS_PUBLIC_BRIEF_FAILED',
-            message: err instanceof Error ? err.message : String(err),
-        },
-        safety: {
-            externalWrite: false,
-        },
-    });
+    const outputFormat = getFlagValue('--format') ?? 'json';
+    if (outputFormat === 'messenger') {
+        console.log('');
+        console.log('🦞 WorldLoops Guard');
+        console.log('');
+        console.log('❌ Reconcile failed');
+        console.log(err instanceof Error ? err.message : String(err));
+        console.log('');
+        console.log('✅ Safe');
+        console.log('externalWrite: false');
+        console.log('No external system changed.');
+        console.log('');
+    }
+    else {
+        printJson({
+            ok: false,
+            error: {
+                code: 'WORLDLOOPS_PUBLIC_BRIEF_FAILED',
+                message: err instanceof Error ? err.message : String(err),
+            },
+            safety: {
+                externalWrite: false,
+            },
+        });
+    }
     process.exit(1);
 });
 //# sourceMappingURL=briefReconcile.js.map

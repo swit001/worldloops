@@ -93,6 +93,12 @@ Boundary: local_proposal_only
 Safety: externalWrite:false
 ```
 
+Messenger-friendly output for Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat:
+
+```bash
+npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
+```
+
 **After user approval:**
 
 ```
@@ -186,11 +192,12 @@ npm run state:check
 npm run receipts:verify
 ```
 
-For compact chat-friendly output:
+For messenger-friendly output (Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat):
 
 ```bash
 npm run wow:mobile
 npm run doctor:mobile
+npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
 ```
 
 For adapter developers:
