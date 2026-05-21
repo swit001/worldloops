@@ -43,15 +43,33 @@ function assertSafe(output, label) {
   const result = run(['demo']);
   assert.strictEqual(result.status, 0, `demo: expected exit 0\n${result.stdout}\n${result.stderr}`);
   assertNoRawJson(result.stdout, 'demo');
-  assertExternalWriteFalse(result.stdout, 'demo');
   assert.ok(
-    result.stdout.includes('WorldLoops Guard') || result.stdout.includes('Agent Execution Guard'),
-    'demo: must include WorldLoops Guard or Agent Execution Guard'
+    result.stdout.includes('externalWrite:false'),
+    'demo: must include externalWrite:false (no space)'
+  );
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard'),
+    'demo: header must be "Agent Execution Guard"'
+  );
+  assert.ok(
+    result.stdout.includes('requires_approval'),
+    'demo: must include requires_approval'
+  );
+  assert.ok(
+    !result.stdout.includes('WorldLoops found 6 open loops'),
+    'demo: must NOT output "WorldLoops found 6 open loops"'
+  );
+  assert.ok(
+    result.stdout.includes('No email, draft, call, or external change made.'),
+    'demo: must include compact safety line'
   );
   console.log('  PASS  demo: exits 0');
   console.log('  PASS  demo: no raw JSON');
-  console.log('  PASS  demo: externalWrite: false present');
-  console.log('  PASS  demo: guard header present');
+  console.log('  PASS  demo: externalWrite:false present (no space)');
+  console.log('  PASS  demo: "Agent Execution Guard" header present');
+  console.log('  PASS  demo: requires_approval present');
+  console.log('  PASS  demo: no "WorldLoops found 6 open loops"');
+  console.log('  PASS  demo: compact safety line present');
 }
 
 // ── npm run guard:demo ────────────────────────────────────────────────────────
@@ -60,15 +78,33 @@ function assertSafe(output, label) {
   const result = run(['guard:demo']);
   assert.strictEqual(result.status, 0, `guard:demo: expected exit 0\n${result.stdout}\n${result.stderr}`);
   assertNoRawJson(result.stdout, 'guard:demo');
-  assertExternalWriteFalse(result.stdout, 'guard:demo');
   assert.ok(
-    result.stdout.includes('WorldLoops Guard') || result.stdout.includes('Agent Execution Guard'),
-    'guard:demo: must include WorldLoops Guard or Agent Execution Guard'
+    result.stdout.includes('externalWrite:false'),
+    'guard:demo: must include externalWrite:false (no space)'
+  );
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard'),
+    'guard:demo: header must be "Agent Execution Guard"'
+  );
+  assert.ok(
+    result.stdout.includes('requires_approval'),
+    'guard:demo: must include requires_approval'
+  );
+  assert.ok(
+    !result.stdout.includes('WorldLoops found 6 open loops'),
+    'guard:demo: must NOT output "WorldLoops found 6 open loops"'
+  );
+  assert.ok(
+    result.stdout.includes('No email, draft, call, or external change made.'),
+    'guard:demo: must include compact safety line'
   );
   console.log('  PASS  guard:demo: exits 0');
   console.log('  PASS  guard:demo: no raw JSON');
-  console.log('  PASS  guard:demo: externalWrite: false present');
-  console.log('  PASS  guard:demo: guard header present');
+  console.log('  PASS  guard:demo: externalWrite:false present (no space)');
+  console.log('  PASS  guard:demo: "Agent Execution Guard" header present');
+  console.log('  PASS  guard:demo: requires_approval present');
+  console.log('  PASS  guard:demo: no "WorldLoops found 6 open loops"');
+  console.log('  PASS  guard:demo: compact safety line present');
 }
 
 // ── guard:adapter --source gmail ──────────────────────────────────────────────
@@ -286,15 +322,15 @@ function assertSafe(output, label) {
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.7.0"'), 'SKILL.md: version must be 1.7.0');
-  console.log('  PASS  SKILL.md: version is 1.7.0');
+  assert.ok(skill.includes('version: "1.7.1"'), 'SKILL.md: version must be 1.7.1');
+  console.log('  PASS  SKILL.md: version is 1.7.1');
 }
 
 // ── package.json: version and scripts ────────────────────────────────────────
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.7.0', 'package.json: version must be 1.7.0');
+  assert.strictEqual(pkg.version, '1.7.1', 'package.json: version must be 1.7.1');
   assert.ok(pkg.scripts.demo, 'package.json: demo script must exist');
   assert.ok(pkg.scripts['guard:demo'], 'package.json: guard:demo script must exist');
   assert.ok(pkg.scripts['guard:adapter'], 'package.json: guard:adapter script must exist');
@@ -302,8 +338,20 @@ function assertSafe(output, label) {
   assert.ok(pkg.scripts['guard:calendar'], 'package.json: guard:calendar script must exist');
   assert.ok(pkg.scripts['guard:slack'], 'package.json: guard:slack script must exist');
   assert.ok(pkg.scripts['guard:github'], 'package.json: guard:github script must exist');
-  console.log('  PASS  package.json: version is 1.7.0');
+  assert.ok(
+    pkg.scripts.demo.includes('guardAdapter.js') && pkg.scripts.demo.includes('--compact'),
+    'package.json: demo script must use guardAdapter.js --compact'
+  );
+  assert.ok(
+    pkg.scripts['guard:demo'].includes('guardAdapter.js') && pkg.scripts['guard:demo'].includes('--compact'),
+    'package.json: guard:demo script must use guardAdapter.js --compact'
+  );
+  assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile must be removed (v1.7.1 routing cleanup)');
+  console.log('  PASS  package.json: version is 1.7.1');
   console.log('  PASS  package.json: all guard scripts present');
+  console.log('  PASS  package.json: demo uses guardAdapter.js --compact');
+  console.log('  PASS  package.json: guard:demo uses guardAdapter.js --compact');
+  console.log('  PASS  package.json: wow:mobile removed');
 }
 
 // ── no --input → exits 1 with safe output ────────────────────────────────────

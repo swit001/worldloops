@@ -1,18 +1,14 @@
 'use strict';
 
 const assert = require('node:assert');
-const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
 
-function runWowMobile() {
-  return spawnSync(process.execPath, ['dist/scripts/demoWowMobile.js'], { encoding: 'utf8' });
-}
+// wow:mobile was removed in v1.7.1 to prevent legacy demo routing in Telegram/OpenClaw.
+// These assertions confirm the script is gone and no longer routes demo traffic.
 
 {
-  const result = runWowMobile();
-  assert.strictEqual(result.status, 0, 'wow:mobile exits 0');
-  assert.ok(result.stdout.includes('6 open loops'), 'wow:mobile includes 6 open loops');
-  assert.ok(result.stdout.includes('Nothing executes without approval'), 'wow:mobile includes safety message');
-  assert.ok(result.stdout.includes('0 emails sent'), 'wow:mobile includes email safety');
-  assert.ok(result.stdout.includes('0 calendar events changed'), 'wow:mobile includes calendar safety');
-  console.log('wow:mobile: all assertions passed');
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile script must not exist (removed in v1.7.1)');
+  assert.ok(!pkg.scripts['test:wow-mobile'], 'package.json: test:wow-mobile script must not exist');
+  console.log('demoWowMobile: wow:mobile removed from package.json — all assertions passed');
 }

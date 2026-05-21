@@ -44,24 +44,26 @@ npm run doctor
 Expected result:
 
 ```
-🦞 WorldLoops found 6 open loops
+🦞 Agent Execution Guard
 
-📧 Proposal follow-up — To Do
-📅 Workshop preparation — Preparing
-💬 Pricing plan review — To Do
-📄 Missing ROI assumptions — Blocked
-🛠 Approval before release — Waiting for review
-🤝 Customer follow-up — To Do
+🚨 High — Gmail callback requested
+State: open
 
-✅ 0 emails sent
-✅ 0 calendar events changed
-✅ 0 chat messages posted
-✅ 0 files modified
-✅ 0 project changes made
+Proposal:
+Review claim context and decide whether to call back or prepare a written response. This is a local planning action only — do not initiate any call, email, or external communication without an explicit decision.
 
-Everything is local.
-Everything is reviewable.
-Nothing executes without approval.
+Adjudication:
+requires_approval
+
+✅ Safe
+externalWrite:false
+No email, draft, call, or external change made.
+```
+
+For the broader open-loop showcase:
+
+```bash
+npm run wow
 ```
 
 ---
@@ -202,23 +204,39 @@ Contract is not external write.
 
 ## 🧰 Useful commands
 
-```bash
-npm run wow
-npm run doctor
-npm run wow:developer
-npm run loop:list
-npm run proposal:list
-npm run state:check
-npm run receipts:verify
-```
-
-For messenger-friendly output (Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat):
+Default demo (Agent Execution Guard compact):
 
 ```bash
 npm run demo
 npm run guard:demo
-npm run wow:mobile
+```
+
+Broader open-loop showcase:
+
+```bash
+npm run wow
+```
+
+Doctor and state:
+
+```bash
+npm run doctor
 npm run doctor:mobile
+npm run state:check
+npm run receipts:verify
+```
+
+Developer tools:
+
+```bash
+npm run wow:developer
+npm run loop:list
+npm run proposal:list
+```
+
+Messenger-friendly adapter output:
+
+```bash
 npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
 ```
 

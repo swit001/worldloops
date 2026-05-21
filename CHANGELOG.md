@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.7.1 — Demo Routing Cleanup
+
+WorldLoops v1.7.1 makes Agent Execution Guard the default demo path and removes the old `wow:mobile` route that caused Telegram/OpenClaw to show the legacy 6-open-loop mobile demo.
+
+### Problem
+
+In v1.7.0, `npm run demo` routed through `briefMessenger.js`, which produced a "WorldLoops Guard" header and verbose format. The `wow:mobile` script existed alongside `demo`, causing natural-language demo routing in Telegram/OpenClaw to sometimes surface "WorldLoops found 6 open loops" instead of the compact Agent Execution Guard output.
+
+### Changes
+
+- `npm run demo` now runs: `node dist/scripts/guardAdapter.js --source gmail --input examples/adapters/openclaw-gmail-claim.json --compact`
+- `npm run guard:demo` now runs the same compact path
+- `wow:mobile` script removed from `package.json`
+- `test:wow-mobile` script removed from `package.json`
+- SKILL.md Agent Runtime Instructions: added explicit routing guidance for "demo", "show demo", "데모 보여줘", and all guard/execution guard phrases
+- README Quick Start: updated expected `npm run demo` output to compact Agent Execution Guard format
+- Tests: tightened to require "Agent Execution Guard" header and `externalWrite:false` (no space) for both `demo` and `guard:demo`; assert "WorldLoops found 6 open loops" does not appear in either; assert `wow:mobile` is not in `package.json`
+
+### Expected output
+
+```
+🦞 Agent Execution Guard
+
+🚨 High — Gmail callback requested
+State: open
+
+Proposal:
+Review claim context and decide whether to call back or prepare a written response. This is a local planning action only — do not initiate any call, email, or external communication without an explicit decision.
+
+Adjudication:
+requires_approval
+
+✅ Safe
+externalWrite:false
+No email, draft, call, or external change made.
+```
+
+### Safety
+
+- No external writes added
+- No connectors added
+- `externalWrite:false` preserved throughout
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run demo
+npm run guard:demo
+npm run test:guard-adapter
+npm run test:messenger
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.7.0 — Agent Execution Guard Adapter Invocation Foundation
 
 WorldLoops v1.7.0 introduces the governed adapter invocation path and cleans up the ClawHub landing.

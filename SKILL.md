@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.7.0"
+version: "1.7.1"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -42,32 +42,27 @@ npm run doctor
 
 ---
 
-## Example messenger output
+## Example demo output
 
 ```bash
 npm run demo
 ```
 
 ```
-🦞 WorldLoops Guard
-
-1 open loop detected
+🦞 Agent Execution Guard
 
 🚨 High — Gmail callback requested
-State: needs_response
+State: open
 
 Proposal:
-Review claim context and decide whether to call back or prepare a written response.
+Review claim context and decide whether to call back or prepare a written response. This is a local planning action only — do not initiate any call, email, or external communication without an explicit decision.
 
 Adjudication:
 requires_approval
 
-Receipt:
-local proposal recorded
-
 ✅ Safe
-externalWrite: false
-No email sent. No external system changed.
+externalWrite:false
+No email, draft, call, or external change made.
 ```
 
 ---
@@ -121,7 +116,6 @@ npm run guard:github -- --input <payload.json>
 For compact chat-friendly output:
 
 ```bash
-npm run wow:mobile
 npm run doctor:mobile
 ```
 
@@ -174,12 +168,18 @@ clawhub install worldloops --force
 
 The following section is for OpenClaw agents, not end users.
 
-### Fast demo
+### Demo routing
 
 When the user asks for any of the following:
+- "demo"
+- "show demo"
+- "데모 보여줘"
+- "guard demo"
+- "execution guard demo"
+- "Agent Execution Guard demo"
 - "real signal governance demo"
+- "WorldLoops guard demo"
 - "WorldLoops demo"
-- "agent execution guard demo"
 - "run the guard demo"
 - "show me the open loop demo"
 
@@ -192,9 +192,9 @@ npm run demo
 Do not inspect `package.json` first.
 Do not search the workspace first.
 Do not print raw JSON.
-Return only the messenger-friendly summary.
+Return only the compact, messenger-friendly output.
 
-The output will be a concise, human-readable summary — safe for Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat surfaces.
+The output will be concise Agent Execution Guard output — safe for Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat surfaces.
 
 ### Runtime invocation
 
