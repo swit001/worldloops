@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.8.0"
+version: "1.8.1"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -104,12 +104,12 @@ No connectors added.
 No OAuth added.
 No external write.
 
-A host agent (OpenClaw or any other) reads signals from Gmail, Calendar, Slack, or GitHub.
+A host agent (OpenClaw, gog, or any other) reads signals from Gmail, Calendar, Slack, or GitHub.
 It places the already-read payload as a local JSON file.
 Agent Execution Guard receives that payload, normalizes it into an `AdapterSignal`, and produces a governed receipt.
 
 ```
-OpenClaw reads Gmail / Calendar / Slack / GitHub
+OpenClaw / gog reads Gmail / Calendar / Slack / GitHub
     ↓
 already-read payload → .worldloops/inbox/openclaw-gmail-live.json
     ↓
@@ -120,6 +120,21 @@ Agent Execution Guard
 governed open loop → proposal → receipt
 externalWrite:false
 ```
+
+### Accepted local payload formats
+
+Agent Execution Guard can consume local payloads in these forms:
+
+- **AdapterSignal JSON** — fully normalized signal with `source`, `sourceType`, `text`, `observedAt`, `externalWrite:false`
+- **OpenClaw-style handoff payloads** — already-normalized payloads from OpenClaw host agents
+- **gog-style Gmail payloads** — `{ "messages": [...] }` output from gog Gmail reads
+- **gog-style Calendar payloads** — `{ "events": [...] }` output from gog Calendar reads
+- **Slack host/plugin payloads** — `{ "channel": "...", "messages": [...] }` output from Slack host tools
+
+gog and OpenClaw read Gmail, Calendar, and Slack.
+Agent Execution Guard only consumes the local JSON output they produce.
+No Gmail, Calendar, or Slack API call is made by WorldLoops.
+`externalWrite:false` is preserved throughout.
 
 ### Local handoff directory
 

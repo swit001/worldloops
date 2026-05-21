@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.8.1 — Gmail, Calendar, and Slack gog Handoff Adapters
+
+v1.8.1 adds Gmail, Calendar, and Slack gog handoff adapters so `guard:gmail`, `guard:calendar`, and `guard:slack` can consume local gog/OpenClaw JSON payloads without adding connectors, OAuth, external fetches, or external writes.
+
+### Problem fixed
+
+`guard:gmail` failed with `Invalid adapter signal. text: required, must be a non-empty string` when given a gog-style Gmail fixture (`{ "messages": [...] }`) because no `text` field was present.
+
+### New normalizers
+
+- **gog Gmail normalizer** (`src/adapters/gogGmail.ts`) — converts `{ "messages": [...] }` payloads to `AdapterSignal`. Picks the most actionable message by keyword score (reply, callback, deadline, follow-up, claim, approval, review). Extracts subject, from, snippet, thread hint. Metadata includes messageId, threadId, labels, from, subject.
+- **gog Calendar normalizer** (`src/adapters/gogCalendar.ts`) — converts `{ "events": [...] }` payloads to `AdapterSignal`. Picks the most actionable event by keyword score (prepare, materials, follow-up, deadline, review, recap). Extracts summary, description, start, end, location. Metadata includes eventId, start, end, location.
+- **Slack host payload normalizer** (`src/adapters/slackPayload.ts`) — converts `{ "channel": "...", "messages": [...] }` or single-message Slack payloads to `AdapterSignal`. Picks the most actionable message. Extracts text, channel, user, ts, thread_ts, permalink. Metadata preserves channel, user, ts, thread_ts, permalink.
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+gog and OpenClaw read external systems.
+Agent Execution Guard only consumes their local JSON output.
+`externalWrite:false` preserved throughout.
+
+### Changes
+
+- `src/adapters/gogGmail.ts` — new gog Gmail → AdapterSignal normalizer
+- `src/adapters/gogCalendar.ts` — new gog Calendar → AdapterSignal normalizer
+- `src/adapters/slackPayload.ts` — new Slack host payload → AdapterSignal normalizer
+- `src/scripts/guardAdapter.ts` — source-specific normalization before AdapterSignal validation
+- `scripts/fixtures/slack-messages.json` — new Slack host payload fixture
+- `tests/guardAdapter.test.cjs` — new gog Gmail, gog Calendar, Slack host payload tests; version 1.8.1
+- `tests/guardHandoff.test.cjs` — new gog Gmail, gog Calendar, Slack host payload tests; version 1.8.1
+- `SKILL.md` — OpenClaw Signal Handoff section updated with accepted payload formats; version 1.8.1
+- `README.md` — OpenClaw Signal Handoff section updated with accepted payload formats
+- `CHANGELOG.md` — this entry
+- `package.json` — version 1.8.0 → 1.8.1
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run demo
+npm run guard:demo
+npm run guard:gmail -- --input scripts/fixtures/gog-gmail-messages.json --compact
+npm run guard:calendar -- --input scripts/fixtures/gog-calendar-events.json --compact
+npm run guard:slack -- --input examples/adapters/slack-message.json --compact
+npm run guard:gmail -- --input examples/handoff/openclaw-gmail-live.redacted.json --compact
+npm run guard:calendar -- --input examples/handoff/openclaw-calendar-live.redacted.json --compact
+npm run test:guard-adapter
+npm run test:guard-handoff
+npm run test:messenger
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.8.0 — Real OpenClaw Signal Handoff
 
 WorldLoops v1.8.0 documents and formalizes the local handoff convention between OpenClaw host agents and Agent Execution Guard.

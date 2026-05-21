@@ -9,6 +9,9 @@ import { buildTransitionReceipt, saveTransitionReceipt } from '../storage/transi
 import { buildOpenLoopStateFromProposal, loadOpenLoopStates, saveOpenLoopState } from '../storage/openLoopStates';
 import { buildProposalFromCandidate, findProposalByIdempotencyKey, saveProposal } from '../storage/proposals';
 import { printMessengerOutput, printCompactOutput } from '../output/messengerFormat';
+import { isGogGmailPayload, gogGmailToAdapterSignal } from '../adapters/gogGmail';
+import { isGogCalendarPayload, gogCalendarToAdapterSignal } from '../adapters/gogCalendar';
+import { isSlackHostPayload, slackPayloadToAdapterSignal } from '../adapters/slackPayload';
 
 const SUPPORTED_SOURCES = ['gmail', 'calendar', 'slack', 'github', 'generic'];
 
@@ -79,13 +82,22 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Normalize: if --source provided and payload lacks required fields, inject defaults
+  // Source-specific normalization for gog and host tool payloads before AdapterSignal validation
   if (source && typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
-    const obj = raw as Record<string, unknown>;
-    if (!obj.source) obj.source = source;
-    if (!obj.sourceType) obj.sourceType = 'message';
-    if (obj.externalWrite === undefined) obj.externalWrite = false;
-    if (!obj.observedAt) obj.observedAt = new Date().toISOString();
+    if (source === 'gmail' && isGogGmailPayload(raw)) {
+      raw = gogGmailToAdapterSignal(raw);
+    } else if (source === 'calendar' && isGogCalendarPayload(raw)) {
+      raw = gogCalendarToAdapterSignal(raw);
+    } else if (source === 'slack' && isSlackHostPayload(raw)) {
+      raw = slackPayloadToAdapterSignal(raw);
+    } else {
+      // Simple field injection for AdapterSignal-like partial payloads
+      const obj = raw as Record<string, unknown>;
+      if (!obj.source) obj.source = source;
+      if (!obj.sourceType) obj.sourceType = 'message';
+      if (obj.externalWrite === undefined) obj.externalWrite = false;
+      if (!obj.observedAt) obj.observedAt = new Date().toISOString();
+    }
   }
 
   const validation = validateAdapterSignal(raw);

@@ -42,6 +42,9 @@ const transitionReceipts_1 = require("../storage/transitionReceipts");
 const openLoopStates_1 = require("../storage/openLoopStates");
 const proposals_1 = require("../storage/proposals");
 const messengerFormat_1 = require("../output/messengerFormat");
+const gogGmail_1 = require("../adapters/gogGmail");
+const gogCalendar_1 = require("../adapters/gogCalendar");
+const slackPayload_1 = require("../adapters/slackPayload");
 const SUPPORTED_SOURCES = ['gmail', 'calendar', 'slack', 'github', 'generic'];
 function getFlagValue(flag) {
     const args = process.argv.slice(2);
@@ -102,17 +105,29 @@ async function main() {
         printError([`❌ Could not read input file: ${inputPath}`], outputFormat);
         process.exit(1);
     }
-    // Normalize: if --source provided and payload lacks required fields, inject defaults
+    // Source-specific normalization for gog and host tool payloads before AdapterSignal validation
     if (source && typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
-        const obj = raw;
-        if (!obj.source)
-            obj.source = source;
-        if (!obj.sourceType)
-            obj.sourceType = 'message';
-        if (obj.externalWrite === undefined)
-            obj.externalWrite = false;
-        if (!obj.observedAt)
-            obj.observedAt = new Date().toISOString();
+        if (source === 'gmail' && (0, gogGmail_1.isGogGmailPayload)(raw)) {
+            raw = (0, gogGmail_1.gogGmailToAdapterSignal)(raw);
+        }
+        else if (source === 'calendar' && (0, gogCalendar_1.isGogCalendarPayload)(raw)) {
+            raw = (0, gogCalendar_1.gogCalendarToAdapterSignal)(raw);
+        }
+        else if (source === 'slack' && (0, slackPayload_1.isSlackHostPayload)(raw)) {
+            raw = (0, slackPayload_1.slackPayloadToAdapterSignal)(raw);
+        }
+        else {
+            // Simple field injection for AdapterSignal-like partial payloads
+            const obj = raw;
+            if (!obj.source)
+                obj.source = source;
+            if (!obj.sourceType)
+                obj.sourceType = 'message';
+            if (obj.externalWrite === undefined)
+                obj.externalWrite = false;
+            if (!obj.observedAt)
+                obj.observedAt = new Date().toISOString();
+        }
     }
     const validation = (0, validateAdapterSignal_1.validateAdapterSignal)(raw);
     if (!validation.ok) {

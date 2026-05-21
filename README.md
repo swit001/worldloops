@@ -40,7 +40,7 @@ No connectors added.
 No OAuth added.
 No external write.
 
-A host agent places an already-read payload into `.worldloops/inbox/`.
+A host agent (OpenClaw, gog, or any other) places an already-read payload into `.worldloops/inbox/`.
 Agent Execution Guard consumes it locally and produces a governed receipt.
 
 ```
@@ -53,6 +53,21 @@ Agent Execution Guard
 governed open loop → proposal → receipt
 externalWrite:false
 ```
+
+### Accepted local payload formats
+
+Agent Execution Guard can consume local payloads in these forms:
+
+- **AdapterSignal JSON** — fully normalized signal with `source`, `sourceType`, `text`, `observedAt`, `externalWrite:false`
+- **OpenClaw-style handoff payloads** — already-normalized payloads from OpenClaw host agents
+- **gog-style Gmail payloads** — `{ "messages": [...] }` output from gog Gmail reads
+- **gog-style Calendar payloads** — `{ "events": [...] }` output from gog Calendar reads
+- **Slack host/plugin payloads** — `{ "channel": "...", "messages": [...] }` output from Slack host tools
+
+gog and OpenClaw read Gmail, Calendar, and Slack.
+Agent Execution Guard only consumes the local JSON output they produce.
+No Gmail, Calendar, or Slack API call is made by WorldLoops.
+`externalWrite:false` is preserved throughout.
 
 Supported handoff paths:
 

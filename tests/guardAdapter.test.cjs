@@ -322,15 +322,15 @@ function assertSafe(output, label) {
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.8.0"'), 'SKILL.md: version must be 1.8.0');
-  console.log('  PASS  SKILL.md: version is 1.8.0');
+  assert.ok(skill.includes('version: "1.8.1"'), 'SKILL.md: version must be 1.8.1');
+  console.log('  PASS  SKILL.md: version is 1.8.1');
 }
 
 // ── package.json: version and scripts ────────────────────────────────────────
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.8.0', 'package.json: version must be 1.8.0');
+  assert.strictEqual(pkg.version, '1.8.1', 'package.json: version must be 1.8.1');
   assert.ok(pkg.scripts.demo, 'package.json: demo script must exist');
   assert.ok(pkg.scripts['guard:demo'], 'package.json: guard:demo script must exist');
   assert.ok(pkg.scripts['guard:adapter'], 'package.json: guard:adapter script must exist');
@@ -347,11 +347,101 @@ function assertSafe(output, label) {
     'package.json: guard:demo script must use guardAdapter.js --compact'
   );
   assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile must be removed (v1.8.0 routing cleanup)');
-  console.log('  PASS  package.json: version is 1.8.0');
+  console.log('  PASS  package.json: version is 1.8.1');
   console.log('  PASS  package.json: all guard scripts present');
   console.log('  PASS  package.json: demo uses guardAdapter.js --compact');
   console.log('  PASS  package.json: guard:demo uses guardAdapter.js --compact');
   console.log('  PASS  package.json: wow:mobile removed');
+}
+
+// ── guard:gmail with gog fixture ─────────────────────────────────────────────
+
+{
+  const result = run([
+    'guard:gmail', '--',
+    '--input', 'scripts/fixtures/gog-gmail-messages.json',
+    '--compact',
+  ]);
+  assert.strictEqual(result.status, 0, `guard:gmail gog: exit 0\n${result.stdout}\n${result.stderr}`);
+  assertNoRawJson(result.stdout, 'guard:gmail gog');
+  assertExternalWriteFalse(result.stdout, 'guard:gmail gog');
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard'),
+    'guard:gmail gog: must include "Agent Execution Guard"'
+  );
+  assert.ok(
+    !result.stdout.includes('Invalid adapter signal'),
+    'guard:gmail gog: must not include "Invalid adapter signal"'
+  );
+  console.log('  PASS  guard:gmail gog fixture: exits 0');
+  console.log('  PASS  guard:gmail gog fixture: no raw JSON');
+  console.log('  PASS  guard:gmail gog fixture: externalWrite:false present');
+  console.log('  PASS  guard:gmail gog fixture: "Agent Execution Guard" header present');
+  console.log('  PASS  guard:gmail gog fixture: no "Invalid adapter signal"');
+}
+
+// ── guard:calendar with gog fixture ──────────────────────────────────────────
+
+{
+  const result = run([
+    'guard:calendar', '--',
+    '--input', 'scripts/fixtures/gog-calendar-events.json',
+    '--compact',
+  ]);
+  assert.strictEqual(result.status, 0, `guard:calendar gog: exit 0\n${result.stdout}\n${result.stderr}`);
+  assertNoRawJson(result.stdout, 'guard:calendar gog');
+  assertExternalWriteFalse(result.stdout, 'guard:calendar gog');
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard'),
+    'guard:calendar gog: must include "Agent Execution Guard"'
+  );
+  assert.ok(
+    !result.stdout.includes('Invalid adapter signal'),
+    'guard:calendar gog: must not include "Invalid adapter signal"'
+  );
+  console.log('  PASS  guard:calendar gog fixture: exits 0');
+  console.log('  PASS  guard:calendar gog fixture: no raw JSON');
+  console.log('  PASS  guard:calendar gog fixture: externalWrite:false present');
+  console.log('  PASS  guard:calendar gog fixture: "Agent Execution Guard" header present');
+  console.log('  PASS  guard:calendar gog fixture: no "Invalid adapter signal"');
+}
+
+// ── guard:slack with host payload fixture ─────────────────────────────────────
+
+{
+  const result = run([
+    'guard:slack', '--',
+    '--input', 'scripts/fixtures/slack-messages.json',
+    '--compact',
+  ]);
+  assert.strictEqual(result.status, 0, `guard:slack host payload: exit 0\n${result.stdout}\n${result.stderr}`);
+  assertNoRawJson(result.stdout, 'guard:slack host payload');
+  assertExternalWriteFalse(result.stdout, 'guard:slack host payload');
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard'),
+    'guard:slack host payload: must include "Agent Execution Guard"'
+  );
+  assert.ok(
+    !result.stdout.includes('Invalid adapter signal'),
+    'guard:slack host payload: must not include "Invalid adapter signal"'
+  );
+  console.log('  PASS  guard:slack host payload: exits 0');
+  console.log('  PASS  guard:slack host payload: no raw JSON');
+  console.log('  PASS  guard:slack host payload: externalWrite:false present');
+  console.log('  PASS  guard:slack host payload: "Agent Execution Guard" header present');
+  console.log('  PASS  guard:slack host payload: no "Invalid adapter signal"');
+}
+
+// ── no connector / OAuth / fetch in dist ──────────────────────────────────────
+
+{
+  const src = fs.readFileSync('dist/scripts/guardAdapter.js', 'utf8');
+  assert.ok(!src.includes('googleapis'), 'guardAdapter: must not reference googleapis');
+  assert.ok(!src.includes('OAuth'), 'guardAdapter: must not reference OAuth');
+  assert.ok(!src.includes('graph.microsoft.com'), 'guardAdapter: must not reference MS Graph');
+  assert.ok(!src.includes("fetch('"), 'guardAdapter: must not contain fetch() calls');
+  assert.ok(!src.includes('fetch("'), 'guardAdapter: must not contain fetch() calls');
+  console.log('  PASS  guardAdapter: no connector/OAuth/fetch behavior in dist');
 }
 
 // ── no --input → exits 1 with safe output ────────────────────────────────────
