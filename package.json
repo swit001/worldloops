@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -95,7 +95,8 @@
     "test:doctor-mobile": "node tests/doctorMobile.test.cjs",
     "test:messenger": "node tests/briefMessenger.test.cjs",
     "test:guard-adapter": "node tests/guardAdapter.test.cjs",
-    "test:guard-handoff": "node tests/guardHandoff.test.cjs"
+    "test:guard-handoff": "node tests/guardHandoff.test.cjs",
+    "test:v182-public-listing": "node tests/v182PublicListing.test.cjs"
   },
   "keywords": [
     "openclaw",

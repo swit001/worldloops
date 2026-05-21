@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.8.2 — Runtime Instruction and Public Listing Cleanup
+
+v1.8.2 cleans up public runtime instructions and default output documentation. It removes non-English demo trigger phrases from SKILL.md, replaces the legacy brief:reconcile default runtime command with npm run --silent demo, and clarifies that compact Agent Execution Guard output is the default while structured JSON remains available for developer workflows.
+
+### Changes
+
+- `SKILL.md` — version 1.8.1 → 1.8.2; Korean phrase "데모 보여줘" removed from Demo routing; Demo routing simplified; safe default runtime command updated from brief:reconcile to npm run --silent demo; local payload handoff commands added; Output section updated to compact-first wording
+- `CHANGELOG.md` — this entry
+- `package.json` — version 1.8.1 → 1.8.2; test:v182-public-listing script added
+- `tests/v182PublicListing.test.cjs` — new tests: no Korean phrase, correct default command, no brief:reconcile as default, compact-first Output, no JSON-first README wording, version 1.8.2
+- `tests/guardAdapter.test.cjs` — version assertions updated to 1.8.2
+- `tests/guardHandoff.test.cjs` — version assertions updated to 1.8.2
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+No normalizer behavior changed.
+`externalWrite:false` preserved throughout.
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run demo
+npm run guard:gmail -- --input scripts/fixtures/gog-gmail-messages.json --compact
+npm run guard:calendar -- --input scripts/fixtures/gog-calendar-events.json --compact
+npm run guard:slack -- --input scripts/fixtures/slack-messages.json --compact
+npm run test:guard-adapter
+npm run test:guard-handoff
+npm run test:messenger
+npm run test:v182-public-listing
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.8.1 — Gmail, Calendar, and Slack gog Handoff Adapters
 
 v1.8.1 adds Gmail, Calendar, and Slack gog handoff adapters so `guard:gmail`, `guard:calendar`, and `guard:slack` can consume local gog/OpenClaw JSON payloads without adding connectors, OAuth, external fetches, or external writes.

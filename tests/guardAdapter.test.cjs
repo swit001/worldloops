@@ -307,10 +307,10 @@ function assertSafe(output, label) {
     'SKILL.md: public section must not include "Do not print raw JSON"'
   );
 
-  // Verify these phrases exist after the Agent Runtime Instructions boundary
+  // Verify agent-facing rules exist after the Agent Runtime Instructions boundary
   const runtimeSection = skill.slice(runtimeIdx);
   assert.ok(
-    runtimeSection.includes('Do not inspect'),
+    runtimeSection.includes('Do not invent missing source data'),
     'SKILL.md: agent runtime instructions must appear after ## Agent Runtime Instructions'
   );
 
@@ -322,15 +322,15 @@ function assertSafe(output, label) {
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.8.1"'), 'SKILL.md: version must be 1.8.1');
-  console.log('  PASS  SKILL.md: version is 1.8.1');
+  assert.ok(skill.includes('version: "1.8.2"'), 'SKILL.md: version must be 1.8.2');
+  console.log('  PASS  SKILL.md: version is 1.8.2');
 }
 
 // ── package.json: version and scripts ────────────────────────────────────────
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.8.1', 'package.json: version must be 1.8.1');
+  assert.strictEqual(pkg.version, '1.8.2', 'package.json: version must be 1.8.2');
   assert.ok(pkg.scripts.demo, 'package.json: demo script must exist');
   assert.ok(pkg.scripts['guard:demo'], 'package.json: guard:demo script must exist');
   assert.ok(pkg.scripts['guard:adapter'], 'package.json: guard:adapter script must exist');
@@ -347,7 +347,7 @@ function assertSafe(output, label) {
     'package.json: guard:demo script must use guardAdapter.js --compact'
   );
   assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile must be removed (v1.8.0 routing cleanup)');
-  console.log('  PASS  package.json: version is 1.8.1');
+  console.log('  PASS  package.json: version is 1.8.2');
   console.log('  PASS  package.json: all guard scripts present');
   console.log('  PASS  package.json: demo uses guardAdapter.js --compact');
   console.log('  PASS  package.json: guard:demo uses guardAdapter.js --compact');

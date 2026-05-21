@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.8.1"
+version: "1.8.2"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -232,31 +232,13 @@ The following section is for OpenClaw agents, not end users.
 
 ### Demo routing
 
-When the user asks for any of the following:
-- "demo"
-- "show demo"
-- "데모 보여줘"
-- "guard demo"
-- "execution guard demo"
-- "Agent Execution Guard demo"
-- "real signal governance demo"
-- "WorldLoops guard demo"
-- "WorldLoops demo"
-- "run the guard demo"
-- "show me the open loop demo"
-
-Run this command immediately:
+When the user asks for a demo, guard demo, execution guard demo, Agent Execution Guard demo, real signal governance demo, WorldLoops guard demo, or open-loop demo, run:
 
 ```bash
-npm run demo
+npm run --silent demo
 ```
 
-Do not inspect `package.json` first.
-Do not search the workspace first.
-Do not print raw JSON.
-Return only the compact, messenger-friendly output.
-
-The output will be concise Agent Execution Guard output — safe for Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat surfaces.
+Return only the compact Agent Execution Guard output.
 
 ### Runtime invocation
 
@@ -272,12 +254,16 @@ When the user asks you to run this skill, do the following:
 Safe default command from the skill directory:
 
 ```
-npm run --silent brief:reconcile -- \
-  --gmail-event scripts/fixtures/openclaw-gmail-webhook.json \
-  --calendar-event scripts/fixtures/openclaw-calendar-events.json \
-  --gog-gmail scripts/fixtures/gog-gmail-messages.json \
-  --gog-calendar scripts/fixtures/gog-calendar-events.json \
-  --message-read scripts/fixtures/openclaw-message-read.json
+npm run --silent demo
+```
+
+For local payload handoff:
+
+```
+npm run --silent guard:gmail -- --input <payload.json> --compact
+npm run --silent guard:calendar -- --input <payload.json> --compact
+npm run --silent guard:slack -- --input <payload.json> --compact
+npm run --silent guard:github -- --input <payload.json> --compact
 ```
 
 ### Default API
@@ -304,15 +290,8 @@ WORLDLOOPS_API_KEY=your_api_key
 
 ### Output
 
-The skill returns safe JSON containing:
-
-- `brief`
-- `openLoops`
-- `proposalCandidates`
-- `safety.externalWrite`
-- `mode`
-- `source`
-- `metadata`
+Default output is compact, messenger-friendly Agent Execution Guard output.
+Structured JSON remains available through developer-oriented commands where supported.
 
 ### Important rules
 
