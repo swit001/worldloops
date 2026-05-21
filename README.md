@@ -1,4 +1,4 @@
-# 🦞 WorldLoops
+# 🦞 WorldLoops — Agent Execution Guard
 
 AI agents can answer from a snapshot.
 
@@ -12,12 +12,32 @@ It turns real work signals into governed open loops — detecting unfinished res
 
 ---
 
+## Architecture
+
+OpenClaw reads signals.
+WorldLoops guards execution.
+
+WorldLoops does not need to own every connector.
+If a host agent can read a signal, it can pass it to Agent Execution Guard.
+
+```
+OpenClaw (reads Gmail, Calendar, Slack, GitHub)
+    ↓
+already-read payload
+    ↓
+Agent Execution Guard (WorldLoops)
+    ↓
+governed open loop → proposal → approval → local transition → receipt
+```
+
+---
+
 ## 🚀 Try it
 
 ```bash
 clawhub install worldloops --force
 cd ~/.openclaw/workspace/skills/worldloops
-npm run wow
+npm run demo
 npm run doctor
 ```
 
@@ -195,9 +215,22 @@ npm run receipts:verify
 For messenger-friendly output (Telegram, Slack, Discord, WhatsApp, SMS, and mobile chat):
 
 ```bash
+npm run demo
+npm run guard:demo
 npm run wow:mobile
 npm run doctor:mobile
 npm run brief:messenger -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
+```
+
+For governed adapter invocation (already-read OpenClaw payloads):
+
+```bash
+npm run guard:adapter -- --source gmail --input examples/adapters/openclaw-gmail-claim.json
+npm run guard:adapter -- --source gmail --input examples/adapters/openclaw-gmail-claim.json --compact
+npm run guard:gmail -- --input examples/adapters/openclaw-gmail-claim.json
+npm run guard:calendar -- --input examples/adapters/openclaw-calendar-prep.json
+npm run guard:slack -- --input examples/adapters/openclaw-slack-review-request.json
+npm run guard:github -- --input examples/adapters/openclaw-github-pr-review.json
 ```
 
 For adapter developers:

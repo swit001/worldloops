@@ -1,5 +1,99 @@
 # Changelog
 
+## v1.7.0 — Agent Execution Guard Adapter Invocation Foundation
+
+WorldLoops v1.7.0 introduces the governed adapter invocation path and cleans up the ClawHub landing.
+
+### Highlights
+
+- ClawHub display name: **Agent Execution Guard**
+- Added `npm run demo` and `npm run guard:demo` one-command demo paths
+- Added `npm run guard:adapter` — governed adapter invocation for already-read OpenClaw payloads
+- Added source aliases: `guard:gmail`, `guard:calendar`, `guard:slack`, `guard:github`
+- Added `--compact` flag for mobile-optimized messenger output
+- Added 6 OpenClaw payload fixtures under `examples/adapters/`
+- Rewrote SKILL.md top section as user-facing ClawHub landing copy
+- Moved agent-facing runtime instructions to `## Agent Runtime Instructions`
+- README architecture section: "OpenClaw reads signals. WorldLoops guards execution."
+
+### Architecture
+
+```
+OpenClaw (reads Gmail, Calendar, Slack, GitHub)
+    ↓
+already-read payload
+    ↓
+Agent Execution Guard (WorldLoops)
+    ↓
+governed open loop → proposal → approval → local transition → receipt
+```
+
+WorldLoops does not fetch Gmail, Calendar, Slack, GitHub, or any external system.
+It only consumes local payload JSON already provided by OpenClaw or the host agent.
+
+### New commands
+
+```bash
+npm run demo
+npm run guard:demo
+npm run guard:adapter -- --source gmail --input <payload.json>
+npm run guard:adapter -- --source gmail --input <payload.json> --compact
+npm run guard:gmail -- --input <payload.json>
+npm run guard:calendar -- --input <payload.json>
+npm run guard:slack -- --input <payload.json>
+npm run guard:github -- --input <payload.json>
+```
+
+### Compact output shape
+
+```
+🦞 Agent Execution Guard
+
+🚨 High — Gmail callback requested
+State: needs_response
+
+Proposal:
+Review before responding.
+
+Adjudication:
+requires_approval
+
+✅ Safe
+externalWrite:false
+No email, draft, call, or external change made.
+```
+
+### New fixtures
+
+- `examples/adapters/openclaw-gmail-claim.json` — high / needs_response / requires_approval
+- `examples/adapters/openclaw-gmail-sales-noise.json` — sales noise suppression
+- `examples/adapters/openclaw-calendar-prep.json` — medium / preparing
+- `examples/adapters/openclaw-slack-review-request.json` — medium / waiting_for_review
+- `examples/adapters/openclaw-github-pr-review.json` — medium / review_requested
+- `examples/adapters/openclaw-generic-task.json` — generic manual task
+
+### Safety
+
+- No external writes added
+- No connectors added
+- No OAuth introduced
+- `externalWrite:false` preserved throughout
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run demo
+npm run guard:demo
+npm run test:messenger
+npm run test:guard-adapter
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.6.4 — Messenger-Friendly Output Hotfix
 
 WorldLoops v1.6.4 adds a messenger-friendly output mode for the real signal governance demo.
