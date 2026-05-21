@@ -322,15 +322,15 @@ function assertSafe(output, label) {
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.7.1"'), 'SKILL.md: version must be 1.7.1');
-  console.log('  PASS  SKILL.md: version is 1.7.1');
+  assert.ok(skill.includes('version: "1.8.0"'), 'SKILL.md: version must be 1.8.0');
+  console.log('  PASS  SKILL.md: version is 1.8.0');
 }
 
 // ── package.json: version and scripts ────────────────────────────────────────
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.7.1', 'package.json: version must be 1.7.1');
+  assert.strictEqual(pkg.version, '1.8.0', 'package.json: version must be 1.8.0');
   assert.ok(pkg.scripts.demo, 'package.json: demo script must exist');
   assert.ok(pkg.scripts['guard:demo'], 'package.json: guard:demo script must exist');
   assert.ok(pkg.scripts['guard:adapter'], 'package.json: guard:adapter script must exist');
@@ -346,8 +346,8 @@ function assertSafe(output, label) {
     pkg.scripts['guard:demo'].includes('guardAdapter.js') && pkg.scripts['guard:demo'].includes('--compact'),
     'package.json: guard:demo script must use guardAdapter.js --compact'
   );
-  assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile must be removed (v1.7.1 routing cleanup)');
-  console.log('  PASS  package.json: version is 1.7.1');
+  assert.ok(!pkg.scripts['wow:mobile'], 'package.json: wow:mobile must be removed (v1.8.0 routing cleanup)');
+  console.log('  PASS  package.json: version is 1.8.0');
   console.log('  PASS  package.json: all guard scripts present');
   console.log('  PASS  package.json: demo uses guardAdapter.js --compact');
   console.log('  PASS  package.json: guard:demo uses guardAdapter.js --compact');

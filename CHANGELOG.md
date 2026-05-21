@@ -1,5 +1,59 @@
 # Changelog
 
+## v1.8.0 — Real OpenClaw Signal Handoff
+
+WorldLoops v1.8.0 documents and formalizes the local handoff convention between OpenClaw host agents and Agent Execution Guard.
+
+### Architecture rule
+
+OpenClaw reads external systems.
+Agent Execution Guard receives local payload JSON and governs execution.
+
+No connectors added.
+No OAuth added.
+No external write.
+`externalWrite:false` preserved throughout.
+
+### Changes
+
+- **Quick Start cleanup:** SKILL.md and README Quick Start now use `clawhub install worldloops` and `npm run demo` only. `npm run doctor` moved to an Optional Safety Check section.
+- **Local handoff directory convention:** `.worldloops/inbox/` documented as the standard path for host agents to place already-read payloads.
+- **Handoff examples:** `examples/handoff/` directory with four redacted payload examples for Gmail, Calendar, Slack, and GitHub.
+- **OpenClaw Signal Handoff section:** Added to both SKILL.md and README.md explaining the payload-in / governed receipt-out flow.
+- **New tests:** `tests/guardHandoff.test.cjs` — verifies all four guard aliases work with handoff examples, compact output, externalWrite:false, no connector/OAuth behavior, Quick Start cleanliness, and version consistency.
+- **Version bump:** 1.7.1 → 1.8.0.
+
+### Handoff flow
+
+```
+OpenClaw reads Gmail / Calendar / Slack / GitHub
+    ↓
+already-read payload → .worldloops/inbox/openclaw-gmail-live.json
+    ↓
+npm run guard:gmail -- --input .worldloops/inbox/openclaw-gmail-live.json --compact
+    ↓
+Agent Execution Guard
+    ↓
+governed open loop → proposal → receipt
+externalWrite:false
+```
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run demo
+npm run guard:demo
+npm run test:guard-adapter
+npm run test:guard-handoff
+npm run test:messenger
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.7.1 — Demo Routing Cleanup
 
 WorldLoops v1.7.1 makes Agent Execution Guard the default demo path and removes the old `wow:mobile` route that caused Telegram/OpenClaw to show the legacy 6-open-loop mobile demo.

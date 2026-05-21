@@ -32,12 +32,52 @@ governed open loop → proposal → approval → local transition → receipt
 
 ---
 
-## 🚀 Try it
+## OpenClaw Signal Handoff
+
+OpenClaw reads. Agent Execution Guard governs.
+
+No connectors added.
+No OAuth added.
+No external write.
+
+A host agent places an already-read payload into `.worldloops/inbox/`.
+Agent Execution Guard consumes it locally and produces a governed receipt.
+
+```
+.worldloops/inbox/openclaw-gmail-live.json      ← host agent places this
+    ↓
+npm run guard:gmail -- --input .worldloops/inbox/openclaw-gmail-live.json --compact
+    ↓
+Agent Execution Guard
+    ↓
+governed open loop → proposal → receipt
+externalWrite:false
+```
+
+Supported handoff paths:
+
+```
+.worldloops/inbox/openclaw-gmail-live.json
+.worldloops/inbox/openclaw-calendar-live.json
+.worldloops/inbox/openclaw-slack-live.json
+.worldloops/inbox/openclaw-github-live.json
+```
+
+Redacted payload examples: [`examples/handoff/`](./examples/handoff/)
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-clawhub install worldloops --force
+clawhub install worldloops
 cd ~/.openclaw/workspace/skills/worldloops
 npm run demo
+```
+
+### Optional Safety Check
+
+```bash
 npm run doctor
 ```
 

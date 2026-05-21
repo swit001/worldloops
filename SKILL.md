@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.7.1"
+version: "1.8.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -31,12 +31,17 @@ No external system is changed.
 
 ---
 
-## Quick start
+## Quick Start
 
 ```bash
-openclaw skills install worldloops
+clawhub install worldloops
 cd ~/.openclaw/workspace/skills/worldloops
 npm run demo
+```
+
+### Optional Safety Check
+
+```bash
 npm run doctor
 ```
 
@@ -88,6 +93,48 @@ WorldLoops guards execution.
 
 WorldLoops does not need to own every connector.
 If a host agent can read a signal, it can pass it to Agent Execution Guard.
+
+---
+
+## OpenClaw Signal Handoff
+
+OpenClaw reads. Agent Execution Guard governs.
+
+No connectors added.
+No OAuth added.
+No external write.
+
+A host agent (OpenClaw or any other) reads signals from Gmail, Calendar, Slack, or GitHub.
+It places the already-read payload as a local JSON file.
+Agent Execution Guard receives that payload, normalizes it into an `AdapterSignal`, and produces a governed receipt.
+
+```
+OpenClaw reads Gmail / Calendar / Slack / GitHub
+    ↓
+already-read payload → .worldloops/inbox/openclaw-gmail-live.json
+    ↓
+npm run guard:gmail -- --input .worldloops/inbox/openclaw-gmail-live.json --compact
+    ↓
+Agent Execution Guard
+    ↓
+governed open loop → proposal → receipt
+externalWrite:false
+```
+
+### Local handoff directory
+
+Host agents should place payloads here:
+
+```
+.worldloops/inbox/openclaw-gmail-live.json
+.worldloops/inbox/openclaw-calendar-live.json
+.worldloops/inbox/openclaw-slack-live.json
+.worldloops/inbox/openclaw-github-live.json
+```
+
+The `.worldloops/inbox/` directory is created automatically on first run and is gitignored by default.
+
+Redacted payload examples are in `examples/handoff/`.
 
 ---
 
