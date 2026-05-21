@@ -276,4 +276,138 @@ function makeDecReceipt(proposalId, overrides) {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
+// ── receipt referencing proposal by local UUID resolves correctly ─────────────
+
+{
+  const tmpDir = mkTmp('receipt-by-uuid');
+  const propUUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+  writeJson(tmpDir, 'proposals.json', [
+    { id: propUUID, idempotencyKey: 'gmail:reply:1h07we6', externalWrite: false },
+  ]);
+  writeJson(tmpDir, 'transition_receipts.json', [
+    makeTransReceipt({ id: 'tr-uuid-ref', proposalId: propUUID }),
+  ]);
+  const result = checkReceipts({ worldloopsDir: tmpDir });
+  assert.strictEqual(result.ok, true, 'receipt referencing proposal UUID: should pass');
+  assert.strictEqual(result.summary.warnings, 0, 'no warnings expected when UUID matches');
+  assert.ok(!result.issues.some((i) => i.code === 'RECEIPT_MISSING_PROPOSAL'),
+    'should not report RECEIPT_MISSING_PROPOSAL when UUID matches');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── receipt referencing proposal by idempotencyKey resolves correctly ─────────
+
+{
+  const tmpDir = mkTmp('receipt-by-ikey');
+  const propUUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
+  const ikey = 'gmail:reply:1h07we6';
+  writeJson(tmpDir, 'proposals.json', [
+    { id: propUUID, idempotencyKey: ikey, externalWrite: false },
+  ]);
+  writeJson(tmpDir, 'transition_receipts.json', [
+    makeTransReceipt({ id: 'tr-ikey-ref', proposalId: ikey }),
+  ]);
+  const result = checkReceipts({ worldloopsDir: tmpDir });
+  assert.strictEqual(result.ok, true, 'receipt referencing idempotencyKey: should pass');
+  assert.strictEqual(result.summary.warnings, 0, 'no warnings when idempotencyKey matches');
+  assert.ok(!result.issues.some((i) => i.code === 'RECEIPT_MISSING_PROPOSAL'),
+    'should not report RECEIPT_MISSING_PROPOSAL when idempotencyKey matches');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── receipt referencing neither UUID nor idempotencyKey still warns ───────────
+
+{
+  const tmpDir = mkTmp('receipt-missing');
+  const propUUID = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
+  writeJson(tmpDir, 'proposals.json', [
+    { id: propUUID, idempotencyKey: 'gmail:reply:known', externalWrite: false },
+  ]);
+  writeJson(tmpDir, 'transition_receipts.json', [
+    makeTransReceipt({ id: 'tr-unknown-ref', proposalId: 'gmail:reply:unknown-key' }),
+  ]);
+  const result = checkReceipts({ worldloopsDir: tmpDir });
+  assert.ok(result.issues.some((i) => i.code === 'RECEIPT_MISSING_PROPOSAL'),
+    'should warn when proposalId does not match any id or idempotencyKey');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── Gmail claim fixture: adapter validates and externalWrite is false ─────────
+
+{
+  const root = path.resolve(__dirname, '..');
+  const { validateAdapterSignal } = require('../dist/adapter/validateAdapterSignal');
+  const claimFixture = require(
+    path.join(root, 'examples/adapters/gmail-claim-contact-request.example.json')
+  );
+  const result = validateAdapterSignal(claimFixture);
+  assert.strictEqual(result.ok, true, 'gmail-claim fixture: should validate');
+  assert.strictEqual(result.signal.source, 'gmail', 'gmail-claim: source should be gmail');
+  assert.strictEqual(result.signal.externalWrite, false, 'gmail-claim: externalWrite must be false');
+  assert.ok(result.signal.text.includes('26-99-554236'), 'gmail-claim: claim number in text');
+}
+
+// ── Sales outreach fixture: adapter validates and externalWrite is false ──────
+
+{
+  const root = path.resolve(__dirname, '..');
+  const { validateAdapterSignal } = require('../dist/adapter/validateAdapterSignal');
+  const salesFixture = require(
+    path.join(root, 'examples/adapters/gmail-working-capital-sales.example.json')
+  );
+  const result = validateAdapterSignal(salesFixture);
+  assert.strictEqual(result.ok, true, 'sales fixture: should validate');
+  assert.strictEqual(result.signal.source, 'gmail', 'sales fixture: source should be gmail');
+  assert.strictEqual(result.signal.externalWrite, false, 'sales fixture: externalWrite must be false');
+}
+
+// ── Proposal created before receipt yields no RECEIPT_MISSING_PROPOSAL ────────
+
+{
+  const tmpDir = mkTmp('proposal-before-receipt');
+  const {
+    buildProposalFromCandidate,
+    saveProposal,
+    findProposalByIdempotencyKey,
+  } = require('../dist/storage/proposals');
+  const { buildTransitionReceipt, saveTransitionReceipt } = require('../dist/storage/transitionReceipts');
+
+  process.env.WORLDLOOPS_DIR = tmpDir;
+
+  const candidate = {
+    idempotencyKey: 'gmail:reply:1h07we6',
+    entityType: 'thread',
+    source: 'gmail',
+    currentState: 'needs_response',
+    proposedState: 'reviewed',
+    reason: 'Claims adjuster follow-up requires response',
+    approvalRequired: true,
+    actionHint: 'Respond to claims adjuster',
+    severity: 'high',
+  };
+
+  // Simulate the v1.6.3 briefReconcile order: proposal first, then receipt
+  const proposal = buildProposalFromCandidate(candidate);
+  saveProposal(proposal);
+
+  const receipt = buildTransitionReceipt(candidate, [], {
+    proposalId: proposal.id,
+    adjudicationResult: 'proposed',
+    decision: 'surfaced_for_review',
+    boundaryCrossed: 'local_commit',
+  });
+  saveTransitionReceipt(receipt);
+
+  delete process.env.WORLDLOOPS_DIR;
+
+  const verifyResult = checkReceipts({ worldloopsDir: tmpDir });
+  assert.strictEqual(verifyResult.ok, true, 'proposal-before-receipt: should pass');
+  assert.strictEqual(verifyResult.summary.warnings, 0,
+    'no RECEIPT_MISSING_PROPOSAL when receipt references local proposal UUID');
+  assert.ok(!verifyResult.issues.some((i) => i.code === 'RECEIPT_MISSING_PROPOSAL'),
+    'RECEIPT_MISSING_PROPOSAL must not appear when proposal id matches');
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
 console.log('receiptsVerify tests passed');

@@ -122,7 +122,21 @@ async function main(): Promise<void> {
     const existingOpenLoops = loadOpenLoopStates();
     const existingCanonicalKeys = new Set(existingOpenLoops.map((loop) => loop.canonicalKey));
     for (const candidate of candidates) {
+      // Resolve or create proposal first so the receipt references the local UUID.
+      let proposalLocalId: string;
+      const existingProposal = findProposalByIdempotencyKey(candidate.idempotencyKey);
+      if (existingProposal) {
+        proposalsAlreadyTracked++;
+        proposalLocalId = existingProposal.id;
+      } else {
+        const proposal = buildProposalFromCandidate(candidate);
+        saveProposal(proposal);
+        proposalsPersisted++;
+        proposalLocalId = proposal.id;
+      }
+
       const receipt = buildTransitionReceipt(candidate, signals, {
+        proposalId: proposalLocalId,
         adjudicationResult: result.ok ? 'proposed' : 'api_error',
         decision: result.ok ? 'surfaced_for_review' : null,
         boundaryCrossed: 'local_commit',
@@ -137,14 +151,6 @@ async function main(): Promise<void> {
         saveOpenLoopState(openLoopState);
         existingCanonicalKeys.add(candidate.idempotencyKey);
         openLoopsPersisted++;
-      }
-
-      if (findProposalByIdempotencyKey(candidate.idempotencyKey)) {
-        proposalsAlreadyTracked++;
-      } else {
-        const proposal = buildProposalFromCandidate(candidate);
-        saveProposal(proposal);
-        proposalsPersisted++;
       }
     }
   }

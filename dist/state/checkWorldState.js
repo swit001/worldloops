@@ -189,6 +189,22 @@ function idSet(items) {
     }
     return s;
 }
+// Builds a lookup set of proposal references (id + idempotencyKey) for receipt verification.
+function proposalLookupSet(proposals) {
+    const s = new Set();
+    if (!proposals)
+        return s;
+    for (const item of proposals) {
+        if (typeof item !== 'object' || item === null)
+            continue;
+        const obj = item;
+        if (typeof obj['id'] === 'string')
+            s.add(obj['id']);
+        if (typeof obj['idempotencyKey'] === 'string')
+            s.add(obj['idempotencyKey']);
+    }
+    return s;
+}
 function buildResult(issues, filesChecked) {
     const errorCount = issues.filter((i) => i.severity === 'error').length;
     const warningCount = issues.filter((i) => i.severity === 'warning').length;
@@ -251,6 +267,7 @@ function checkWorldState(options) {
         filesChecked++;
     }
     const proposalIds = idSet(proposals);
+    const proposalLookup = proposalLookupSet(proposals);
     // ── execution_plans.json ─────────────────────────────────────────────────────
     const plansFile = fp('execution_plans.json');
     const plansFileExists = fs.existsSync(plansFile);
@@ -325,7 +342,7 @@ function checkWorldState(options) {
                     continue;
                 const obj = item;
                 const pid = obj['proposalId'];
-                if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
+                if (typeof pid === 'string' && pid !== '' && !proposalLookup.has(pid)) {
                     const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
                     if (alreadyRepaired) {
                         issues.push({
@@ -367,7 +384,7 @@ function checkWorldState(options) {
                     continue;
                 const obj = item;
                 const pid = obj['proposalId'];
-                if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
+                if (typeof pid === 'string' && pid !== '' && !proposalLookup.has(pid)) {
                     const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
                     if (alreadyRepaired) {
                         issues.push({
@@ -431,7 +448,8 @@ function checkReceipts(options) {
     const fp = (name) => path.join(dir, name);
     // Load proposals for reference checks (silent errors; not counted in filesChecked)
     const proposalsFileExists = fs.existsSync(fp('proposals.json'));
-    const proposalIds = idSet(tryReadJsonArray(fp('proposals.json'), []));
+    const proposalsRaw = tryReadJsonArray(fp('proposals.json'), []);
+    const proposalLookup = proposalLookupSet(proposalsRaw);
     // ── transition_receipts.json ─────────────────────────────────────────────────
     const transFile = fp('transition_receipts.json');
     const transFileExists = fs.existsSync(transFile);
@@ -447,7 +465,7 @@ function checkReceipts(options) {
                     continue;
                 const obj = item;
                 const pid = obj['proposalId'];
-                if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
+                if (typeof pid === 'string' && pid !== '' && !proposalLookup.has(pid)) {
                     const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
                     if (alreadyRepaired) {
                         issues.push({
@@ -489,7 +507,7 @@ function checkReceipts(options) {
                     continue;
                 const obj = item;
                 const pid = obj['proposalId'];
-                if (typeof pid === 'string' && pid !== '' && !proposalIds.has(pid)) {
+                if (typeof pid === 'string' && pid !== '' && !proposalLookup.has(pid)) {
                     const alreadyRepaired = typeof obj['_worldloopsRepair'] === 'object' && obj['_worldloopsRepair'] !== null;
                     if (alreadyRepaired) {
                         issues.push({

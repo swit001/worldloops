@@ -6,16 +6,19 @@ function printJson(value) {
 }
 function printHuman(proposal) {
     console.log(`Proposal: ${proposal.id}`);
-    console.log(`  Template:       ${proposal.templateId}`);
-    console.log(`  Title:          ${proposal.title}`);
-    console.log(`  Status:         ${proposal.status}`);
-    console.log(`  Category:       ${proposal.category}`);
-    console.log(`  Risk level:     ${proposal.riskLevel}`);
-    console.log(`  requiredReview: true`);
-    console.log(`  externalWrite:  false`);
-    console.log(`  Created at:     ${proposal.createdAt}`);
-    console.log(`  Updated at:     ${proposal.updatedAt}`);
-    console.log(`  Source:         ${proposal.source}`);
+    console.log(`  Template:         ${proposal.templateId}`);
+    console.log(`  Title:            ${proposal.title}`);
+    console.log(`  Status:           ${proposal.status}`);
+    console.log(`  Category:         ${proposal.category}`);
+    console.log(`  Risk level:       ${proposal.riskLevel}`);
+    if (proposal.idempotencyKey) {
+        console.log(`  IdempotencyKey:   ${proposal.idempotencyKey}`);
+    }
+    console.log(`  requiredReview:   true`);
+    console.log(`  externalWrite:    false`);
+    console.log(`  Created at:       ${proposal.createdAt}`);
+    console.log(`  Updated at:       ${proposal.updatedAt}`);
+    console.log(`  Source:           ${proposal.source}`);
     console.log('');
     console.log('  Intent:');
     console.log(`    ${proposal.intent}`);

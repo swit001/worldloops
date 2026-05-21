@@ -160,4 +160,68 @@ for (const fixture of [
   fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
+// ── reconcileMode is always local_heuristic ───────────────────────────────────
+
+{
+  const tmpDir = makeTmpDir();
+  const result = runAdapterTest(
+    path.join(root, 'examples/adapters/slack-message.json'),
+    { worldloopsDir: tmpDir }
+  );
+  assert.strictEqual(result.reconcileMode, 'local_heuristic',
+    'adapter:test should always report reconcileMode:local_heuristic');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── Gmail claim contact request fixture: validates and local reconcile passes ─
+
+{
+  const tmpDir = makeTmpDir();
+  const result = runAdapterTest(
+    path.join(root, 'examples/adapters/gmail-claim-contact-request.example.json'),
+    { worldloopsDir: tmpDir }
+  );
+  assert.strictEqual(result.validate, 'passed', 'gmail-claim: validate should pass');
+  assert.strictEqual(result.reconcile, 'passed', 'gmail-claim: local reconcile should pass');
+  assert.strictEqual(result.openLoopPersisted, true, 'gmail-claim: openLoopPersisted (local heuristic)');
+  assert.strictEqual(result.proposalPersisted, true, 'gmail-claim: proposalPersisted (local heuristic)');
+  assert.strictEqual(result.idempotency, 'passed', 'gmail-claim: idempotency should pass');
+  assert.strictEqual(result.externalWrite, false, 'gmail-claim: externalWrite must be false');
+  assert.strictEqual(result.reconcileMode, 'local_heuristic');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── Gmail claim: receipt aligns with proposal (no RECEIPT_MISSING_PROPOSAL) ──
+
+{
+  const os = require('node:os');
+  const { checkReceipts } = require('../dist/state/checkWorldState');
+
+  const tmpDir = makeTmpDir();
+  runAdapterTest(
+    path.join(root, 'examples/adapters/gmail-claim-contact-request.example.json'),
+    { worldloopsDir: tmpDir }
+  );
+  const verifyResult = checkReceipts({ worldloopsDir: tmpDir });
+  assert.ok(!verifyResult.issues.some((i) => i.code === 'RECEIPT_MISSING_PROPOSAL'),
+    'gmail-claim: receipts:verify should produce no RECEIPT_MISSING_PROPOSAL');
+  assert.strictEqual(verifyResult.safety.externalWrite, false);
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+// ── Gmail working-capital sales fixture: validates, externalWrite:false ───────
+
+{
+  const tmpDir = makeTmpDir();
+  const result = runAdapterTest(
+    path.join(root, 'examples/adapters/gmail-working-capital-sales.example.json'),
+    { worldloopsDir: tmpDir }
+  );
+  assert.strictEqual(result.validate, 'passed', 'sales-outreach: validate should pass');
+  assert.strictEqual(result.externalWrite, false, 'sales-outreach: externalWrite must be false');
+  assert.strictEqual(result.reconcileMode, 'local_heuristic',
+    'sales-outreach: mode is local_heuristic');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
 console.log('adapterTest tests passed');

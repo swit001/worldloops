@@ -1,22 +1,18 @@
 # 🦞 WorldLoops
 
-AI agents can answer questions.
+AI agents can answer from a snapshot.
 
-But real work is not finished when an answer is generated.
+WorldLoops tracks what remains unresolved.
 
-WorldLoops helps agents remember, track, and govern unfinished responsibilities across email, calendar, chat, documents, project tools, and meeting notes.
+It turns real work signals into governed open loops — detecting unfinished responsibility, classifying severity, proposing the next transition, adjudicating whether approval is required, recording decisions, and committing local state transitions with receipts.
 
-It turns scattered signals into open loops with clear states.
+`externalWrite:false` is preserved throughout.
 
-✅ Nothing is sent.
-✅ Nothing is changed.
-✅ Nothing executes without approval.
-
-**WorldLoops is a responsibility layer and execution guard for AI agents.**
+**WorldLoops is an execution guard for AI agents — not a todo list.**
 
 ---
 
-## 🚀 Try the 5-minute demo
+## 🚀 Try it
 
 ```bash
 clawhub install worldloops --force
@@ -50,58 +46,110 @@ Nothing executes without approval.
 
 ---
 
-## 🧭 What WorldLoops sees
+## 🧭 What WorldLoops does
 
-A normal assistant may see:
+WorldLoops does not just list tasks.
 
-- an email
-- a calendar event
-- a chat message
-- a document TODO
-- a project review request
-- a meeting note
+It turns real work signals into governed open loops:
 
-WorldLoops sees unfinished responsibilities:
-
-- Proposal follow-up — To Do
-- Workshop preparation — Preparing
-- Pricing plan review — To Do
-- Missing ROI assumptions — Blocked
-- Approval needed before release — Waiting for review
-- Customer follow-up — To Do
+- detects unfinished responsibility
+- classifies severity
+- proposes the next transition
+- adjudicates whether approval is required
+- records user decisions
+- commits local state transitions
+- creates receipts
+- preserves `externalWrite:false`
 
 ---
 
-## ✨ Why it is different
+## 🔁 From signal to governed transition
 
-Most agents answer from a snapshot.
+```
+Signal
+  → Open Loop
+    → Severity
+      → Proposal
+        → Adjudication
+          → User Approval
+            → Local Transition
+              → Receipt
+                → externalWrite:false
+```
 
-WorldLoops manages open loops as state.
+**Example real signal:**
 
-| | Normal assistant | WorldLoops |
-|---|---|---|
-| Input | Summarizes messages | Finds unfinished responsibilities |
-| Mode | Reacts to prompts | Tracks open loops |
-| Action | Calls tools directly | Proposes governed transitions |
-| Safety | Can act too freely with write access | Preserves `externalWrite:false` |
-| Oversight | Needs constant supervision | Keeps work visible and reviewable |
+A Gmail message says:
+> "Please give me a call back. It is important that we discuss your injuries and this incident. Claim No. 26-99-554236."
+
+**WorldLoops produces:**
+
+```
+🚨 High — Claim contact request
+State: needs_response
+Proposal: prepare callback or written response plan
+Adjudication: requires_approval
+Boundary: local_proposal_only
+Safety: externalWrite:false
+```
+
+**After user approval:**
+
+```
+Decision receipt created.
+Loop transitioned locally.
+No email sent.
+No call made.
+No external system changed.
+```
+
+This is the key product difference.
+
+Normal assistants summarize what they see.
+WorldLoops tracks what remains unresolved, governs what should happen next, and records every safe transition.
 
 ---
 
-## 🔁 What is an open loop?
+## 🚨 Severity-aware open loops
 
-An open loop is an unfinished responsibility hidden inside a work signal.
+WorldLoops classifies detected open loops by severity:
 
-Examples:
+- **Critical / High** → escalated immediately, requires approval
+- **Medium** → surfaced for review, proposal generated
+- **Low** → tracked but not escalated
 
-- an email that requires a reply
-- a meeting that requires preparation
-- a chat message asking for review
-- a document with an unresolved TODO
-- a project change waiting for approval
-- a customer follow-up that has not happened yet
+High-severity loops (like a legal claim follow-up) trigger proposals with `adjudication: requires_approval`.
 
-WorldLoops turns these signals into stateful, reviewable open loops.
+---
+
+## 🧑‍⚖️ Proposals, adjudication, and approval
+
+When an open loop requires action, WorldLoops creates a proposal:
+
+- what action is proposed
+- why it is required
+- what checks should be performed first
+- whether approval is required (`requiredReview: true`)
+- what boundary applies (`local_proposal_only`, `read_only`, etc.)
+
+No proposal executes automatically.
+Human approval is required before any local transition is committed.
+
+---
+
+## 🧾 Receipts and audit trail
+
+Every approved decision creates a receipt:
+
+- transition receipt (records the loop state change)
+- proposal decision receipt (records the approval or rejection)
+
+Receipts are verifiable with:
+
+```bash
+npm run receipts:verify
+npm run state:check
+```
 
 ---
 
@@ -126,45 +174,11 @@ Contract is not external write.
 
 ---
 
-## 🧰 Current capabilities
-
-WorldLoops can help agents:
-
-- detect unfinished responsibilities
-- turn work signals into open loops
-- keep local open-loop state
-- propose next steps
-- review proposals before execution
-- create local execution plans and contracts
-- inspect state health
-- verify receipts
-- run a friendly first-time demo
-
-All of this remains local and safe by default.
-
----
-
-## 🧑‍💻 Useful commands
-
-For everyone:
+## 🧰 Useful commands
 
 ```bash
 npm run wow
 npm run doctor
-```
-
-### 💬 For Telegram / Discord / mobile
-
-```bash
-npm run wow:mobile
-npm run doctor:mobile
-```
-
-Use these when WorldLoops is called through a messenger channel such as Telegram or Discord.
-
-For developers:
-
-```bash
 npm run wow:developer
 npm run loop:list
 npm run proposal:list
@@ -172,25 +186,24 @@ npm run state:check
 npm run receipts:verify
 ```
 
+For compact chat-friendly output:
+
+```bash
+npm run wow:mobile
+npm run doctor:mobile
+```
+
 For adapter developers:
 
 ```bash
 npm run adapter:validate -- examples/adapters/slack-message.json
 npm run adapter:test -- examples/adapters/slack-message.json
+npm run brief:reconcile -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
 ```
 
 ---
 
-## 📦 Install from ClawHub
-
-```bash
-clawhub install worldloops --force
-cd ~/.openclaw/workspace/skills/worldloops
-```
-
----
-
-## 🔧 For developers
+## 🧑‍💻 For developers
 
 WorldLoops is a local, safe-by-default world state layer for agent execution.
 

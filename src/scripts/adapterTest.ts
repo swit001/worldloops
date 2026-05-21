@@ -28,7 +28,7 @@ function printReport(result: AdapterTestResult): void {
       console.log(`  error: ${err}`);
     }
   }
-  console.log(`reconcile: ${result.reconcile}`);
+  console.log(`reconcile: ${result.reconcile} (mode: ${result.reconcileMode})`);
   if (result.reconcileError) {
     console.log(`  error: ${result.reconcileError}`);
   }
@@ -36,6 +36,9 @@ function printReport(result: AdapterTestResult): void {
   console.log(`proposalPersisted: ${result.proposalPersisted}`);
   console.log(`idempotency: ${result.idempotency}`);
   console.log(`externalWrite: ${result.externalWrite}`);
+  if (result.reconcileMode === 'local_heuristic') {
+    console.log('note: adapter:test uses a local heuristic — results may differ from the live API');
+  }
 }
 
 if (!filePath) {

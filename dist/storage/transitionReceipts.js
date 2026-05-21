@@ -77,7 +77,7 @@ function buildTransitionReceipt(candidate, signals, opts) {
     return {
         id: `${candidate.idempotencyKey}-${crypto.randomUUID()}`,
         createdAt: new Date().toISOString(),
-        proposalId: candidate.idempotencyKey,
+        proposalId: opts.proposalId !== undefined ? opts.proposalId : candidate.idempotencyKey,
         sourceSignalsObserved: signals.map((s) => `[${s.source}] ${s.text}`),
         normalizedResponsibility: candidate.entityType,
         proposedTransition: {

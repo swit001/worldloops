@@ -8,6 +8,7 @@ export interface AdapterTestResult {
     proposalPersisted: boolean;
     idempotency: 'passed' | 'failed';
     externalWrite: false;
+    reconcileMode: 'local_heuristic';
 }
 export declare function runAdapterTest(filePath: string, opts?: {
     worldloopsDir?: string;

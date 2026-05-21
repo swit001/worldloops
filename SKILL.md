@@ -1,17 +1,21 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.6.2"
+version: "1.6.3"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
 
 # 🦞 Agent Execution Guard — by WorldLoops
 
-AI agents can answer.
-But who keeps track of what is still unfinished?
+AI agents can answer from a snapshot.
 
-Agent Execution Guard turns scattered work signals into open loops with clear states — safely.
+WorldLoops tracks what remains unresolved.
+
+It turns real work signals into governed open loops with severity, proposals, adjudication, user approval, local transitions, and receipts — while preserving `externalWrite:false`.
+
+This is not a todo list.
+This is an execution guard for AI agents.
 
 ✅ Nothing is sent.
 ✅ Nothing is changed.
@@ -26,16 +30,34 @@ npm run wow
 npm run doctor
 ```
 
-## 💬 Messenger-friendly demo
+## 🔁 From signal to governed transition
 
-For Telegram, Discord, or any mobile channel:
-
-```bash
-npm run wow:mobile
-npm run doctor:mobile
+```
+Signal → Open Loop → Severity → Proposal → Adjudication → User Approval → Local Transition → Receipt → externalWrite:false
 ```
 
-When the user asks for a short, Telegram, Discord, mobile, or messenger-friendly summary, prefer these commands over the full terminal output.
+**Example real signal:**
+
+Gmail message:
+> "Please give me a call back. It is important that we discuss your injuries and this incident. Claim No. 26-99-554236."
+
+WorldLoops produces:
+
+```
+🚨 High open loop
+State: needs_response
+Proposal: prepare response plan
+Adjudication: requires_approval
+Boundary: local_proposal_only
+Receipt: created after approval
+Safety: no external write
+```
+
+No emails sent.
+No drafts created.
+No Slack messages posted.
+No calendar events changed.
+No external writes.
 
 ## 🧭 What you will see
 
@@ -160,14 +182,12 @@ npm run wow
 npm run doctor
 ```
 
-For messenger channels:
+For compact chat-friendly output:
 
 ```bash
 npm run wow:mobile
 npm run doctor:mobile
 ```
-
-When the user asks for a short or mobile-friendly summary, prefer these commands over the full terminal output.
 
 For developers:
 

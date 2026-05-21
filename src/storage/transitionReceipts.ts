@@ -45,6 +45,7 @@ export function buildTransitionReceipt(
   candidate: ProposalCandidate,
   signals: Signal[],
   opts: {
+    proposalId?: string | null;
     adjudicationResult: string | null;
     decision: string | null;
     boundaryCrossed: BoundaryCrossed;
@@ -53,7 +54,7 @@ export function buildTransitionReceipt(
   return {
     id: `${candidate.idempotencyKey}-${crypto.randomUUID()}`,
     createdAt: new Date().toISOString(),
-    proposalId: candidate.idempotencyKey,
+    proposalId: opts.proposalId !== undefined ? opts.proposalId : candidate.idempotencyKey,
     sourceSignalsObserved: signals.map((s) => `[${s.source}] ${s.text}`),
     normalizedResponsibility: candidate.entityType,
     proposedTransition: {

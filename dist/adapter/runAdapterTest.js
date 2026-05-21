@@ -66,7 +66,21 @@ function buildLocalProposalCandidate(signal) {
 function runLocalReconcile(signal) {
     const worldSignal = (0, toWorldLoopsSignal_1.toWorldLoopsSignal)(signal);
     const candidate = buildLocalProposalCandidate(signal);
+    // Resolve or create proposal first so the receipt references the local UUID.
+    let proposalLocalId;
+    let proposalNew = false;
+    const existingProposal = (0, proposals_1.findProposalByIdempotencyKey)(candidate.idempotencyKey);
+    if (existingProposal) {
+        proposalLocalId = existingProposal.id;
+    }
+    else {
+        const proposal = (0, proposals_1.buildProposalFromCandidate)(candidate);
+        (0, proposals_1.saveProposal)(proposal);
+        proposalLocalId = proposal.id;
+        proposalNew = true;
+    }
     const receipt = (0, transitionReceipts_1.buildTransitionReceipt)(candidate, [worldSignal], {
+        proposalId: proposalLocalId,
         adjudicationResult: 'proposed',
         decision: 'surfaced_for_review',
         boundaryCrossed: 'local_commit',
@@ -79,11 +93,6 @@ function runLocalReconcile(signal) {
         (0, openLoopStates_1.saveOpenLoopState)((0, openLoopStates_1.buildOpenLoopStateFromProposal)(candidate, [worldSignal]));
         openLoopNew = true;
     }
-    let proposalNew = false;
-    if (!(0, proposals_1.findProposalByIdempotencyKey)(candidate.idempotencyKey)) {
-        (0, proposals_1.saveProposal)((0, proposals_1.buildProposalFromCandidate)(candidate));
-        proposalNew = true;
-    }
     return { openLoopNew, proposalNew };
 }
 function _runAdapterTestCore(filePath) {
@@ -95,6 +104,7 @@ function _runAdapterTestCore(filePath) {
         proposalPersisted: false,
         idempotency: 'failed',
         externalWrite: false,
+        reconcileMode: 'local_heuristic',
     };
     let raw;
     try {

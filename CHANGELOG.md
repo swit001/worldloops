@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.6.3 — Receipt Alignment & Real Signal Fixtures
+
+WorldLoops v1.6.3 fixes receipt/proposal reference alignment for real AdapterSignal reconciliation and adds real Gmail signal fixtures.
+
+### Highlights
+
+- Fixed `RECEIPT_MISSING_PROPOSAL` warning caused by idempotencyKey vs local proposal UUID mismatch
+- Added real Gmail claim/contact request fixture (`gmail-claim-contact-request.example.json`)
+- Added working-capital sales outreach suppression fixture (`gmail-working-capital-sales.example.json`)
+- Improved consistency between `adapter:test` and `brief:reconcile` — `adapter:test` now labels its mode as `local_heuristic`
+- Preserved `externalWrite:false` throughout
+
+### Root cause fixed
+
+`brief:reconcile` was building the transition receipt before creating the local proposal.
+The receipt stored `proposalId: candidate.idempotencyKey` (e.g., `gmail:reply:1h07we6`),
+but the proposal was stored with a local UUID as its `id`.
+The receipt verifier only checked against `proposal.id`, so the receipt appeared orphaned.
+
+### Fix
+
+- Proposals are now created before receipts in `brief:reconcile` and `adapter:test`
+- Receipts reference the local proposal UUID (`proposal.id`) via a new optional `proposalId` parameter in `buildTransitionReceipt`
+- `receipts:verify` and `state:check` now resolve receipt references against both `proposal.id` and `proposal.idempotencyKey` (backward-compatible fallback)
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run smoke
+npm run adapter:validate -- examples/adapters/gmail-claim-contact-request.example.json
+npm run adapter:test -- examples/adapters/gmail-claim-contact-request.example.json
+npm run brief:reconcile -- --adapter-signal examples/adapters/gmail-claim-contact-request.example.json
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.6.2 — Messenger-Friendly Output
 
 WorldLoops v1.6.2 adds mobile-friendly output commands for Telegram, Discord, and other messenger-based OpenClaw channels.
