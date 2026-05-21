@@ -1,5 +1,79 @@
 # Changelog
 
+## v1.9.0 — Live Handoff Daily Brief
+
+v1.9.0 adds Live Handoff Daily Brief, combining local Gmail, Calendar, and Slack handoff payloads from `.worldloops/inbox/` into one compact Agent Execution Guard summary, with delivery preferences and a delivery-ready command, while preserving `externalWrite:false` and adding no connectors, OAuth, fetch, or external API calls.
+
+### New
+
+- `npm run guard:daily` — reads local inbox payloads and produces a compact Daily Brief including schedule and delivery channel info
+- `npm run brief:daily` — aliases `guard:daily`
+- `npm run brief:preferences` — shows current Daily Brief preferences (schedule, delivery channel, sources, min severity)
+- `npm run brief:preferences:set` — updates preferences via `--time HH:MM`, `--channel <channel>`, `--sources <list>`
+- `npm run brief:deliver` — generates and delivers the Daily Brief (`--dry-run`, `--channel <channel>`)
+- `src/scripts/guardDaily.ts` — uses shared `dailyBriefRunner`; shows schedule and delivery channel in output
+- `src/scripts/briefPreferences.ts` — human-readable preference display
+- `src/scripts/briefPreferencesSet.ts` — flag-based preference setter
+- `src/scripts/briefDeliver.ts` — delivery-ready output; `local` prints brief; remote channels show "not active in this runtime"
+- `src/dailyBriefRunner.ts` — shared source-processing module used by `guardDaily` and `briefDeliver`
+- `scripts/fixtures/inbox/` — test fixture directory with redacted inbox payloads
+- `tests/guardDaily.test.cjs` — guard:daily test suite
+- `tests/briefPreferences.test.cjs` — brief preferences and delivery test suite
+
+### Delivery channels
+
+Daily Brief delivery channels include local, Telegram, Slack, Discord, SMS, and email.
+Default channel: `local` (prints to stdout).
+Remote channels require a host scheduler or integration to be active.
+No cron, launchd, or daemon installation.
+
+### Changed
+
+- `src/types.ts` — `NotificationPrefs.dailyBrief` extended with optional `channel`, `minimumSeverity`, `sources`
+- `src/notifications/prefs.ts` — `DEFAULT_PREFS.dailyBrief` extended with new defaults; `VALID_CHANNELS`, `DeliveryChannel`, `DEFAULT_BRIEF_CHANNEL` exported
+- `package.json` — version 1.8.2 → 1.9.0; all new scripts and test scripts added
+- `SKILL.md` — version 1.8.2 → 1.9.0; Daily Brief section expanded with preferences and delivery docs
+- `README.md` — Daily Brief section expanded
+- `CHANGELOG.md` — this entry
+- `tests/guardAdapter.test.cjs` — version assertions updated to 1.9.0
+- `tests/guardHandoff.test.cjs` — version assertions updated to 1.9.0
+- `tests/v182PublicListing.test.cjs` — version assertions updated to 1.9.0
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+No normalizer behavior changed.
+`externalWrite:false` preserved throughout.
+No cron, launchd, or daemon installation.
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run guard:daily
+npm run brief:daily -- --inbox scripts/fixtures/inbox
+npm run brief:preferences
+npm run brief:preferences:set -- --time 08:30
+npm run brief:preferences:set -- --channel telegram
+npm run brief:deliver -- --dry-run
+npm run brief:deliver -- --channel telegram
+npm run guard:gmail -- --input scripts/fixtures/gog-gmail-messages.json --compact
+npm run guard:calendar -- --input scripts/fixtures/gog-calendar-events.json --compact
+npm run guard:slack -- --input scripts/fixtures/slack-messages.json --compact
+npm run test:guard-daily
+npm run test:brief-preferences
+npm run test:guard-adapter
+npm run test:guard-handoff
+npm run test:messenger
+npm run receipts:verify
+npm run state:check
+```
+
+---
+
 ## v1.8.2 — Runtime Instruction and Public Listing Cleanup
 
 v1.8.2 cleans up public runtime instructions and default output documentation. It removes non-English demo trigger phrases from SKILL.md, replaces the legacy brief:reconcile default runtime command with npm run --silent demo, and clarifies that compact Agent Execution Guard output is the default while structured JSON remains available for developer workflows.

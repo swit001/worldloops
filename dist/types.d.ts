@@ -44,6 +44,9 @@ export interface NotificationPrefs {
         enabled: boolean;
         time: string;
         timezone: string;
+        channel?: string;
+        minimumSeverity?: MinSeverity;
+        sources?: string[];
     };
     proactiveDiscovery: {
         enabled: boolean;

@@ -82,6 +82,61 @@ Redacted payload examples: [`examples/handoff/`](./examples/handoff/)
 
 ---
 
+## 📋 Daily Brief
+
+Get one compact Agent Execution Guard summary from all three local handoff sources.
+
+OpenClaw/gog/host tools read Gmail, Calendar, and Slack.
+Agent Execution Guard reads only the local payload files they produce.
+No Gmail, Calendar, or Slack API call is made by WorldLoops.
+`externalWrite:false` is preserved throughout.
+
+### Expected payload locations
+
+```
+.worldloops/inbox/openclaw-gmail-live.json
+.worldloops/inbox/openclaw-calendar-live.json
+.worldloops/inbox/openclaw-slack-live.json
+```
+
+### Run
+
+```bash
+npm run guard:daily
+npm run brief:daily
+```
+
+Default schedule: 9:00 AM. Default delivery channel: local.
+
+### Preferences
+
+```bash
+npm run brief:preferences
+npm run brief:preferences:set -- --time 08:30
+npm run brief:preferences:set -- --channel telegram
+npm run brief:preferences:set -- --channel local
+```
+
+Daily Brief delivery channels include local, Telegram, Slack, Discord, SMS, and email.
+
+### Delivery
+
+```bash
+npm run brief:deliver
+npm run brief:deliver -- --dry-run
+npm run brief:deliver -- --channel telegram
+```
+
+Actual delivery to remote channels (Telegram, Slack, Discord, SMS, email) requires a host scheduler or integration.
+WorldLoops does not install cron, launchd, or background daemons.
+A host scheduler (e.g. OpenClaw) may call `npm run brief:deliver` at the configured time.
+
+If no integration is active, the command exits 0 with a delivery-ready message.
+
+If payload files are missing, the brief shows instructions explaining where to save them.
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -264,6 +319,19 @@ Default demo (Agent Execution Guard compact):
 ```bash
 npm run demo
 npm run guard:demo
+```
+
+Daily Brief (all local inbox sources):
+
+```bash
+npm run guard:daily
+npm run brief:daily
+npm run brief:preferences
+npm run brief:preferences:set -- --time 08:30
+npm run brief:preferences:set -- --channel telegram
+npm run brief:deliver
+npm run brief:deliver -- --dry-run
+npm run brief:deliver -- --channel telegram
 ```
 
 Broader open-loop showcase:

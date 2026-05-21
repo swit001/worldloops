@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.8.2"
+version: "1.9.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -153,6 +153,125 @@ Redacted payload examples are in `examples/handoff/`.
 
 ---
 
+## Daily Brief
+
+Get a single compact summary of Gmail, Calendar, and Slack handoff payloads in one command.
+
+OpenClaw/gog/host tools read Gmail, Calendar, and Slack.
+Agent Execution Guard reads only local payload files.
+No Gmail, Calendar, or Slack API call is made by WorldLoops.
+`externalWrite:false` is preserved.
+
+### How it works
+
+1. Host tools (OpenClaw, gog, or Slack plugin) read your Gmail, Calendar, and Slack.
+2. They save the already-read payloads as local JSON files in `.worldloops/inbox/`.
+3. Agent Execution Guard reads those local files and produces one compact Daily Brief.
+
+```
+.worldloops/inbox/openclaw-gmail-live.json      ← Gmail payload
+.worldloops/inbox/openclaw-calendar-live.json   ← Calendar payload
+.worldloops/inbox/openclaw-slack-live.json      ← Slack payload
+```
+
+### Run
+
+```bash
+npm run guard:daily
+npm run brief:daily
+```
+
+### Preferences
+
+Default schedule: **09:00**, default delivery channel: **local**.
+
+View preferences:
+
+```bash
+npm run brief:preferences
+```
+
+Change delivery time:
+
+```bash
+npm run brief:preferences:set -- --time 08:30
+```
+
+Set delivery channel:
+
+```bash
+npm run brief:preferences:set -- --channel local
+npm run brief:preferences:set -- --channel telegram
+npm run brief:preferences:set -- --channel slack
+npm run brief:preferences:set -- --channel discord
+npm run brief:preferences:set -- --channel sms
+npm run brief:preferences:set -- --channel email
+```
+
+Daily Brief delivery channels include local, Telegram, Slack, Discord, SMS, and email.
+When referring only to chat-style channels: messenger channels such as Telegram, Slack, and Discord.
+
+### Delivery
+
+Generate and deliver the brief:
+
+```bash
+npm run brief:deliver
+npm run brief:deliver -- --dry-run
+npm run brief:deliver -- --channel telegram
+```
+
+Delivery notes:
+- Channel `local` prints the brief to stdout.
+- Remote channels (Telegram, Slack, Discord, SMS, email) require a host scheduler or integration to be active.
+- If no integration is active, the command exits 0 with a delivery-ready message and the brief text.
+- WorldLoops does not install cron, launchd, or background daemons.
+- A host scheduler (e.g. OpenClaw) may call `npm run brief:deliver` at the configured time.
+
+### Example output
+
+```
+🦞 Agent Execution Guard Daily Brief
+
+Sources:
+✅ Gmail
+✅ Calendar
+✅ Slack
+
+Open loops:
+⚠️ Gmail — Follow-up needed
+📅 Calendar — No actionable loop detected
+💬 Slack — Action requested
+
+✅ Safe
+externalWrite:false
+No email, draft, calendar event, Slack message, or external change made.
+
+Daily Brief schedule: 09:00 (UTC) — Delivery channel: local
+To change: npm run brief:preferences:set -- --time HH:MM
+```
+
+If payload files are missing, the brief shows instructions:
+
+```
+🦞 Agent Execution Guard Daily Brief
+
+No local handoff payloads found.
+
+Expected files:
+- .worldloops/inbox/openclaw-gmail-live.json
+- .worldloops/inbox/openclaw-calendar-live.json
+- .worldloops/inbox/openclaw-slack-live.json
+
+OpenClaw/gog/host tools should read the external systems and save local JSON payloads here.
+
+✅ Safe
+externalWrite:false
+No external system changed.
+```
+
+---
+
 ## Current commands
 
 For everyone:
@@ -162,6 +281,19 @@ npm run demo
 npm run guard:demo
 npm run wow
 npm run doctor
+```
+
+For Daily Brief (all sources combined):
+
+```bash
+npm run guard:daily
+npm run brief:daily
+npm run brief:preferences
+npm run brief:preferences:set -- --time 08:30
+npm run brief:preferences:set -- --channel telegram
+npm run brief:deliver
+npm run brief:deliver -- --dry-run
+npm run brief:deliver -- --channel telegram
 ```
 
 For governed adapter invocation (already-read OpenClaw payloads):
@@ -255,6 +387,23 @@ Safe default command from the skill directory:
 
 ```
 npm run --silent demo
+```
+
+For Daily Brief (all local inbox sources combined):
+
+```
+npm run --silent guard:daily
+npm run --silent brief:deliver
+npm run --silent brief:deliver -- --dry-run
+npm run --silent brief:deliver -- --channel telegram
+```
+
+For Daily Brief preferences:
+
+```
+npm run --silent brief:preferences
+npm run --silent brief:preferences:set -- --time HH:MM
+npm run --silent brief:preferences:set -- --channel <channel>
 ```
 
 For local payload handoff:

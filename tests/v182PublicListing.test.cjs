@@ -94,20 +94,20 @@ console.log('\nv182PublicListing tests\n');
   console.log('  PASS  README.md: no JSON-first default output wording');
 }
 
-// ── package.json: version is 1.8.2 ───────────────────────────────────────────
+// ── package.json: version is 1.9.0 ───────────────────────────────────────────
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.8.2', 'package.json: version must be 1.8.2');
-  console.log('  PASS  package.json: version is 1.8.2');
+  assert.strictEqual(pkg.version, '1.9.0', 'package.json: version must be 1.9.0');
+  console.log('  PASS  package.json: version is 1.9.0');
 }
 
-// ── SKILL.md: version is 1.8.2 ───────────────────────────────────────────────
+// ── SKILL.md: version is 1.9.0 ───────────────────────────────────────────────
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.8.2"'), 'SKILL.md: version must be 1.8.2');
-  console.log('  PASS  SKILL.md: version is 1.8.2');
+  assert.ok(skill.includes('version: "1.9.0"'), 'SKILL.md: version must be 1.9.0');
+  console.log('  PASS  SKILL.md: version is 1.9.0');
 }
 
 // ── SKILL.md: local payload handoff commands present in runtime section ────────

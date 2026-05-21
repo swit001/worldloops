@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_PREFS = void 0;
+exports.DEFAULT_PREFS = exports.DEFAULT_BRIEF_CHANNEL = exports.VALID_CHANNELS = void 0;
 exports.getPrefsPath = getPrefsPath;
 exports.loadPrefs = loadPrefs;
 exports.savePrefs = savePrefs;
@@ -49,11 +49,16 @@ function getWorldLoopsDir() {
 function getPrefsPath() {
     return path.join(getWorldLoopsDir(), 'notification_prefs.json');
 }
+exports.VALID_CHANNELS = ['local', 'telegram', 'slack', 'discord', 'sms', 'email'];
+exports.DEFAULT_BRIEF_CHANNEL = 'local';
 exports.DEFAULT_PREFS = {
     dailyBrief: {
         enabled: true,
         time: '09:00',
         timezone: 'UTC',
+        channel: exports.DEFAULT_BRIEF_CHANNEL,
+        minimumSeverity: 'medium',
+        sources: ['gmail', 'calendar', 'slack'],
     },
     proactiveDiscovery: {
         enabled: false,

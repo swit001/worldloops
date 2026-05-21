@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "1.8.2",
+  "version": "1.9.0",
   "description": "Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,11 @@
     "wow:developer": "node dist/scripts/wowDeveloper.js",
     "brief:reconcile": "node dist/scripts/briefReconcile.js",
     "brief:messenger": "node dist/scripts/briefMessenger.js",
-    "brief:daily": "node dist/scripts/briefDaily.js",
+    "guard:daily": "node dist/scripts/guardDaily.js",
+    "brief:daily": "node dist/scripts/guardDaily.js",
+    "brief:preferences": "node dist/scripts/briefPreferences.js",
+    "brief:preferences:set": "node dist/scripts/briefPreferencesSet.js",
+    "brief:deliver": "node dist/scripts/briefDeliver.js",
     "discovery:run": "node dist/scripts/discoveryRun.js",
     "notifications:init": "node dist/scripts/notificationsInit.js",
     "notifications:show": "node dist/scripts/notificationsShow.js",
@@ -94,6 +98,8 @@
     "test:state-repair": "node tests/stateRepair.test.cjs",
     "test:doctor-mobile": "node tests/doctorMobile.test.cjs",
     "test:messenger": "node tests/briefMessenger.test.cjs",
+    "test:guard-daily": "node tests/guardDaily.test.cjs",
+    "test:brief-preferences": "node tests/briefPreferences.test.cjs",
     "test:guard-adapter": "node tests/guardAdapter.test.cjs",
     "test:guard-handoff": "node tests/guardHandoff.test.cjs",
     "test:v182-public-listing": "node tests/v182PublicListing.test.cjs"

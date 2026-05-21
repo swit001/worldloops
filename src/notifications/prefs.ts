@@ -10,11 +10,18 @@ export function getPrefsPath(): string {
   return path.join(getWorldLoopsDir(), 'notification_prefs.json');
 }
 
+export const VALID_CHANNELS = ['local', 'telegram', 'slack', 'discord', 'sms', 'email'] as const;
+export type DeliveryChannel = (typeof VALID_CHANNELS)[number];
+export const DEFAULT_BRIEF_CHANNEL: DeliveryChannel = 'local';
+
 export const DEFAULT_PREFS: NotificationPrefs = {
   dailyBrief: {
     enabled: true,
     time: '09:00',
     timezone: 'UTC',
+    channel: DEFAULT_BRIEF_CHANNEL,
+    minimumSeverity: 'medium',
+    sources: ['gmail', 'calendar', 'slack'],
   },
   proactiveDiscovery: {
     enabled: false,
