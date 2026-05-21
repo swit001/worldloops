@@ -1,4 +1,4 @@
-# WorldLoops
+# 🦞 WorldLoops
 
 AI agents can answer questions.
 
@@ -8,15 +8,15 @@ WorldLoops helps agents remember, track, and govern unfinished responsibilities 
 
 It turns scattered signals into open loops with clear states.
 
-Nothing is sent.
-Nothing is changed.
-Nothing executes without approval.
+✅ Nothing is sent.
+✅ Nothing is changed.
+✅ Nothing executes without approval.
 
 **WorldLoops is a responsibility layer and execution guard for AI agents.**
 
 ---
 
-## Try the 5-minute demo
+## 🚀 Try the 5-minute demo
 
 ```bash
 clawhub install worldloops --force
@@ -28,12 +28,20 @@ npm run doctor
 Expected result:
 
 ```
-6 open loops found
-0 emails sent
-0 calendar events changed
-0 chat messages posted
-0 files modified
-0 project changes made
+🦞 WorldLoops found 6 open loops
+
+📧 Proposal follow-up — To Do
+📅 Workshop preparation — Preparing
+💬 Pricing plan review — To Do
+📄 Missing ROI assumptions — Blocked
+🛠 Approval before release — Waiting for review
+🤝 Customer follow-up — To Do
+
+✅ 0 emails sent
+✅ 0 calendar events changed
+✅ 0 chat messages posted
+✅ 0 files modified
+✅ 0 project changes made
 
 Everything is local.
 Everything is reviewable.
@@ -42,7 +50,7 @@ Nothing executes without approval.
 
 ---
 
-## What WorldLoops sees
+## 🧭 What WorldLoops sees
 
 A normal assistant may see:
 
@@ -64,7 +72,7 @@ WorldLoops sees unfinished responsibilities:
 
 ---
 
-## Why it is different
+## ✨ Why it is different
 
 Most agents answer from a snapshot.
 
@@ -80,7 +88,7 @@ WorldLoops manages open loops as state.
 
 ---
 
-## What is an open loop?
+## 🔁 What is an open loop?
 
 An open loop is an unfinished responsibility hidden inside a work signal.
 
@@ -97,7 +105,7 @@ WorldLoops turns these signals into stateful, reviewable open loops.
 
 ---
 
-## Safety boundary
+## 🛡 Safety boundary
 
 WorldLoops does not send emails.
 WorldLoops does not post chat messages.
@@ -118,7 +126,7 @@ Contract is not external write.
 
 ---
 
-## Current capabilities
+## 🧰 Current capabilities
 
 WorldLoops can help agents:
 
@@ -136,7 +144,7 @@ All of this remains local and safe by default.
 
 ---
 
-## Useful commands
+## 🧑‍💻 Useful commands
 
 For everyone:
 
@@ -144,6 +152,15 @@ For everyone:
 npm run wow
 npm run doctor
 ```
+
+### 💬 For Telegram / Discord / mobile
+
+```bash
+npm run wow:mobile
+npm run doctor:mobile
+```
+
+Use these when WorldLoops is called through a messenger channel such as Telegram or Discord.
 
 For developers:
 
@@ -164,7 +181,7 @@ npm run adapter:test -- examples/adapters/slack-message.json
 
 ---
 
-## Install from ClawHub
+## 📦 Install from ClawHub
 
 ```bash
 clawhub install worldloops --force
@@ -173,7 +190,7 @@ cd ~/.openclaw/workspace/skills/worldloops
 
 ---
 
-## For developers
+## 🔧 For developers
 
 WorldLoops is a local, safe-by-default world state layer for agent execution.
 
@@ -186,7 +203,7 @@ Execution remains governed.
 
 ---
 
-## Advanced docs
+## 📚 Advanced docs
 
 - Adapter guide: [ADAPTER_GUIDE.md](./ADAPTER_GUIDE.md)
 - Community adapter guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
@@ -195,7 +212,7 @@ Execution remains governed.
 
 ---
 
-## What WorldLoops is not
+## 🚫 What WorldLoops is not
 
 WorldLoops is not:
 
@@ -210,7 +227,7 @@ WorldLoops keeps humans in control without making them the bottleneck.
 
 ---
 
-## Links
+## 🔗 Links
 
 - Website: https://worldloops.ai
 - API: https://api.worldloops.ai

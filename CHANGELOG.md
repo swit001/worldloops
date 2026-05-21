@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.6.2 — Messenger-Friendly Output
+
+WorldLoops v1.6.2 adds mobile-friendly output commands for Telegram, Discord, and other messenger-based OpenClaw channels.
+
+New commands:
+
+```
+npm run wow:mobile
+npm run doctor:mobile
+```
+
+These provide short, readable summaries that preserve the same safety posture while avoiding long terminal-style output in chat interfaces.
+
+No runtime behavior changed.
+No external writes added.
+`externalWrite:false` remains enforced.
+
+### Validation
+
+```
+npm run typecheck
+npm run build
+npm run smoke
+npm run wow
+npm run wow:mobile
+npm run doctor
+npm run doctor:mobile
+npm run wow:developer
+npm run state:check
+npm run receipts:verify
+```
+
+---
+
 ## v1.6.1 — Landing & README Simplification
 
 WorldLoops v1.6.1 simplifies the GitHub README and ClawHub landing page around the current 5-Minute Wow Experience.

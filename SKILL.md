@@ -1,25 +1,23 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.6.1"
+version: "1.6.2"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
 
-# Agent Execution Guard — by WorldLoops
+# 🦞 Agent Execution Guard — by WorldLoops
 
 AI agents can answer.
 But who keeps track of what is still unfinished?
 
 Agent Execution Guard turns scattered work signals into open loops with clear states — safely.
 
-It helps agents see responsibilities across email, calendar, chat, documents, project tools, and meeting notes.
+✅ Nothing is sent.
+✅ Nothing is changed.
+✅ Nothing executes without approval.
 
-Nothing is sent.
-Nothing is changed.
-Nothing executes without approval.
-
-## Try it
+## 🚀 Try it
 
 ```bash
 openclaw skills install worldloops
@@ -28,30 +26,42 @@ npm run wow
 npm run doctor
 ```
 
-## What you will see
+## 💬 Messenger-friendly demo
 
-```
-6 open loops found
-Proposal follow-up — To Do
-Workshop preparation — Preparing
-Pricing plan review — To Do
-Missing ROI assumptions — Blocked
-Approval needed before release — Waiting for review
-Customer follow-up — To Do
+For Telegram, Discord, or any mobile channel:
+
+```bash
+npm run wow:mobile
+npm run doctor:mobile
 ```
 
-## Safety
+When the user asks for a short, Telegram, Discord, mobile, or messenger-friendly summary, prefer these commands over the full terminal output.
+
+## 🧭 What you will see
 
 ```
-0 emails sent
-0 calendar events changed
-0 chat messages posted
-0 files modified
-0 project changes made
-externalWrite:false enforced
+🦞 WorldLoops found 6 open loops
+
+📧 Proposal follow-up — To Do
+📅 Workshop preparation — Preparing
+💬 Pricing plan review — To Do
+📄 Missing ROI assumptions — Blocked
+🛠 Approval before release — Waiting for review
+🤝 Customer follow-up — To Do
 ```
 
-## Why it matters
+## 🛡 Safety
+
+```
+✅ 0 emails sent
+✅ 0 calendar events changed
+✅ 0 chat messages posted
+✅ 0 files modified
+✅ 0 project changes made
+✅ externalWrite:false enforced
+```
+
+## ✨ Why it matters
 
 Most agents answer from a snapshot.
 WorldLoops manages open loops as state.
@@ -59,7 +69,7 @@ WorldLoops manages open loops as state.
 It is not another chatbot.
 It is a responsibility layer for AI agents.
 
-## Use it when
+## ✅ Use it when
 
 - an agent needs to track unresolved work
 - scattered messages imply responsibilities
@@ -67,14 +77,14 @@ It is a responsibility layer for AI agents.
 - you want proposals before execution
 - you want safe, local, reviewable agent behavior
 
-## Do not use it for
+## 🚫 Do not use it for
 
 - uncontrolled automation
 - silent external writes
 - replacing human judgment
 - sending emails or messages automatically
 
-## Developer check
+## 🧑‍💻 Developer check
 
 ```bash
 npm run wow:developer
@@ -82,7 +92,7 @@ npm run wow:developer
 
 ---
 
-## Safety boundary
+## 🔒 Safety boundary
 
 WorldLoops does not send messages.
 WorldLoops does not send emails.
@@ -93,7 +103,7 @@ WorldLoops does not modify external systems.
 
 ---
 
-## Runtime invocation
+## ⚙️ Runtime invocation
 
 When the user asks you to run this skill, do the following:
 
@@ -117,7 +127,7 @@ npm run --silent brief:reconcile -- \
 
 ---
 
-## Default API
+## 🔗 Default API
 
 By default, WorldLoops uses:
 
@@ -141,7 +151,7 @@ WORLDLOOPS_API_KEY=your_api_key
 
 ---
 
-## Useful commands
+## 🧰 Useful commands
 
 For everyone:
 
@@ -149,6 +159,15 @@ For everyone:
 npm run wow
 npm run doctor
 ```
+
+For messenger channels:
+
+```bash
+npm run wow:mobile
+npm run doctor:mobile
+```
+
+When the user asks for a short or mobile-friendly summary, prefer these commands over the full terminal output.
 
 For developers:
 
@@ -181,7 +200,7 @@ All commands preserve `externalWrite:false` and do not write to Gmail, Calendar,
 
 ---
 
-## Output
+## 📦 Output
 
 The skill returns safe JSON containing:
 
@@ -195,7 +214,7 @@ The skill returns safe JSON containing:
 
 ---
 
-## Updating
+## 🔄 Updating
 
 Existing users can update with:
 
@@ -211,7 +230,7 @@ clawhub install worldloops --force
 
 ---
 
-## Important rules
+## ⚠️ Important rules
 
 Do not invent missing source data.
 Do not send messages.
