@@ -51,6 +51,100 @@ exports.SOURCES = [
     { id: 'calendar', file: 'openclaw-calendar-live.json', label: 'Calendar', emoji: '📅' },
     { id: 'slack', file: 'openclaw-slack-live.json', label: 'Slack', emoji: '💬' },
 ];
+function truncate(s, maxLen = 120) {
+    return s.length <= maxLen ? s : s.slice(0, maxLen - 1) + '…';
+}
+function extractEvidence(sourceId, raw) {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+        return {};
+    const obj = raw;
+    if (sourceId === 'gmail') {
+        const messages = Array.isArray(obj.messages) ? obj.messages : [];
+        const first = messages[0];
+        if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+            const msg = first;
+            const subject = typeof msg.subject === 'string' ? msg.subject : undefined;
+            const from = typeof msg.from === 'string' ? msg.from : undefined;
+            const raw_snippet = typeof msg.snippet === 'string' ? msg.snippet :
+                typeof msg.body === 'string' ? msg.body : undefined;
+            const snippet = raw_snippet ? truncate(raw_snippet) : undefined;
+            return { subject, from, snippet, itemCount: messages.length };
+        }
+        return { itemCount: messages.length };
+    }
+    if (sourceId === 'calendar') {
+        const events = Array.isArray(obj.events) ? obj.events : [];
+        const first = events[0];
+        if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+            const evt = first;
+            const title = typeof evt.summary === 'string' ? evt.summary :
+                typeof evt.title === 'string' ? evt.title : undefined;
+            const start = typeof evt.start === 'string' ? evt.start : undefined;
+            const end = typeof evt.end === 'string' ? evt.end : undefined;
+            return { title, start, end, itemCount: events.length };
+        }
+        return { itemCount: events.length };
+    }
+    if (sourceId === 'slack') {
+        const messages = Array.isArray(obj.messages) ? obj.messages :
+            Array.isArray(obj.items) ? obj.items : [];
+        const channel = typeof obj.channel === 'string' ? obj.channel : undefined;
+        const first = messages[0];
+        if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+            const msg = first;
+            const raw_text = typeof msg.text === 'string' ? msg.text : undefined;
+            const text = raw_text ? truncate(raw_text) : undefined;
+            const user = typeof msg.user === 'string' ? msg.user :
+                typeof msg.username === 'string' ? msg.username : undefined;
+            return { text, channel, user, itemCount: messages.length };
+        }
+        return { channel, itemCount: messages.length };
+    }
+    return {};
+}
+function buildSummaryLines(sourceId, label, emoji, candidates, evidence) {
+    if (candidates.length === 0) {
+        const lines = [];
+        lines.push(`${emoji} ${label} — No actionable loop detected`);
+        if (evidence.itemCount !== undefined) {
+            const unit = sourceId === 'calendar' ? 'event' : 'message';
+            const plural = evidence.itemCount === 1 ? unit : `${unit}s`;
+            lines.push(`Checked: ${evidence.itemCount} ${plural}`);
+        }
+        lines.push(`Reason: no prep, deadline, approval, or follow-up language detected`);
+        return lines;
+    }
+    const first = candidates[0];
+    const lines = [];
+    let headerLabel;
+    if (sourceId === 'gmail')
+        headerLabel = 'Follow-up needed';
+    else if (sourceId === 'calendar')
+        headerLabel = 'Preparation needed';
+    else
+        headerLabel = 'Action requested';
+    lines.push(`${emoji} ${label} — ${headerLabel}`);
+    const whyDefault = sourceId === 'gmail' ? 'follow-up or reply request detected' :
+        sourceId === 'calendar' ? 'preparation or action item detected' :
+            'review or approval request detected';
+    lines.push(`Why: ${first.reason || whyDefault}`);
+    let evidenceText;
+    if (sourceId === 'gmail')
+        evidenceText = evidence.snippet;
+    else if (sourceId === 'calendar')
+        evidenceText = evidence.title
+            ? `${evidence.title}${evidence.start ? ` at ${evidence.start}` : ''}`
+            : undefined;
+    else if (sourceId === 'slack')
+        evidenceText = evidence.text;
+    lines.push(`Evidence: ${evidenceText ? `"${evidenceText}"` : 'not available in payload'}`);
+    const actionDefault = sourceId === 'gmail' ? 'Draft a reply or follow-up' :
+        sourceId === 'calendar' ? 'Prepare agenda or review action items' :
+            'Review the referenced item and add comments or approval';
+    lines.push(`Action: ${first.actionHint || actionDefault}`);
+    lines.push(`Adjudication: ${first.approvalRequired ? 'requires_approval' : 'informational'}`);
+    return lines;
+}
 function normalizePayload(sourceId, raw) {
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
         return raw;
@@ -74,25 +168,11 @@ function normalizePayload(sourceId, raw) {
         obj.observedAt = new Date().toISOString();
     return raw;
 }
-function buildSummaryLine(sourceId, label, emoji, candidates) {
-    if (candidates.length === 0) {
-        return `${emoji} ${label} — No actionable loop detected`;
-    }
-    const first = candidates[0];
-    let defaultReason;
-    if (sourceId === 'gmail')
-        defaultReason = 'Follow-up needed';
-    else if (sourceId === 'calendar')
-        defaultReason = 'Preparation needed';
-    else
-        defaultReason = 'Action requested';
-    return `${emoji} ${label} — ${first.reason || defaultReason}`;
-}
 async function processSource(sourceId, file, label, emoji, inboxDir) {
     const filePath = path.join(inboxDir, file);
     const found = fs.existsSync(filePath);
     if (!found) {
-        return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLine: '' };
+        return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLines: [] };
     }
     let raw;
     try {
@@ -101,15 +181,16 @@ async function processSource(sourceId, file, label, emoji, inboxDir) {
     catch {
         return {
             id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-            summaryLine: `❌ ${label} — Error reading payload`,
+            summaryLines: [`❌ ${label} — Error reading payload`],
         };
     }
+    const evidence = extractEvidence(sourceId, raw);
     const normalized = normalizePayload(sourceId, raw);
     const validation = (0, validateAdapterSignal_1.validateAdapterSignal)(normalized);
     if (!validation.ok) {
         return {
             id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-            summaryLine: `❌ ${label} — Invalid payload`,
+            summaryLines: [`❌ ${label} — Invalid payload`],
         };
     }
     try {
@@ -118,13 +199,13 @@ async function processSource(sourceId, file, label, emoji, inboxDir) {
         const candidates = result.proposalCandidates ?? [];
         return {
             id: sourceId, label, emoji, file, found: true, ok: result.ok, candidates,
-            summaryLine: buildSummaryLine(sourceId, label, emoji, candidates),
+            summaryLines: buildSummaryLines(sourceId, label, emoji, candidates, evidence),
         };
     }
     catch {
         return {
             id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-            summaryLine: `⚠️ ${label} — Guard check unavailable`,
+            summaryLines: [`⚠️ ${label} — Guard check unavailable`],
         };
     }
 }
@@ -140,14 +221,18 @@ function buildBriefLines(results) {
     const foundResults = results.filter(r => r.found);
     const missingResults = results.filter(r => !r.found);
     if (foundResults.length === 0) {
-        lines.push('No local handoff payloads found.');
+        lines.push('No local handoff payloads found yet.');
         lines.push('');
-        lines.push('Expected files:');
+        lines.push('Add payloads here:');
         for (const src of exports.SOURCES) {
-            lines.push(`- ${exports.DEFAULT_INBOX_DIR}/${src.file}`);
+            lines.push(`- ${src.label}: ${exports.DEFAULT_INBOX_DIR}/${src.file}`);
         }
         lines.push('');
-        lines.push('OpenClaw/gog/host tools should read the external systems and save local JSON payloads here.');
+        lines.push('Then run:');
+        lines.push('npm run guard:daily');
+        lines.push('');
+        lines.push('Source systems stay untouched.');
+        lines.push('externalWrite:false');
         return lines;
     }
     lines.push('Sources:');
@@ -163,7 +248,10 @@ function buildBriefLines(results) {
     lines.push('');
     lines.push('Open loops:');
     for (const r of foundResults) {
-        lines.push(r.summaryLine);
+        for (const line of r.summaryLines) {
+            lines.push(line);
+        }
+        lines.push('');
     }
     return lines;
 }

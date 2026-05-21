@@ -13,6 +13,7 @@ async function main(): Promise<void> {
   const prefs = loadPrefs();
   const scheduleTime = prefs.dailyBrief.time ?? '09:00';
   const timezone = prefs.dailyBrief.timezone ?? 'UTC';
+  const timezoneDisplay = timezone === 'UTC' ? 'local time' : timezone;
   const channel = prefs.dailyBrief.channel ?? DEFAULT_BRIEF_CHANNEL;
 
   console.log('🦞 Agent Execution Guard Daily Brief');
@@ -36,7 +37,7 @@ async function main(): Promise<void> {
   }
 
   console.log('');
-  console.log(`Daily Brief schedule: ${scheduleTime} (${timezone}) — Delivery channel: ${channel}`);
+  console.log(`Daily Brief schedule: ${scheduleTime} ${timezoneDisplay} — Delivery channel: ${channel}`);
   console.log('To change: npm run brief:preferences:set -- --time HH:MM');
 }
 

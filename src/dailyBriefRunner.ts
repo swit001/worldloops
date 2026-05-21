@@ -19,6 +19,19 @@ export const SOURCES = [
 
 export type SourceId = 'gmail' | 'calendar' | 'slack';
 
+interface EvidenceData {
+  snippet?: string;
+  subject?: string;
+  from?: string;
+  title?: string;
+  start?: string;
+  end?: string;
+  text?: string;
+  channel?: string;
+  user?: string;
+  itemCount?: number;
+}
+
 export interface SourceResult {
   id: SourceId;
   label: string;
@@ -27,7 +40,117 @@ export interface SourceResult {
   found: boolean;
   ok: boolean;
   candidates: ProposalCandidate[];
-  summaryLine: string;
+  summaryLines: string[];
+}
+
+function truncate(s: string, maxLen = 120): string {
+  return s.length <= maxLen ? s : s.slice(0, maxLen - 1) + '…';
+}
+
+function extractEvidence(sourceId: SourceId, raw: unknown): EvidenceData {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
+  const obj = raw as Record<string, unknown>;
+
+  if (sourceId === 'gmail') {
+    const messages = Array.isArray(obj.messages) ? obj.messages : [];
+    const first = messages[0];
+    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+      const msg = first as Record<string, unknown>;
+      const subject = typeof msg.subject === 'string' ? msg.subject : undefined;
+      const from = typeof msg.from === 'string' ? msg.from : undefined;
+      const raw_snippet = typeof msg.snippet === 'string' ? msg.snippet :
+                          typeof msg.body === 'string' ? msg.body : undefined;
+      const snippet = raw_snippet ? truncate(raw_snippet) : undefined;
+      return { subject, from, snippet, itemCount: messages.length };
+    }
+    return { itemCount: messages.length };
+  }
+
+  if (sourceId === 'calendar') {
+    const events = Array.isArray(obj.events) ? obj.events : [];
+    const first = events[0];
+    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+      const evt = first as Record<string, unknown>;
+      const title = typeof evt.summary === 'string' ? evt.summary :
+                    typeof evt.title === 'string' ? evt.title : undefined;
+      const start = typeof evt.start === 'string' ? evt.start : undefined;
+      const end = typeof evt.end === 'string' ? evt.end : undefined;
+      return { title, start, end, itemCount: events.length };
+    }
+    return { itemCount: events.length };
+  }
+
+  if (sourceId === 'slack') {
+    const messages = Array.isArray(obj.messages) ? obj.messages :
+                     Array.isArray(obj.items) ? obj.items : [];
+    const channel = typeof obj.channel === 'string' ? obj.channel : undefined;
+    const first = messages[0];
+    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+      const msg = first as Record<string, unknown>;
+      const raw_text = typeof msg.text === 'string' ? msg.text : undefined;
+      const text = raw_text ? truncate(raw_text) : undefined;
+      const user = typeof msg.user === 'string' ? msg.user :
+                   typeof msg.username === 'string' ? msg.username : undefined;
+      return { text, channel, user, itemCount: messages.length };
+    }
+    return { channel, itemCount: messages.length };
+  }
+
+  return {};
+}
+
+function buildSummaryLines(
+  sourceId: SourceId,
+  label: string,
+  emoji: string,
+  candidates: ProposalCandidate[],
+  evidence: EvidenceData
+): string[] {
+  if (candidates.length === 0) {
+    const lines: string[] = [];
+    lines.push(`${emoji} ${label} — No actionable loop detected`);
+    if (evidence.itemCount !== undefined) {
+      const unit = sourceId === 'calendar' ? 'event' : 'message';
+      const plural = evidence.itemCount === 1 ? unit : `${unit}s`;
+      lines.push(`Checked: ${evidence.itemCount} ${plural}`);
+    }
+    lines.push(`Reason: no prep, deadline, approval, or follow-up language detected`);
+    return lines;
+  }
+
+  const first = candidates[0];
+  const lines: string[] = [];
+
+  let headerLabel: string;
+  if (sourceId === 'gmail') headerLabel = 'Follow-up needed';
+  else if (sourceId === 'calendar') headerLabel = 'Preparation needed';
+  else headerLabel = 'Action requested';
+  lines.push(`${emoji} ${label} — ${headerLabel}`);
+
+  const whyDefault =
+    sourceId === 'gmail' ? 'follow-up or reply request detected' :
+    sourceId === 'calendar' ? 'preparation or action item detected' :
+    'review or approval request detected';
+  lines.push(`Why: ${first.reason || whyDefault}`);
+
+  let evidenceText: string | undefined;
+  if (sourceId === 'gmail') evidenceText = evidence.snippet;
+  else if (sourceId === 'calendar') evidenceText = evidence.title
+    ? `${evidence.title}${evidence.start ? ` at ${evidence.start}` : ''}`
+    : undefined;
+  else if (sourceId === 'slack') evidenceText = evidence.text;
+
+  lines.push(`Evidence: ${evidenceText ? `"${evidenceText}"` : 'not available in payload'}`);
+
+  const actionDefault =
+    sourceId === 'gmail' ? 'Draft a reply or follow-up' :
+    sourceId === 'calendar' ? 'Prepare agenda or review action items' :
+    'Review the referenced item and add comments or approval';
+  lines.push(`Action: ${first.actionHint || actionDefault}`);
+
+  lines.push(`Adjudication: ${first.approvalRequired ? 'requires_approval' : 'informational'}`);
+
+  return lines;
 }
 
 function normalizePayload(sourceId: SourceId, raw: unknown): unknown {
@@ -51,23 +174,6 @@ function normalizePayload(sourceId: SourceId, raw: unknown): unknown {
   return raw;
 }
 
-function buildSummaryLine(
-  sourceId: SourceId,
-  label: string,
-  emoji: string,
-  candidates: ProposalCandidate[]
-): string {
-  if (candidates.length === 0) {
-    return `${emoji} ${label} — No actionable loop detected`;
-  }
-  const first = candidates[0];
-  let defaultReason: string;
-  if (sourceId === 'gmail') defaultReason = 'Follow-up needed';
-  else if (sourceId === 'calendar') defaultReason = 'Preparation needed';
-  else defaultReason = 'Action requested';
-  return `${emoji} ${label} — ${first.reason || defaultReason}`;
-}
-
 export async function processSource(
   sourceId: SourceId,
   file: string,
@@ -79,7 +185,7 @@ export async function processSource(
   const found = fs.existsSync(filePath);
 
   if (!found) {
-    return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLine: '' };
+    return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLines: [] };
   }
 
   let raw: unknown;
@@ -88,17 +194,18 @@ export async function processSource(
   } catch {
     return {
       id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-      summaryLine: `❌ ${label} — Error reading payload`,
+      summaryLines: [`❌ ${label} — Error reading payload`],
     };
   }
 
+  const evidence = extractEvidence(sourceId, raw);
   const normalized = normalizePayload(sourceId, raw);
   const validation = validateAdapterSignal(normalized);
 
   if (!validation.ok) {
     return {
       id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-      summaryLine: `❌ ${label} — Invalid payload`,
+      summaryLines: [`❌ ${label} — Invalid payload`],
     };
   }
 
@@ -108,12 +215,12 @@ export async function processSource(
     const candidates = result.proposalCandidates ?? [];
     return {
       id: sourceId, label, emoji, file, found: true, ok: result.ok, candidates,
-      summaryLine: buildSummaryLine(sourceId, label, emoji, candidates),
+      summaryLines: buildSummaryLines(sourceId, label, emoji, candidates, evidence),
     };
   } catch {
     return {
       id: sourceId, label, emoji, file, found: true, ok: false, candidates: [],
-      summaryLine: `⚠️ ${label} — Guard check unavailable`,
+      summaryLines: [`⚠️ ${label} — Guard check unavailable`],
     };
   }
 }
@@ -132,14 +239,18 @@ export function buildBriefLines(results: SourceResult[]): string[] {
   const missingResults = results.filter(r => !r.found);
 
   if (foundResults.length === 0) {
-    lines.push('No local handoff payloads found.');
+    lines.push('No local handoff payloads found yet.');
     lines.push('');
-    lines.push('Expected files:');
+    lines.push('Add payloads here:');
     for (const src of SOURCES) {
-      lines.push(`- ${DEFAULT_INBOX_DIR}/${src.file}`);
+      lines.push(`- ${src.label}: ${DEFAULT_INBOX_DIR}/${src.file}`);
     }
     lines.push('');
-    lines.push('OpenClaw/gog/host tools should read the external systems and save local JSON payloads here.');
+    lines.push('Then run:');
+    lines.push('npm run guard:daily');
+    lines.push('');
+    lines.push('Source systems stay untouched.');
+    lines.push('externalWrite:false');
     return lines;
   }
 
@@ -160,7 +271,10 @@ export function buildBriefLines(results: SourceResult[]): string[] {
   lines.push('');
   lines.push('Open loops:');
   for (const r of foundResults) {
-    lines.push(r.summaryLine);
+    for (const line of r.summaryLines) {
+      lines.push(line);
+    }
+    lines.push('');
   }
 
   return lines;

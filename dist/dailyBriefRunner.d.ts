@@ -25,7 +25,7 @@ export interface SourceResult {
     found: boolean;
     ok: boolean;
     candidates: ProposalCandidate[];
-    summaryLine: string;
+    summaryLines: string[];
 }
 export declare function processSource(sourceId: SourceId, file: string, label: string, emoji: string, inboxDir: string): Promise<SourceResult>;
 export declare function processAllSources(inboxDir: string): Promise<SourceResult[]>;

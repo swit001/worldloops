@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.9.1 — Daily Brief Explainability and Timezone Polish
+
+v1.9.1 adds Daily Brief evidence lines, improves explainability for Gmail/Calendar/Slack summaries, changes default schedule wording from UTC to local time, and strengthens runtime routing for Daily Brief requests.
+
+### New
+
+- Daily Brief source summaries now include `Why`, `Evidence`, `Action`, and `Adjudication` lines for actionable sources
+- Non-actionable Calendar (and other) sources now show `Checked: N events` and `Reason:` lines
+- Evidence snippets are capped at 120 characters; raw JSON is never exposed
+- Missing-payload onboarding block is shorter and more mobile-friendly, with source-labeled paths
+- SKILL.md Agent Runtime Instructions now include a direct Daily Brief routing section
+- Runtime instructions prefer `--silent` commands and instruct agents to return only command output
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — `SourceResult.summaryLines` replaces `summaryLine`; `extractEvidence` and `buildSummaryLines` added
+- `src/scripts/guardDaily.ts` — schedule wording: `09:00 (UTC)` → `09:00 local time` (when timezone is default); explicit timezone shown when set
+- `src/scripts/briefPreferences.ts` — same timezone display update
+- `package.json` — version 1.9.0 → 1.9.1
+- `SKILL.md` — version 1.9.0 → 1.9.1; Daily Brief examples updated with Why/Evidence/Action/Adjudication and local time wording; routing instructions strengthened
+- `README.md` — Daily Brief examples updated with connected and missing-payload onboarding examples
+- `CHANGELOG.md` — this entry
+- `tests/guardDaily.test.cjs` — new assertions: Why lines, Evidence lines, Gmail/Slack evidence, Calendar checked count, local time wording, routing instruction
+- `tests/briefPreferences.test.cjs` — new assertions: default schedule says local time, not UTC
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+No normalizer behavior changed.
+`externalWrite:false` preserved throughout.
+No cron, launchd, or daemon installation.
+
+---
+
 ## v1.9.0 — Live Handoff Daily Brief
 
 v1.9.0 adds Live Handoff Daily Brief, combining local Gmail, Calendar, and Slack handoff payloads from `.worldloops/inbox/` into one compact Agent Execution Guard summary, with delivery preferences and a delivery-ready command, while preserving `externalWrite:false` and adding no connectors, OAuth, fetch, or external API calls.

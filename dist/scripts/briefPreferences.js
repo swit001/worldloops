@@ -6,13 +6,14 @@ function main() {
     const db = prefs.dailyBrief;
     const time = db.time ?? '09:00';
     const timezone = db.timezone ?? 'UTC';
+    const timezoneDisplay = timezone === 'UTC' ? 'local time' : timezone;
     const channel = db.channel ?? prefs_1.DEFAULT_BRIEF_CHANNEL;
     const minSeverity = db.minimumSeverity ?? 'medium';
     const sources = (db.sources ?? ['gmail', 'calendar', 'slack']).join(', ');
     const status = db.enabled ? 'enabled' : 'disabled';
     console.log('🦞 Daily Brief Preferences');
     console.log('');
-    console.log(`Schedule:        ${time} (${timezone})`);
+    console.log(`Schedule:        ${time} ${timezoneDisplay}`);
     console.log(`Delivery channel: ${channel}`);
     console.log(`Min severity:    ${minSeverity}`);
     console.log(`Sources:         ${sources}`);

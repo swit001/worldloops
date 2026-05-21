@@ -106,7 +106,63 @@ npm run guard:daily
 npm run brief:daily
 ```
 
-Default schedule: 9:00 AM. Default delivery channel: local.
+Default schedule: **09:00 local time**. Default delivery channel: **local**.
+
+### Example output — payloads connected
+
+```
+🦞 Agent Execution Guard Daily Brief
+
+Sources:
+✅ Gmail
+✅ Calendar
+✅ Slack
+
+Open loops:
+
+⚠️ Gmail — Follow-up needed
+Why: follow-up or reply request detected
+Evidence: "Can you send the updated proposal by Friday?"
+Action: Draft a reply or follow-up
+Adjudication: requires_approval
+
+📅 Calendar — No actionable loop detected
+Checked: 1 event
+Reason: no prep, deadline, approval, or follow-up language detected
+
+💬 Slack — Action requested
+Why: review or approval request detected
+Evidence: "Can you review this before release?"
+Action: Review the referenced item and add comments or approval
+Adjudication: requires_approval
+
+✅ Safe
+externalWrite:false
+No email, draft, calendar event, Slack message, or external change made.
+
+Daily Brief schedule: 09:00 local time — Delivery channel: local
+```
+
+### Example output — payloads not connected yet
+
+```
+🦞 Agent Execution Guard Daily Brief
+
+No local handoff payloads found yet.
+
+Add payloads here:
+- Gmail: .worldloops/inbox/openclaw-gmail-live.json
+- Calendar: .worldloops/inbox/openclaw-calendar-live.json
+- Slack: .worldloops/inbox/openclaw-slack-live.json
+
+Then run:
+npm run guard:daily
+
+Source systems stay untouched.
+externalWrite:false
+
+Daily Brief schedule: 09:00 local time — Delivery channel: local
+```
 
 ### Preferences
 
@@ -133,7 +189,7 @@ A host scheduler (e.g. OpenClaw) may call `npm run brief:deliver` at the configu
 
 If no integration is active, the command exits 0 with a delivery-ready message.
 
-If payload files are missing, the brief shows instructions explaining where to save them.
+If payload files are missing, the brief shows short onboarding instructions with expected file paths.
 
 ---
 

@@ -54,6 +54,38 @@ function assertExternalWriteFalse(output, label) {
   console.log('  PASS  brief:preferences: default time is 09:00');
 }
 
+// ── v1.9.1: default schedule says local time, not UTC ────────────────────────
+
+{
+  const result = run(['brief:preferences']);
+  assert.ok(
+    result.stdout.includes('local time'),
+    'brief:preferences: default schedule must say "local time"'
+  );
+  assert.ok(
+    !result.stdout.includes('(UTC)'),
+    'brief:preferences: default schedule must not say "(UTC)"'
+  );
+  console.log('  PASS  brief:preferences: default schedule says "local time"');
+  console.log('  PASS  brief:preferences: default schedule does not say "(UTC)"');
+}
+
+// ── v1.9.1: brief:deliver --dry-run says local time ──────────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assert.ok(
+    result.stdout.includes('local time'),
+    'guard:daily: schedule line must say "local time"'
+  );
+  assert.ok(
+    !result.stdout.includes('(UTC)'),
+    'guard:daily: schedule line must not say "(UTC)"'
+  );
+  console.log('  PASS  guard:daily: schedule says "local time"');
+  console.log('  PASS  guard:daily: schedule does not say "(UTC)"');
+}
+
 // ── default delivery channel is local ─────────────────────────────────────────
 
 {
@@ -257,7 +289,7 @@ function assertExternalWriteFalse(output, label) {
   console.log('  PASS  brief scripts: no connector/OAuth/direct-fetch behavior');
 }
 
-// ── SKILL.md: mentions default 09:00 and brief:preferences commands ───────────
+// ── SKILL.md: mentions default 09:00 local time and brief:preferences commands ─
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
@@ -265,6 +297,14 @@ function assertExternalWriteFalse(output, label) {
   const publicSection = skill.slice(0, runtimeIdx);
 
   assert.ok(publicSection.includes('09:00'), 'SKILL.md: must mention default 09:00 time');
+  assert.ok(
+    publicSection.includes('local time'),
+    'SKILL.md: must say "local time" for default schedule'
+  );
+  assert.ok(
+    !publicSection.includes('09:00 (UTC)'),
+    'SKILL.md: must not use "09:00 (UTC)"'
+  );
   assert.ok(
     publicSection.includes('brief:preferences'),
     'SKILL.md: must document brief:preferences command'
@@ -278,6 +318,8 @@ function assertExternalWriteFalse(output, label) {
     'SKILL.md: must not call email a messenger'
   );
   console.log('  PASS  SKILL.md: 09:00 default time mentioned');
+  console.log('  PASS  SKILL.md: "local time" wording present');
+  console.log('  PASS  SKILL.md: does not use "09:00 (UTC)"');
   console.log('  PASS  SKILL.md: brief:preferences documented');
   console.log('  PASS  SKILL.md: brief:deliver documented');
 }

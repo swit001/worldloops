@@ -14,6 +14,7 @@ async function main() {
     const prefs = (0, prefs_1.loadPrefs)();
     const scheduleTime = prefs.dailyBrief.time ?? '09:00';
     const timezone = prefs.dailyBrief.timezone ?? 'UTC';
+    const timezoneDisplay = timezone === 'UTC' ? 'local time' : timezone;
     const channel = prefs.dailyBrief.channel ?? prefs_1.DEFAULT_BRIEF_CHANNEL;
     console.log('🦞 Agent Execution Guard Daily Brief');
     console.log('');
@@ -33,7 +34,7 @@ async function main() {
         console.log('No external system changed.');
     }
     console.log('');
-    console.log(`Daily Brief schedule: ${scheduleTime} (${timezone}) — Delivery channel: ${channel}`);
+    console.log(`Daily Brief schedule: ${scheduleTime} ${timezoneDisplay} — Delivery channel: ${channel}`);
     console.log('To change: npm run brief:preferences:set -- --time HH:MM');
 }
 main().catch((err) => {

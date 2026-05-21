@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.0"
+version: "1.9.1"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -183,7 +183,7 @@ npm run brief:daily
 
 ### Preferences
 
-Default schedule: **09:00**, default delivery channel: **local**.
+Default schedule: **09:00 local time**, default delivery channel: **local**.
 
 View preferences:
 
@@ -228,7 +228,7 @@ Delivery notes:
 - WorldLoops does not install cron, launchd, or background daemons.
 - A host scheduler (e.g. OpenClaw) may call `npm run brief:deliver` at the configured time.
 
-### Example output
+### Example output — payloads connected
 
 ```
 🦞 Agent Execution Guard Daily Brief
@@ -239,35 +239,50 @@ Sources:
 ✅ Slack
 
 Open loops:
+
 ⚠️ Gmail — Follow-up needed
+Why: follow-up or reply request detected
+Evidence: "Can you send the updated proposal by Friday?"
+Action: Draft a reply or follow-up
+Adjudication: requires_approval
+
 📅 Calendar — No actionable loop detected
+Checked: 1 event
+Reason: no prep, deadline, approval, or follow-up language detected
+
 💬 Slack — Action requested
+Why: review or approval request detected
+Evidence: "Can you review this before release?"
+Action: Review the referenced item and add comments or approval
+Adjudication: requires_approval
 
 ✅ Safe
 externalWrite:false
 No email, draft, calendar event, Slack message, or external change made.
 
-Daily Brief schedule: 09:00 (UTC) — Delivery channel: local
+Daily Brief schedule: 09:00 local time — Delivery channel: local
 To change: npm run brief:preferences:set -- --time HH:MM
 ```
 
-If payload files are missing, the brief shows instructions:
+### Example output — payloads not connected yet
 
 ```
 🦞 Agent Execution Guard Daily Brief
 
-No local handoff payloads found.
+No local handoff payloads found yet.
 
-Expected files:
-- .worldloops/inbox/openclaw-gmail-live.json
-- .worldloops/inbox/openclaw-calendar-live.json
-- .worldloops/inbox/openclaw-slack-live.json
+Add payloads here:
+- Gmail: .worldloops/inbox/openclaw-gmail-live.json
+- Calendar: .worldloops/inbox/openclaw-calendar-live.json
+- Slack: .worldloops/inbox/openclaw-slack-live.json
 
-OpenClaw/gog/host tools should read the external systems and save local JSON payloads here.
+Then run:
+npm run guard:daily
 
-✅ Safe
+Source systems stay untouched.
 externalWrite:false
-No external system changed.
+
+Daily Brief schedule: 09:00 local time — Delivery channel: local
 ```
 
 ---
@@ -361,6 +376,38 @@ clawhub install worldloops --force
 ## Agent Runtime Instructions
 
 The following section is for OpenClaw agents, not end users.
+
+### Daily Brief routing
+
+When the user asks for any of the following:
+- Daily Brief
+- morning brief
+- daily summary
+- today's open loops
+- what did I miss
+- open loops today
+- Agent Execution Guard Daily Brief
+- brief me
+
+Run immediately — do not search the workspace first:
+
+```bash
+npm run --silent guard:daily
+```
+
+Return only the command output. Do not narrate the command unless the user asks.
+
+For fixture-based Daily Brief examples:
+
+```bash
+npm run --silent brief:daily -- --inbox scripts/fixtures/inbox
+```
+
+For delivery-ready checks:
+
+```bash
+npm run --silent brief:deliver -- --channel telegram
+```
 
 ### Demo routing
 

@@ -363,9 +363,9 @@ function assertAgentExecutionGuardHeader(output, label) {
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.0', 'package.json: version must be 1.9.0');
+  assert.strictEqual(pkg.version, '1.9.1', 'package.json: version must be 1.9.1');
   assert.ok(pkg.scripts['test:guard-handoff'], 'package.json: test:guard-handoff script must exist');
-  console.log('  PASS  package.json: version is 1.9.0');
+  console.log('  PASS  package.json: version is 1.9.1');
   console.log('  PASS  package.json: test:guard-handoff script exists');
 }
 
@@ -373,8 +373,8 @@ function assertAgentExecutionGuardHeader(output, label) {
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.9.0"'), 'SKILL.md: version must be 1.9.0');
-  console.log('  PASS  SKILL.md: version is 1.9.0');
+  assert.ok(skill.includes('version: "1.9.1"'), 'SKILL.md: version must be 1.9.1');
+  console.log('  PASS  SKILL.md: version is 1.9.1');
 }
 
 console.log('\nguardHandoff: all assertions passed\n');
