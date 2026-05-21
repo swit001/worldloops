@@ -91,6 +91,8 @@ Agent Execution Guard reads only the local payload files they produce.
 No Gmail, Calendar, or Slack API call is made by WorldLoops.
 `externalWrite:false` is preserved throughout.
 
+Non-English action phrases such as Korean review requests are supported by the detector.
+
 ### Expected payload locations
 
 ```
@@ -122,15 +124,15 @@ Open loops:
 
 ⚠️ Gmail — Review requested
 From: Test Reviewer <reviewer@example.com>
-Subject: 등록하신 문서를 다시 검토해주세요.
+Subject: Please review the submitted document
 Why: review request detected
-Evidence: "등록하신 문서를 다시 검토해주세요. 수정이 필요한 부분이 있습니다."
+Evidence: "Please review the submitted document and send updates by EOD."
 Action: Review the submitted document or reply if needed
 Adjudication: requires_approval
 
 📅 Calendar — Important context
-Event: Flight to 서울 (KE 24)
-When: 2026-05-21T12:40:00.000Z
+Event: Flight to Seoul (KE 24)
+When: May 21, 12:40 PM local time
 Location: SFO
 Reason: travel event detected, no action proposed
 

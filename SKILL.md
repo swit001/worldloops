@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.3"
+version: "1.9.4"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -242,15 +242,15 @@ Open loops:
 
 ⚠️ Gmail — Review requested
 From: Test Reviewer <reviewer@example.com>
-Subject: 등록하신 문서를 다시 검토해주세요.
+Subject: Please review the submitted document
 Why: review request detected
-Evidence: "등록하신 문서를 다시 검토해주세요. 수정이 필요한 부분이 있습니다."
+Evidence: "Please review the submitted document and send updates by EOD."
 Action: Review the submitted document or reply if needed
 Adjudication: requires_approval
 
 📅 Calendar — Important context
-Event: Flight to 서울 (KE 24)
-When: 2026-05-21T12:40:00.000Z
+Event: Flight to Seoul (KE 24)
+When: May 21, 12:40 PM local time
 Location: SFO
 Reason: travel event detected, no action proposed
 

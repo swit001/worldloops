@@ -44,6 +44,29 @@ function isTravelContextEvent(title?: string, description?: string): boolean {
   return TRAVEL_CONTEXT_KEYWORDS.some(kw => combined.includes(kw.toLowerCase()));
 }
 
+function formatCalendarTime(isoString: string): string {
+  try {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(isoString)) {
+      const [, m, d] = isoString.split('-').map(Number);
+      const ref = new Date(Date.UTC(2000, m - 1, d));
+      const monthName = ref.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+      return `${monthName} ${d}`;
+    }
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'unavailable';
+    const month = date.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+    const day = date.getUTCDate();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = hours % 12 || 12;
+    const minuteStr = minutes.toString().padStart(2, '0');
+    return `${month} ${day}, ${hour12}:${minuteStr} ${ampm} local time`;
+  } catch {
+    return 'unavailable';
+  }
+}
+
 function detectLocalCandidate(sourceId: SourceId, evidence: EvidenceData): ProposalCandidate | null {
   if (sourceId === 'gmail') {
     const textToCheck = [evidence.subject ?? '', evidence.snippet ?? ''].join(' ');
@@ -225,7 +248,7 @@ export function buildSummaryLines(
     if (sourceId === 'calendar' && isTravelContextEvent(evidence.title, evidence.description)) {
       lines.push(`📅 ${label} — Important context`);
       if (evidence.title) lines.push(`Event: ${evidence.title}`);
-      if (evidence.start) lines.push(`When: ${evidence.start}`);
+      if (evidence.start) lines.push(`When: ${formatCalendarTime(evidence.start)}`);
       if (evidence.location) lines.push(`Location: ${evidence.location}`);
       lines.push(`Reason: travel event detected, no action proposed`);
       if (details && evidence.eventId) lines.push(`eventId: ${evidence.eventId}`);
@@ -304,7 +327,7 @@ export function buildSummaryLines(
     lines.push(`Subject: ${evidence.subject ?? 'unavailable'}`);
   } else if (sourceId === 'calendar') {
     lines.push(`Event: ${evidence.title ?? 'unavailable'}`);
-    if (evidence.start) lines.push(`When: ${evidence.start}`);
+    if (evidence.start) lines.push(`When: ${formatCalendarTime(evidence.start)}`);
     if (evidence.location) lines.push(`Location: ${evidence.location}`);
   } else if (sourceId === 'slack') {
     lines.push(`From: ${evidence.user ?? 'unavailable'}`);
@@ -322,7 +345,7 @@ export function buildSummaryLines(
     evidenceText = evidence.snippet;
   } else if (sourceId === 'calendar') {
     evidenceText = evidence.description ?? (evidence.title
-      ? `${evidence.title}${evidence.start ? ` at ${evidence.start}` : ''}`
+      ? `${evidence.title}${evidence.start ? ` at ${formatCalendarTime(evidence.start)}` : ''}`
       : undefined);
   } else if (sourceId === 'slack') {
     evidenceText = evidence.text;

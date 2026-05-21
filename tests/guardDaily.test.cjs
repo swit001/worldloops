@@ -169,7 +169,7 @@ function assertExternalWriteFalse(output, label) {
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.3', 'package.json: version must be 1.9.3');
+  assert.strictEqual(pkg.version, '1.9.4', 'package.json: version must be 1.9.4');
   assert.ok(pkg.scripts['guard:daily'], 'package.json: guard:daily script must exist');
   assert.ok(pkg.scripts['brief:daily'], 'package.json: brief:daily script must exist');
   assert.ok(
@@ -181,7 +181,7 @@ function assertExternalWriteFalse(output, label) {
     'package.json: brief:daily must alias guardDaily.js'
   );
   assert.ok(pkg.scripts['test:guard-daily'], 'package.json: test:guard-daily script must exist');
-  console.log('  PASS  package.json: version is 1.9.3');
+  console.log('  PASS  package.json: version is 1.9.4');
   console.log('  PASS  package.json: guard:daily and brief:daily scripts present');
   console.log('  PASS  package.json: both scripts use guardDaily.js');
   console.log('  PASS  package.json: test:guard-daily script present');
@@ -434,6 +434,10 @@ function assertExternalWriteFalse(output, label) {
 {
   const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
   assert.ok(
+    changelog.includes('v1.9.4'),
+    'CHANGELOG.md: must contain v1.9.4 entry'
+  );
+  assert.ok(
     changelog.includes('v1.9.3'),
     'CHANGELOG.md: must contain v1.9.3 entry'
   );
@@ -453,6 +457,7 @@ function assertExternalWriteFalse(output, label) {
     changelog.includes('Daily Brief'),
     'CHANGELOG.md: must mention Daily Brief'
   );
+  console.log('  PASS  CHANGELOG.md: v1.9.4 entry present');
   console.log('  PASS  CHANGELOG.md: v1.9.3 entry present');
   console.log('  PASS  CHANGELOG.md: v1.9.2 entry present');
   console.log('  PASS  CHANGELOG.md: v1.9.1 entry present');
@@ -953,6 +958,171 @@ function assertExternalWriteFalse(output, label) {
   assert.ok(!src.includes('googleapis'), 'guardDaily v1.9.3: must not reference googleapis');
   assert.ok(!src.includes('OAuth'), 'guardDaily v1.9.3: must not reference OAuth');
   console.log('  PASS  v1.9.3: no connector/OAuth/fetch behavior introduced');
+}
+
+// ── v1.9.4: Calendar time formatting — buildSummaryLines unit test ────────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+
+  const travelLines = buildSummaryLines(
+    'calendar', 'Calendar', '📅', [],
+    {
+      title: 'Flight to Seoul (KE 24)',
+      start: '2026-05-21T12:40:00.000Z',
+      location: 'SFO',
+      description: 'Departs SFO. Check in 2 hours before departure.',
+      itemCount: 1,
+      eventId: 'cal-travel-001',
+    }
+  );
+
+  assert.ok(
+    !travelLines.some(l => l.includes('2026-05-21T12:40:00.000Z')),
+    'v1.9.4 Calendar time: When: line must not contain raw ISO timestamp'
+  );
+  assert.ok(
+    travelLines.some(l => l.includes('local time')),
+    `v1.9.4 Calendar time: When: line must contain "local time", got: ${travelLines.join(' | ')}`
+  );
+  assert.ok(
+    travelLines.some(l => /When:.*May\s+\d+/.test(l)),
+    `v1.9.4 Calendar time: When: line must contain human-readable date (Month day), got: ${travelLines.join(' | ')}`
+  );
+  console.log('  PASS  v1.9.4 Calendar time: no raw ISO timestamp in When:');
+  console.log('  PASS  v1.9.4 Calendar time: "local time" present in When:');
+  console.log('  PASS  v1.9.4 Calendar time: human-readable date present in When:');
+}
+
+// ── v1.9.4: Calendar travel integration — no raw ISO timestamp ────────────────
+
+{
+  const TRAVEL_INBOX = 'scripts/fixtures/inbox-travel-calendar';
+  const result = run(['guard:daily', '--', '--inbox', TRAVEL_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily travel v1.9.4: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    !result.stdout.includes('2026-05-21T12:40:00.000Z'),
+    'v1.9.4 Calendar travel integration: output must not contain raw ISO timestamp'
+  );
+  assert.ok(
+    result.stdout.includes('local time'),
+    'v1.9.4 Calendar travel integration: output must contain "local time"'
+  );
+  assert.ok(
+    /When:.*May\s+\d+/.test(result.stdout),
+    `v1.9.4 Calendar travel integration: output must contain human-readable date in When: line`
+  );
+  console.log('  PASS  v1.9.4 Calendar travel integration: no raw ISO timestamp');
+  console.log('  PASS  v1.9.4 Calendar travel integration: "local time" present');
+  console.log('  PASS  v1.9.4 Calendar travel integration: human-readable date in When:');
+}
+
+// ── v1.9.4: SKILL.md public section must not contain Korean Gmail sample text ──
+
+{
+  const skill = fs.readFileSync('SKILL.md', 'utf8');
+  const runtimeIdx = skill.indexOf('## Agent Runtime Instructions');
+  assert.ok(runtimeIdx !== -1, 'SKILL.md: must contain ## Agent Runtime Instructions section');
+  const publicSection = skill.slice(0, runtimeIdx);
+
+  assert.ok(
+    !publicSection.includes('등록하신 문서를 다시 검토해주세요'),
+    'SKILL.md public section: must not contain Korean Gmail subject example text'
+  );
+  assert.ok(
+    !publicSection.includes('수정이 필요한 부분이 있습니다'),
+    'SKILL.md public section: must not contain Korean Gmail evidence text'
+  );
+  assert.ok(
+    publicSection.includes('Please review the submitted document'),
+    'SKILL.md public section: must contain English replacement example text'
+  );
+  console.log('  PASS  v1.9.4 SKILL.md: no Korean Gmail subject in public examples');
+  console.log('  PASS  v1.9.4 SKILL.md: no Korean Gmail evidence in public examples');
+  console.log('  PASS  v1.9.4 SKILL.md: English replacement example present');
+}
+
+// ── v1.9.4: README must not contain Korean Gmail sample text in examples ───────
+
+{
+  const readme = fs.readFileSync('README.md', 'utf8');
+  assert.ok(
+    !readme.includes('등록하신 문서를 다시 검토해주세요'),
+    'README.md: must not contain Korean Gmail subject example text'
+  );
+  assert.ok(
+    !readme.includes('수정이 필요한 부분이 있습니다'),
+    'README.md: must not contain Korean Gmail evidence text'
+  );
+  assert.ok(
+    readme.includes('Please review the submitted document'),
+    'README.md: must contain English replacement example text'
+  );
+  console.log('  PASS  v1.9.4 README: no Korean Gmail subject in public examples');
+  console.log('  PASS  v1.9.4 README: no Korean Gmail evidence in public examples');
+  console.log('  PASS  v1.9.4 README: English replacement example present');
+}
+
+// ── v1.9.4: Korean fixture still exists and Korean detection still works ────────
+
+{
+  const koreanFixturePath = 'scripts/fixtures/inbox-korean-gmail/openclaw-gmail-live.json';
+  assert.ok(fs.existsSync(koreanFixturePath), 'v1.9.4: Korean Gmail fixture must still exist');
+
+  const koreanGmail = JSON.parse(fs.readFileSync(koreanFixturePath, 'utf8'));
+  const hasKorean = koreanGmail.messages && koreanGmail.messages.some(m =>
+    (m.subject && (m.subject.includes('검토해주세요') || m.subject.includes('다시 검토'))) ||
+    (m.snippet && (m.snippet.includes('검토해주세요') || m.snippet.includes('다시 검토')))
+  );
+  assert.ok(hasKorean, 'v1.9.4: Korean Gmail fixture must still contain a Korean review phrase');
+
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+  const koreanCandidate = {
+    idempotencyKey: 'local-gmail-korean-review',
+    entityType: 'email',
+    source: 'gmail',
+    currentState: 'unread',
+    proposedState: 'reviewed',
+    reason: 'review request detected',
+    approvalRequired: true,
+    actionHint: 'Review the submitted document or reply if needed',
+  };
+  const koreanLines = buildSummaryLines(
+    'gmail', 'Gmail', '⚠️',
+    [koreanCandidate],
+    { subject: '등록하신 문서를 다시 검토해주세요.', from: 'reviewer@example.com', itemCount: 1 }
+  );
+  assert.ok(
+    koreanLines[0].includes('Review requested'),
+    `v1.9.4: Korean Gmail detection must still produce "Review requested" header, got: ${koreanLines[0]}`
+  );
+  assert.ok(
+    koreanLines.some(l => l.includes('requires_approval')),
+    'v1.9.4: Korean Gmail detection must still produce requires_approval'
+  );
+  console.log('  PASS  v1.9.4: Korean Gmail fixture still exists');
+  console.log('  PASS  v1.9.4: Korean fixture still contains Korean review phrase');
+  console.log('  PASS  v1.9.4: Korean Gmail detection still produces "Review requested"');
+  console.log('  PASS  v1.9.4: Korean Gmail detection still produces requires_approval');
+}
+
+// ── v1.9.4: externalWrite:false still present in all outputs ──────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assertExternalWriteFalse(result.stdout, 'v1.9.4 guard:daily');
+  console.log('  PASS  v1.9.4: externalWrite:false preserved in guard:daily output');
+}
+
+// ── v1.9.4: No connector / OAuth / fetch in updated dist files ────────────────
+
+{
+  const runner = fs.readFileSync('dist/dailyBriefRunner.js', 'utf8');
+  assert.ok(!runner.includes('googleapis'), 'v1.9.4 dailyBriefRunner: must not reference googleapis');
+  assert.ok(!runner.includes('OAuth'), 'v1.9.4 dailyBriefRunner: must not reference OAuth');
+  assert.ok(!runner.includes("fetch('"), 'v1.9.4 dailyBriefRunner: must not contain fetch()');
+  assert.ok(!runner.includes('fetch("'), 'v1.9.4 dailyBriefRunner: must not contain fetch()');
+  console.log('  PASS  v1.9.4: no connector/OAuth/fetch in dailyBriefRunner');
 }
 
 console.log('\nguardDaily: all assertions passed\n');

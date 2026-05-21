@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.9.4 — Calendar Time Formatting and Public Example Cleanup
+
+v1.9.4 improves Calendar time formatting and ClawHub-facing example polish. Calendar event times now display as human-readable local time instead of raw ISO timestamps, public Daily Brief examples are English-first, and Korean action phrase detection remains supported and tested.
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — added `formatCalendarTime` helper; Calendar `When:` lines now show human-readable time (e.g. `May 21, 12:40 PM local time`) instead of raw ISO timestamps; date-only strings show as `Month day`; unparseable strings show as `unavailable`
+- `package.json` — version 1.9.3 → 1.9.4
+- `SKILL.md` — version 1.9.3 → 1.9.4; public Daily Brief example updated: Korean Gmail Subject/Evidence replaced with English, Calendar flight event Englished, Calendar When: shows human-readable time
+- `README.md` — public Daily Brief example updated: same English-first changes; non-English detection support noted
+- `CHANGELOG.md` — this entry
+- `tests/guardDaily.test.cjs` — new assertions: Calendar travel output has no raw ISO timestamp, has human-readable time, uses "local time"; SKILL.md and README public examples contain no Korean Gmail text; version bump to 1.9.4
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+Korean detection is local phrase matching only — no AI inference.
+`externalWrite:false` preserved throughout.
+
+---
+
 ## v1.9.3 — Live Daily Brief Detection Polish
 
 v1.9.3 improves live Daily Brief detection with Korean action phrase support, neutral Gmail no-action summaries, Calendar important context for travel events, clearer Calendar zero-event output, and better Slack setup guidance while preserving externalWrite:false.

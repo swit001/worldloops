@@ -98,16 +98,16 @@ console.log('\nv182PublicListing tests\n');
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.0', 'package.json: version must be 1.9.0');
-  console.log('  PASS  package.json: version is 1.9.0');
+  assert.strictEqual(pkg.version, '1.9.4', 'package.json: version must be 1.9.4');
+  console.log('  PASS  package.json: version is 1.9.4');
 }
 
 // ── SKILL.md: version is 1.9.0 ───────────────────────────────────────────────
 
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
-  assert.ok(skill.includes('version: "1.9.0"'), 'SKILL.md: version must be 1.9.0');
-  console.log('  PASS  SKILL.md: version is 1.9.0');
+  assert.ok(skill.includes('version: "1.9.4"'), 'SKILL.md: version must be 1.9.4');
+  console.log('  PASS  SKILL.md: version is 1.9.4');
 }
 
 // ── SKILL.md: local payload handoff commands present in runtime section ────────
