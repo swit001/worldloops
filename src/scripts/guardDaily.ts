@@ -8,8 +8,13 @@ function getFlagValue(flag: string): string | undefined {
   return args[idx + 1];
 }
 
+function hasFlag(flag: string): boolean {
+  return process.argv.slice(2).includes(flag);
+}
+
 async function main(): Promise<void> {
   const inboxDir = getFlagValue('--inbox') ?? DEFAULT_INBOX_DIR;
+  const details = hasFlag('--details');
   const prefs = loadPrefs();
   const scheduleTime = prefs.dailyBrief.time ?? '09:00';
   const timezone = prefs.dailyBrief.timezone ?? 'UTC';
@@ -19,7 +24,7 @@ async function main(): Promise<void> {
   console.log('🦞 Agent Execution Guard Daily Brief');
   console.log('');
 
-  const results = await processAllSources(inboxDir);
+  const results = await processAllSources(inboxDir, details);
   const lines = buildBriefLines(results);
   for (const line of lines) {
     console.log(line);

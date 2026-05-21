@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.9.2 — Attributable Compact Daily Brief
+
+v1.9.2 adds attributable compact Daily Brief output. Gmail items now show sender and subject, Calendar items show event and time, and Slack items show sender/channel context. No-action sources use neutral wording, missing Slack gives setup guidance, and --details provides deeper source identifiers when available.
+
+### New
+
+- Gmail Daily Brief items include `From:` and `Subject:` attribution for actionable loops
+- Calendar Daily Brief items include `Event:` and `When:` for actionable loops; `Event:` for no-action loops
+- Slack Daily Brief items include `From:` and `Channel:` attribution for actionable loops
+- Calendar zero-event case now clearly shown as `No events found` with `Next:` guidance
+- No-action Gmail uses neutral `📧` icon instead of warning `⚠️`
+- Missing Slack payload shows setup-oriented guidance: configure OpenClaw channels.slack
+- `--details` flag: adds source identifiers (messageId, threadId, eventId, ts, thread_ts, permalink) to output
+- `npm run guard:daily -- --details` and `npm run brief:daily -- --inbox ... --details` supported
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — `buildSummaryLines` now exported; attribution lines added; `EvidenceData` extended with messageId, threadId, eventId, location, description, ts, thread_ts, permalink, sampleMessages; `processAllSources` and `processSource` accept `details` flag; missing Slack returns setup-guidance summaryLines; `buildBriefLines` includes missing-source summaryLines in Open loops section
+- `src/scripts/guardDaily.ts` — `--details` flag parsed and passed to `processAllSources`
+- `package.json` — version 1.9.1 → 1.9.2
+- `SKILL.md` — version 1.9.1 → 1.9.2; Daily Brief examples updated with attributed output; routing instructions discourage tool search steps and package.json inspection; `--details` commands added
+- `README.md` — Daily Brief example updated with attributed output (From, Subject, Event, Channel)
+- `CHANGELOG.md` — this entry
+- `tests/guardDaily.test.cjs` — new assertions for attribution (From, Subject, Event, Channel), no-action neutral icon, calendar zero-event, missing Slack setup guidance, compact output, details mode, routing discouragement
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+No normalizer behavior changed.
+`externalWrite:false` preserved throughout.
+No cron, launchd, or daemon installation.
+
+---
+
 ## v1.9.1 — Daily Brief Explainability and Timezone Polish
 
 v1.9.1 adds Daily Brief evidence lines, improves explainability for Gmail/Calendar/Slack summaries, changes default schedule wording from UTC to local time, and strengthens runtime routing for Daily Brief requests.

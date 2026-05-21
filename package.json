@@ -1,6 +1,6 @@
 {
   "name": "worldloops",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.",
   "main": "index.js",
   "scripts": {

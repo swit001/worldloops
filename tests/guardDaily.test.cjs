@@ -169,7 +169,7 @@ function assertExternalWriteFalse(output, label) {
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.1', 'package.json: version must be 1.9.1');
+  assert.strictEqual(pkg.version, '1.9.2', 'package.json: version must be 1.9.2');
   assert.ok(pkg.scripts['guard:daily'], 'package.json: guard:daily script must exist');
   assert.ok(pkg.scripts['brief:daily'], 'package.json: brief:daily script must exist');
   assert.ok(
@@ -181,7 +181,7 @@ function assertExternalWriteFalse(output, label) {
     'package.json: brief:daily must alias guardDaily.js'
   );
   assert.ok(pkg.scripts['test:guard-daily'], 'package.json: test:guard-daily script must exist');
-  console.log('  PASS  package.json: version is 1.9.1');
+  console.log('  PASS  package.json: version is 1.9.2');
   console.log('  PASS  package.json: guard:daily and brief:daily scripts present');
   console.log('  PASS  package.json: both scripts use guardDaily.js');
   console.log('  PASS  package.json: test:guard-daily script present');
@@ -429,10 +429,14 @@ function assertExternalWriteFalse(output, label) {
   console.log('  PASS  README.md: guard:daily command present');
 }
 
-// ── CHANGELOG.md: v1.9.1 and v1.9.0 entries ─────────────────────────────────
+// ── CHANGELOG.md: v1.9.2, v1.9.1 and v1.9.0 entries ─────────────────────────
 
 {
   const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+  assert.ok(
+    changelog.includes('v1.9.2'),
+    'CHANGELOG.md: must contain v1.9.2 entry'
+  );
   assert.ok(
     changelog.includes('v1.9.1'),
     'CHANGELOG.md: must contain v1.9.1 entry'
@@ -445,8 +449,231 @@ function assertExternalWriteFalse(output, label) {
     changelog.includes('Daily Brief'),
     'CHANGELOG.md: must mention Daily Brief'
   );
+  console.log('  PASS  CHANGELOG.md: v1.9.2 entry present');
   console.log('  PASS  CHANGELOG.md: v1.9.1 entry present');
   console.log('  PASS  CHANGELOG.md: v1.9.0 entry present');
+}
+
+// ── v1.9.2: Attribution — Gmail includes From and Subject ─────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily attribution: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('From:'),
+    'guard:daily: output must include From: (Gmail or Slack attribution)'
+  );
+  assert.ok(
+    result.stdout.includes('Subject:'),
+    'guard:daily: output must include Subject: (Gmail attribution)'
+  );
+  console.log('  PASS  guard:daily: From: attribution present');
+  console.log('  PASS  guard:daily: Subject: attribution present');
+}
+
+// ── v1.9.2: Attribution — Calendar includes Event ────────────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily calendar attribution: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('Event:'),
+    'guard:daily: output must include Event: (Calendar attribution)'
+  );
+  const hasWhenOrChecked =
+    result.stdout.includes('When:') || result.stdout.includes('Checked:') || result.stdout.includes('Event:');
+  assert.ok(hasWhenOrChecked, 'guard:daily: Calendar must include When:, Checked:, or Event:');
+  console.log('  PASS  guard:daily: Calendar Event: attribution present');
+  console.log('  PASS  guard:daily: Calendar When/Checked/Event present');
+}
+
+// ── v1.9.2: Attribution — Slack includes From/User and Channel ────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily slack attribution: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('Channel:'),
+    'guard:daily: output must include Channel: (Slack attribution)'
+  );
+  console.log('  PASS  guard:daily: Slack Channel: attribution present');
+}
+
+// ── v1.9.2: No-action — Gmail uses neutral icon (not warning) ─────────────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+  const noActionLines = buildSummaryLines('gmail', 'Gmail', '⚠️', [], { itemCount: 2, from: 'Alice', subject: 'FYI', sampleMessages: [{from: 'Alice', subject: 'FYI'}] });
+  assert.ok(Array.isArray(noActionLines), 'buildSummaryLines: must return array for no-action Gmail');
+  assert.ok(noActionLines.length > 0, 'buildSummaryLines: no-action Gmail must return lines');
+  assert.ok(
+    !noActionLines[0].includes('⚠️'),
+    'buildSummaryLines: no-action Gmail header must not use ⚠️ (warning icon)'
+  );
+  assert.ok(
+    noActionLines[0].includes('📧') || noActionLines[0].includes('No actionable'),
+    'buildSummaryLines: no-action Gmail must use neutral icon 📧 or "No actionable" wording'
+  );
+  console.log('  PASS  Gmail no-action: does not use warning icon ⚠️');
+  console.log('  PASS  Gmail no-action: uses neutral icon or neutral wording');
+}
+
+// ── v1.9.2: No-action — Calendar zero-event case ──────────────────────────────
+
+{
+  const CALENDAR_ZERO_INBOX = 'scripts/fixtures/inbox-calendar-zero';
+  const result = run(['guard:daily', '--', '--inbox', CALENDAR_ZERO_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily calendar zero: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('No events found'),
+    'guard:daily calendar zero: must say "No events found"'
+  );
+  assert.ok(
+    result.stdout.includes('Checked: 0 events'),
+    'guard:daily calendar zero: must say "Checked: 0 events"'
+  );
+  console.log('  PASS  Calendar zero-event: "No events found" present');
+  console.log('  PASS  Calendar zero-event: "Checked: 0 events" present');
+}
+
+// ── v1.9.2: Missing Slack shows setup guidance ────────────────────────────────
+
+{
+  const NO_SLACK_INBOX = 'scripts/fixtures/inbox-no-slack';
+  const result = run(['guard:daily', '--', '--inbox', NO_SLACK_INBOX]);
+  assert.strictEqual(result.status, 0, `guard:daily no-slack: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('not connected') || result.stdout.includes('channels.slack'),
+    'guard:daily no-slack: must include Slack setup guidance'
+  );
+  assert.ok(
+    result.stdout.includes('openclaw-slack-live.json'),
+    'guard:daily no-slack: must reference Slack payload path'
+  );
+  assertExternalWriteFalse(result.stdout, 'guard:daily no-slack');
+  console.log('  PASS  Missing Slack: setup guidance present');
+  console.log('  PASS  Missing Slack: Slack payload path referenced');
+  console.log('  PASS  Missing Slack: externalWrite:false present');
+}
+
+// ── v1.9.2: Missing payload onboarding remains short ─────────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', MISSING_INBOX]);
+  const lines = result.stdout.split('\n').filter(l => l.trim().length > 0);
+  assert.ok(
+    lines.length < 25,
+    `guard:daily all-missing: onboarding must be short (got ${lines.length} non-empty lines)`
+  );
+  assert.ok(
+    !result.stdout.includes('OpenClaw/gog/host tools should read the external systems'),
+    'guard:daily all-missing: must not include old verbose text'
+  );
+  console.log('  PASS  Missing payload onboarding: remains short');
+}
+
+// ── v1.9.2: Compact output — no raw JSON, evidence snippets present ───────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX]);
+  assertNoRawJson(result.stdout, 'guard:daily compact');
+  assert.ok(
+    result.stdout.includes('Evidence:'),
+    'guard:daily compact: must include Evidence: snippets'
+  );
+  // Evidence snippets must not be overly long (each quoted evidence ≤ 150 chars)
+  const evidenceMatches = result.stdout.match(/Evidence: "([^"]+)"/g) || [];
+  for (const match of evidenceMatches) {
+    assert.ok(
+      match.length <= 160,
+      `guard:daily compact: evidence snippet too long: ${match.slice(0, 80)}...`
+    );
+  }
+  assert.ok(
+    result.stdout.includes('externalWrite:false') || result.stdout.includes('externalWrite: false'),
+    'guard:daily compact: must include externalWrite:false'
+  );
+  assert.ok(
+    result.stdout.includes('local time'),
+    'guard:daily compact: must include schedule with "local time" wording'
+  );
+  console.log('  PASS  Compact output: no raw JSON');
+  console.log('  PASS  Compact output: Evidence: snippets present');
+  console.log('  PASS  Compact output: evidence snippets not overly long');
+  console.log('  PASS  Compact output: externalWrite:false present');
+  console.log('  PASS  Compact output: local time schedule present');
+}
+
+// ── v1.9.2: Details mode — guard:daily --details exits 0 ─────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX, '--details']);
+  assert.strictEqual(
+    result.status, 0,
+    `guard:daily --details: expected exit 0\n${result.stdout}\n${result.stderr}`
+  );
+  assert.ok(
+    result.stdout.includes('Agent Execution Guard Daily Brief'),
+    'guard:daily --details: must contain "Agent Execution Guard Daily Brief"'
+  );
+  assertNoRawJson(result.stdout, 'guard:daily --details');
+  assertExternalWriteFalse(result.stdout, 'guard:daily --details');
+  console.log('  PASS  guard:daily --details: exits 0');
+  console.log('  PASS  guard:daily --details: no raw JSON');
+  console.log('  PASS  guard:daily --details: externalWrite:false present');
+}
+
+// ── v1.9.2: Details mode — brief:daily --inbox --details exits 0 ──────────────
+
+{
+  const result = run(['brief:daily', '--', '--inbox', FIXTURE_INBOX, '--details']);
+  assert.strictEqual(
+    result.status, 0,
+    `brief:daily --details: expected exit 0\n${result.stdout}\n${result.stderr}`
+  );
+  assertExternalWriteFalse(result.stdout, 'brief:daily --details');
+  console.log('  PASS  brief:daily --inbox --details: exits 0');
+  console.log('  PASS  brief:daily --inbox --details: externalWrite:false present');
+}
+
+// ── v1.9.2: Details mode — includes at least one source identifier ─────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', FIXTURE_INBOX, '--details']);
+  assert.strictEqual(result.status, 0, `guard:daily --details source id: expected exit 0\n${result.stdout}`);
+  const hasSourceId =
+    result.stdout.includes('messageId:') || result.stdout.includes('threadId:') ||
+    result.stdout.includes('eventId:') || result.stdout.includes('ts:') ||
+    result.stdout.includes('thread_ts:') || result.stdout.includes('permalink:');
+  assert.ok(hasSourceId, 'guard:daily --details: must include at least one source identifier (messageId, threadId, eventId, ts, etc.)');
+  console.log('  PASS  Details mode: source identifier present');
+}
+
+// ── v1.9.2: SKILL.md discourages tool search / command narration ──────────────
+
+{
+  const skill = fs.readFileSync('SKILL.md', 'utf8');
+  const runtimeIdx = skill.indexOf('## Agent Runtime Instructions');
+  assert.ok(runtimeIdx !== -1, 'SKILL.md: must contain ## Agent Runtime Instructions section');
+  const runtimeSection = skill.slice(runtimeIdx);
+  assert.ok(
+    runtimeSection.includes('Do not show tool search steps') ||
+    runtimeSection.includes('Do not inspect package.json'),
+    'SKILL.md: routing section must discourage tool search steps or package.json inspection for Daily Brief'
+  );
+  console.log('  PASS  SKILL.md: discourages tool search / command narration for Daily Brief');
+}
+
+// ── v1.9.2: No connector / OAuth / fetch introduced ──────────────────────────
+
+{
+  const src = fs.readFileSync('dist/scripts/guardDaily.js', 'utf8');
+  assert.ok(!src.includes('googleapis'), 'guardDaily v1.9.2: must not reference googleapis');
+  assert.ok(!src.includes('OAuth'), 'guardDaily v1.9.2: must not reference OAuth');
+  assert.ok(!src.includes('graph.microsoft.com'), 'guardDaily v1.9.2: must not reference MS Graph');
+  assert.ok(!src.includes("fetch('"), 'guardDaily v1.9.2: must not contain fetch() with single-quote');
+  assert.ok(!src.includes('fetch("'), 'guardDaily v1.9.2: must not contain fetch() with double-quote');
+  console.log('  PASS  v1.9.2: no connector/OAuth/fetch behavior introduced');
 }
 
 console.log('\nguardDaily: all assertions passed\n');

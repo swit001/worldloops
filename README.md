@@ -121,19 +121,24 @@ Sources:
 Open loops:
 
 ⚠️ Gmail — Follow-up needed
+From: Alex Kim
+Subject: Updated proposal
 Why: follow-up or reply request detected
-Evidence: "Can you send the updated proposal by Friday?"
+Evidence: "Need a response before EOD."
 Action: Draft a reply or follow-up
 Adjudication: requires_approval
 
 📅 Calendar — No actionable loop detected
 Checked: 1 event
+Event: Weekly sync
 Reason: no prep, deadline, approval, or follow-up language detected
 
 💬 Slack — Action requested
+From: Dana
+Channel: #product
 Why: review or approval request detected
 Evidence: "Can you review this before release?"
-Action: Review the referenced item and add comments or approval
+Action: Review and comment
 Adjudication: requires_approval
 
 ✅ Safe

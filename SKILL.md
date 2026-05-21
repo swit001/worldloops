@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.1"
+version: "1.9.2"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -241,19 +241,24 @@ Sources:
 Open loops:
 
 ⚠️ Gmail — Follow-up needed
+From: Alex Kim
+Subject: Updated proposal
 Why: follow-up or reply request detected
-Evidence: "Can you send the updated proposal by Friday?"
+Evidence: "Need a response before EOD."
 Action: Draft a reply or follow-up
 Adjudication: requires_approval
 
 📅 Calendar — No actionable loop detected
 Checked: 1 event
+Event: Weekly sync
 Reason: no prep, deadline, approval, or follow-up language detected
 
 💬 Slack — Action requested
+From: Dana
+Channel: #product
 Why: review or approval request detected
 Evidence: "Can you review this before release?"
-Action: Review the referenced item and add comments or approval
+Action: Review and comment
 Adjudication: requires_approval
 
 ✅ Safe
@@ -303,6 +308,9 @@ For Daily Brief (all sources combined):
 ```bash
 npm run guard:daily
 npm run brief:daily
+npm run guard:daily -- --details
+npm run brief:daily -- --inbox scripts/fixtures/inbox
+npm run brief:daily -- --inbox scripts/fixtures/inbox --details
 npm run brief:preferences
 npm run brief:preferences:set -- --time 08:30
 npm run brief:preferences:set -- --channel telegram
@@ -396,11 +404,20 @@ npm run --silent guard:daily
 ```
 
 Return only the command output. Do not narrate the command unless the user asks.
+Do not show tool search steps.
+Do not inspect package.json first for Daily Brief requests.
 
 For fixture-based Daily Brief examples:
 
 ```bash
 npm run --silent brief:daily -- --inbox scripts/fixtures/inbox
+```
+
+For details mode (source identifiers):
+
+```bash
+npm run --silent guard:daily -- --details
+npm run --silent brief:daily -- --inbox scripts/fixtures/inbox --details
 ```
 
 For delivery-ready checks:

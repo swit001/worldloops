@@ -19,6 +19,13 @@ export const SOURCES = [
 
 export type SourceId = 'gmail' | 'calendar' | 'slack';
 
+interface SampleMessage {
+  from?: string;
+  subject?: string;
+  user?: string;
+  text?: string;
+}
+
 interface EvidenceData {
   snippet?: string;
   subject?: string;
@@ -26,10 +33,19 @@ interface EvidenceData {
   title?: string;
   start?: string;
   end?: string;
+  location?: string;
+  description?: string;
   text?: string;
   channel?: string;
   user?: string;
   itemCount?: number;
+  messageId?: string;
+  threadId?: string;
+  eventId?: string;
+  ts?: string;
+  thread_ts?: string;
+  permalink?: string;
+  sampleMessages?: SampleMessage[];
 }
 
 export interface SourceResult {
@@ -61,7 +77,17 @@ function extractEvidence(sourceId: SourceId, raw: unknown): EvidenceData {
       const raw_snippet = typeof msg.snippet === 'string' ? msg.snippet :
                           typeof msg.body === 'string' ? msg.body : undefined;
       const snippet = raw_snippet ? truncate(raw_snippet) : undefined;
-      return { subject, from, snippet, itemCount: messages.length };
+      const messageId = typeof msg.id === 'string' ? msg.id : undefined;
+      const threadId = typeof msg.threadId === 'string' ? msg.threadId : undefined;
+      const sampleMessages: SampleMessage[] = messages.slice(0, 3).map((m: unknown) => {
+        if (typeof m !== 'object' || m === null) return {};
+        const item = m as Record<string, unknown>;
+        return {
+          from: typeof item.from === 'string' ? item.from : undefined,
+          subject: typeof item.subject === 'string' ? item.subject : undefined,
+        };
+      });
+      return { subject, from, snippet, itemCount: messages.length, messageId, threadId, sampleMessages };
     }
     return { itemCount: messages.length };
   }
@@ -75,7 +101,11 @@ function extractEvidence(sourceId: SourceId, raw: unknown): EvidenceData {
                     typeof evt.title === 'string' ? evt.title : undefined;
       const start = typeof evt.start === 'string' ? evt.start : undefined;
       const end = typeof evt.end === 'string' ? evt.end : undefined;
-      return { title, start, end, itemCount: events.length };
+      const location = typeof evt.location === 'string' ? evt.location : undefined;
+      const raw_description = typeof evt.description === 'string' ? evt.description : undefined;
+      const description = raw_description ? truncate(raw_description) : undefined;
+      const eventId = typeof evt.id === 'string' ? evt.id : undefined;
+      return { title, start, end, location, description, eventId, itemCount: events.length };
     }
     return { itemCount: events.length };
   }
@@ -83,7 +113,7 @@ function extractEvidence(sourceId: SourceId, raw: unknown): EvidenceData {
   if (sourceId === 'slack') {
     const messages = Array.isArray(obj.messages) ? obj.messages :
                      Array.isArray(obj.items) ? obj.items : [];
-    const channel = typeof obj.channel === 'string' ? obj.channel : undefined;
+    const topChannel = typeof obj.channel === 'string' ? obj.channel : undefined;
     const first = messages[0];
     if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
       const msg = first as Record<string, unknown>;
@@ -91,30 +121,83 @@ function extractEvidence(sourceId: SourceId, raw: unknown): EvidenceData {
       const text = raw_text ? truncate(raw_text) : undefined;
       const user = typeof msg.user === 'string' ? msg.user :
                    typeof msg.username === 'string' ? msg.username : undefined;
-      return { text, channel, user, itemCount: messages.length };
+      const channel = typeof msg.channel === 'string' ? msg.channel : topChannel;
+      const ts = typeof msg.ts === 'string' ? msg.ts : undefined;
+      const thread_ts = typeof msg.thread_ts === 'string' ? msg.thread_ts : undefined;
+      const permalink = typeof msg.permalink === 'string' ? msg.permalink : undefined;
+      return { text, channel, user, itemCount: messages.length, ts, thread_ts, permalink };
     }
-    return { channel, itemCount: messages.length };
+    return { channel: topChannel, itemCount: messages.length };
   }
 
   return {};
 }
 
-function buildSummaryLines(
+export function buildSummaryLines(
   sourceId: SourceId,
   label: string,
-  emoji: string,
+  _emoji: string,
   candidates: ProposalCandidate[],
-  evidence: EvidenceData
+  evidence: EvidenceData,
+  details = false
 ): string[] {
   if (candidates.length === 0) {
     const lines: string[] = [];
-    lines.push(`${emoji} ${label} — No actionable loop detected`);
+
+    // Calendar zero-event case
+    if (sourceId === 'calendar' && evidence.itemCount === 0) {
+      lines.push(`📅 ${label} — No events found`);
+      lines.push(`Checked: 0 events`);
+      lines.push(`Reason: calendar payload was present, but contained no events`);
+      lines.push(`Next: read events for today through the next 14 days`);
+      if (details && evidence.eventId) lines.push(`eventId: ${evidence.eventId}`);
+      return lines;
+    }
+
+    const noActionEmoji = sourceId === 'gmail' ? '📧' :
+                          sourceId === 'calendar' ? '📅' : '💬';
+
+    lines.push(`${noActionEmoji} ${label} — No actionable loop detected`);
+
     if (evidence.itemCount !== undefined) {
       const unit = sourceId === 'calendar' ? 'event' : 'message';
       const plural = evidence.itemCount === 1 ? unit : `${unit}s`;
       lines.push(`Checked: ${evidence.itemCount} ${plural}`);
     }
-    lines.push(`Reason: no prep, deadline, approval, or follow-up language detected`);
+
+    if (sourceId === 'calendar' && evidence.title) {
+      lines.push(`Event: ${evidence.title}`);
+    }
+
+    if (sourceId === 'gmail' && evidence.sampleMessages && evidence.sampleMessages.length > 0) {
+      lines.push(`Sample:`);
+      for (const m of evidence.sampleMessages) {
+        const parts: string[] = [];
+        if (m.from) parts.push(`From: ${m.from}`);
+        if (m.subject) parts.push(`Subject: ${m.subject}`);
+        if (parts.length > 0) lines.push(`- ${parts.join(' / ')}`);
+      }
+    }
+
+    if (sourceId === 'gmail') {
+      lines.push(`Reason: no reply, deadline, approval, or follow-up request detected`);
+    } else {
+      lines.push(`Reason: no prep, deadline, approval, or follow-up language detected`);
+    }
+
+    if (details) {
+      if (sourceId === 'gmail') {
+        if (evidence.messageId) lines.push(`messageId: ${evidence.messageId}`);
+        if (evidence.threadId) lines.push(`threadId: ${evidence.threadId}`);
+      } else if (sourceId === 'calendar') {
+        if (evidence.eventId) lines.push(`eventId: ${evidence.eventId}`);
+      } else if (sourceId === 'slack') {
+        if (evidence.ts) lines.push(`ts: ${evidence.ts}`);
+        if (evidence.thread_ts) lines.push(`thread_ts: ${evidence.thread_ts}`);
+        if (evidence.permalink) lines.push(`permalink: ${evidence.permalink}`);
+      }
+    }
+
     return lines;
   }
 
@@ -122,10 +205,24 @@ function buildSummaryLines(
   const lines: string[] = [];
 
   let headerLabel: string;
-  if (sourceId === 'gmail') headerLabel = 'Follow-up needed';
-  else if (sourceId === 'calendar') headerLabel = 'Preparation needed';
-  else headerLabel = 'Action requested';
-  lines.push(`${emoji} ${label} — ${headerLabel}`);
+  let activeEmoji: string;
+  if (sourceId === 'gmail') { headerLabel = 'Follow-up needed'; activeEmoji = '⚠️'; }
+  else if (sourceId === 'calendar') { headerLabel = 'Prep needed'; activeEmoji = '📅'; }
+  else { headerLabel = 'Action requested'; activeEmoji = '💬'; }
+
+  lines.push(`${activeEmoji} ${label} — ${headerLabel}`);
+
+  if (sourceId === 'gmail') {
+    lines.push(`From: ${evidence.from ?? 'unavailable'}`);
+    lines.push(`Subject: ${evidence.subject ?? 'unavailable'}`);
+  } else if (sourceId === 'calendar') {
+    lines.push(`Event: ${evidence.title ?? 'unavailable'}`);
+    if (evidence.start) lines.push(`When: ${evidence.start}`);
+    if (evidence.location) lines.push(`Location: ${evidence.location}`);
+  } else if (sourceId === 'slack') {
+    lines.push(`From: ${evidence.user ?? 'unavailable'}`);
+    lines.push(`Channel: ${evidence.channel ?? 'unavailable'}`);
+  }
 
   const whyDefault =
     sourceId === 'gmail' ? 'follow-up or reply request detected' :
@@ -134,11 +231,15 @@ function buildSummaryLines(
   lines.push(`Why: ${first.reason || whyDefault}`);
 
   let evidenceText: string | undefined;
-  if (sourceId === 'gmail') evidenceText = evidence.snippet;
-  else if (sourceId === 'calendar') evidenceText = evidence.title
-    ? `${evidence.title}${evidence.start ? ` at ${evidence.start}` : ''}`
-    : undefined;
-  else if (sourceId === 'slack') evidenceText = evidence.text;
+  if (sourceId === 'gmail') {
+    evidenceText = evidence.snippet;
+  } else if (sourceId === 'calendar') {
+    evidenceText = evidence.description ?? (evidence.title
+      ? `${evidence.title}${evidence.start ? ` at ${evidence.start}` : ''}`
+      : undefined);
+  } else if (sourceId === 'slack') {
+    evidenceText = evidence.text;
+  }
 
   lines.push(`Evidence: ${evidenceText ? `"${evidenceText}"` : 'not available in payload'}`);
 
@@ -149,6 +250,19 @@ function buildSummaryLines(
   lines.push(`Action: ${first.actionHint || actionDefault}`);
 
   lines.push(`Adjudication: ${first.approvalRequired ? 'requires_approval' : 'informational'}`);
+
+  if (details) {
+    if (sourceId === 'gmail') {
+      if (evidence.messageId) lines.push(`messageId: ${evidence.messageId}`);
+      if (evidence.threadId) lines.push(`threadId: ${evidence.threadId}`);
+    } else if (sourceId === 'calendar') {
+      if (evidence.eventId) lines.push(`eventId: ${evidence.eventId}`);
+    } else if (sourceId === 'slack') {
+      if (evidence.ts) lines.push(`ts: ${evidence.ts}`);
+      if (evidence.thread_ts) lines.push(`thread_ts: ${evidence.thread_ts}`);
+      if (evidence.permalink) lines.push(`permalink: ${evidence.permalink}`);
+    }
+  }
 
   return lines;
 }
@@ -179,12 +293,22 @@ export async function processSource(
   file: string,
   label: string,
   emoji: string,
-  inboxDir: string
+  inboxDir: string,
+  details = false
 ): Promise<SourceResult> {
   const filePath = path.join(inboxDir, file);
   const found = fs.existsSync(filePath);
 
   if (!found) {
+    if (sourceId === 'slack') {
+      const summaryLines = [
+        `⬜ Slack — not connected`,
+        `Reason: no Slack payload found`,
+        `Next: configure OpenClaw channels.slack, then save payload to:`,
+        `${DEFAULT_INBOX_DIR}/openclaw-slack-live.json`,
+      ];
+      return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLines };
+    }
     return { id: sourceId, label, emoji, file, found: false, ok: false, candidates: [], summaryLines: [] };
   }
 
@@ -215,7 +339,7 @@ export async function processSource(
     const candidates = result.proposalCandidates ?? [];
     return {
       id: sourceId, label, emoji, file, found: true, ok: result.ok, candidates,
-      summaryLines: buildSummaryLines(sourceId, label, emoji, candidates, evidence),
+      summaryLines: buildSummaryLines(sourceId, label, emoji, candidates, evidence, details),
     };
   } catch {
     return {
@@ -225,10 +349,10 @@ export async function processSource(
   }
 }
 
-export async function processAllSources(inboxDir: string): Promise<SourceResult[]> {
+export async function processAllSources(inboxDir: string, details = false): Promise<SourceResult[]> {
   const results: SourceResult[] = [];
   for (const src of SOURCES) {
-    results.push(await processSource(src.id, src.file, src.label, src.emoji, inboxDir));
+    results.push(await processSource(src.id, src.file, src.label, src.emoji, inboxDir, details));
   }
   return results;
 }
@@ -236,7 +360,6 @@ export async function processAllSources(inboxDir: string): Promise<SourceResult[
 export function buildBriefLines(results: SourceResult[]): string[] {
   const lines: string[] = [];
   const foundResults = results.filter(r => r.found);
-  const missingResults = results.filter(r => !r.found);
 
   if (foundResults.length === 0) {
     lines.push('No local handoff payloads found yet.');
@@ -259,22 +382,16 @@ export function buildBriefLines(results: SourceResult[]): string[] {
     lines.push(r.found ? `✅ ${r.label}` : `⬜ ${r.label} — missing`);
   }
 
-  if (missingResults.length > 0) {
-    lines.push('');
-    for (const r of missingResults) {
-      lines.push(
-        `No ${r.label} payload found. Save a host-read payload to ${DEFAULT_INBOX_DIR}/openclaw-${r.id}-live.json.`
-      );
-    }
-  }
-
   lines.push('');
   lines.push('Open loops:');
-  for (const r of foundResults) {
-    for (const line of r.summaryLines) {
-      lines.push(line);
+
+  for (const r of results) {
+    if (r.summaryLines.length > 0) {
+      lines.push('');
+      for (const line of r.summaryLines) {
+        lines.push(line);
+      }
     }
-    lines.push('');
   }
 
   return lines;

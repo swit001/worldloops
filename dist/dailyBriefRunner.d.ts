@@ -17,6 +17,33 @@ export declare const SOURCES: ({
     emoji: string;
 })[];
 export type SourceId = 'gmail' | 'calendar' | 'slack';
+interface SampleMessage {
+    from?: string;
+    subject?: string;
+    user?: string;
+    text?: string;
+}
+interface EvidenceData {
+    snippet?: string;
+    subject?: string;
+    from?: string;
+    title?: string;
+    start?: string;
+    end?: string;
+    location?: string;
+    description?: string;
+    text?: string;
+    channel?: string;
+    user?: string;
+    itemCount?: number;
+    messageId?: string;
+    threadId?: string;
+    eventId?: string;
+    ts?: string;
+    thread_ts?: string;
+    permalink?: string;
+    sampleMessages?: SampleMessage[];
+}
 export interface SourceResult {
     id: SourceId;
     label: string;
@@ -27,6 +54,8 @@ export interface SourceResult {
     candidates: ProposalCandidate[];
     summaryLines: string[];
 }
-export declare function processSource(sourceId: SourceId, file: string, label: string, emoji: string, inboxDir: string): Promise<SourceResult>;
-export declare function processAllSources(inboxDir: string): Promise<SourceResult[]>;
+export declare function buildSummaryLines(sourceId: SourceId, label: string, _emoji: string, candidates: ProposalCandidate[], evidence: EvidenceData, details?: boolean): string[];
+export declare function processSource(sourceId: SourceId, file: string, label: string, emoji: string, inboxDir: string, details?: boolean): Promise<SourceResult>;
+export declare function processAllSources(inboxDir: string, details?: boolean): Promise<SourceResult[]>;
 export declare function buildBriefLines(results: SourceResult[]): string[];
+export {};
