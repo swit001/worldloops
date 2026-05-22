@@ -104,7 +104,8 @@
     "test:guard-handoff": "node tests/guardHandoff.test.cjs",
     "test:v182-public-listing": "node tests/v182PublicListing.test.cjs",
     "openclaw:intake": "node dist/scripts/openclawIntake.js",
-    "test:openclaw-intake": "node tests/openclawIntake.test.cjs"
+    "test:openclaw-intake": "node tests/openclawIntake.test.cjs",
+    "telegram:test": "node dist/scripts/telegramTestBot.js"
   },
   "keywords": [
     "openclaw",
