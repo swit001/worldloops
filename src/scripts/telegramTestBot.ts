@@ -3,7 +3,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { loadObservations, runIntake } from '../openclawIntake';
-import type { IntakeSummary, AdjudicationResult } from '../openclawIntake';
+import type {
+  IntakeSummary,
+  AdjudicationResult,
+  OpenClawObservation,
+  SuppressionReason,
+} from '../openclawIntake';
+import { loadOpenLoopStates } from '../storage/openLoopStates';
+import type { OpenLoopState } from '../types/openLoopState';
 
 const OPENCLAW_INBOX = path.join(process.env.HOME ?? '', '.openclaw/workspace/.worldloops/inbox');
 
@@ -112,6 +119,31 @@ function truncate(text: string): string {
   return text.slice(0, cutoff) + TRUNCATION_SUFFIX;
 }
 
+// Split a long brief into Telegram-sized messages at line boundaries, so the
+// full brief — including the ✅ Safe footer — is always delivered rather than
+// truncated mid-section.
+function splitMessage(text: string, max = 4000): string[] {
+  if (text.length <= max) return [text];
+  const chunks: string[] = [];
+  let current = '';
+  for (const line of text.split('\n')) {
+    if (current && current.length + 1 + line.length > max) {
+      chunks.push(current);
+      current = line;
+    } else {
+      current = current ? `${current}\n${line}` : line;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+async function sendBrief(token: string, chatId: number, text: string): Promise<void> {
+  for (const chunk of splitMessage(text)) {
+    await sendMessage(token, chatId, chunk);
+  }
+}
+
 function srcEmoji(source: string): string {
   if (source === 'gmail' || source === 'email') return '📧';
   if (source === 'calendar') return '🗓️';
@@ -156,47 +188,320 @@ function actionFromText(text: string): string {
   return '';
 }
 
-function buildLoopEntry(r: AdjudicationResult, adjLabel: string): string {
+// ── Language ───────────────────────────────────────────────────────────────
+// The brief is a presentation surface. We detect the target language from the
+// user's Telegram message and translate section/field labels and concise
+// synthesized text only — never the raw observed private text.
+
+type Lang = 'en' | 'ko';
+
+function detectLang(text: string): Lang {
+  if (/[가-힣]/.test(text)) return 'ko';
+  if (/show in korean/i.test(text)) return 'ko';
+  return 'en';
+}
+
+interface FieldLabels {
+  from: string; subject: string; event: string; when: string;
+  location: string; why: string; evidence: string; action: string;
+  adjudication: string; channel: string;
+}
+
+interface Labels {
+  lang: Lang;
+  briefTitle: string;
+  modeLine: (mode: string) => string;
+  secNew: string; secTracked: string; secAging: string; secClosed: string;
+  secReview: string; secContext: string; secSuppressed: string; secSafe: string;
+  none: string;
+  attend: string;
+  openForDays: (n: number) => string;
+  transitionLine: (from: string, to: string) => string;
+  closedSuffix: string;
+  escalatedSuffix: string;
+  needsReviewSuffix: string;
+  lowConfidence: string;
+  dueLabel: (d: string) => string;
+  safetyLine1: string;
+  safetyLine2: string;
+  suppPromo: string;
+  suppNegative: string;
+  field: FieldLabels;
+  pReading: string;
+  pLoaded: (n: number) => string;
+  pAdjudicating: string;
+  pFound: (
+    total: number,
+    opened: number,
+    tracked: number,
+    ctx: number,
+    suppressed: number
+  ) => string;
+}
+
+const EN_LABELS: Labels = {
+  lang: 'en',
+  briefTitle: '🛡️ WorldLoops Brief',
+  modeLine: (m) => `mode: ${m}`,
+  secNew: '🧭 New open loops',
+  secTracked: '🔁 Already tracked open loops',
+  secAging: '⏳ Aging open loops',
+  secClosed: '✅ Closed since last brief',
+  secReview: '⚠️ Needs review / Escalated',
+  secContext: '📎 Context',
+  secSuppressed: '🧹 Suppressed',
+  secSafe: '✅ Safe',
+  none: 'None.',
+  attend: 'Attend',
+  openForDays: (n) => `open for ${n} day${n === 1 ? '' : 's'}`,
+  transitionLine: (f, t) => `  Transition: ${f} → ${t}`,
+  closedSuffix: 'completed',
+  escalatedSuffix: 'escalated',
+  needsReviewSuffix: 'needs confirmation',
+  lowConfidence: 'low confidence',
+  dueLabel: (d) => `, due ${d}`,
+  safetyLine1: 'externalWrite:false',
+  safetyLine2: 'No email, draft, calendar event, Slack message, or external change made.',
+  suppPromo: 'promotional / no action',
+  suppNegative: 'no action required',
+  field: {
+    from: 'From', subject: 'Subject', event: 'Event', when: 'When',
+    location: 'Location', why: 'Why', evidence: 'Evidence', action: 'Action',
+    adjudication: 'Adjudication', channel: 'Channel',
+  },
+  pReading: 'Reading interpreted OpenClaw observations…',
+  pLoaded: (n) => `Loaded ${n} interpreted candidate${n === 1 ? '' : 's'}.`,
+  pAdjudicating: 'WorldLoops is adjudicating candidates…',
+  pFound: (total, opened, tracked, ctx, sup) =>
+    `WorldLoops adjudicated ${total} candidate${total === 1 ? '' : 's'}:\n` +
+    `${opened} newly opened, ${tracked} already tracked, ${ctx} context, ${sup} suppressed.`,
+};
+
+const KO_LABELS: Labels = {
+  lang: 'ko',
+  briefTitle: '🛡️ WorldLoops 브리프',
+  modeLine: (m) => `mode: ${m}`,
+  secNew: '🧭 새로 열린 루프',
+  secTracked: '🔁 이미 추적 중인 루프',
+  secAging: '⏳ 오래 열려 있는 루프',
+  secClosed: '✅ 지난 브리프 이후 닫힌 루프',
+  secReview: '⚠️ 확인 필요 / 에스컬레이션',
+  secContext: '📎 참고 컨텍스트',
+  secSuppressed: '🧹 억제된 노이즈',
+  secSafe: '✅ 안전 경계',
+  none: '없음.',
+  attend: '참석',
+  openForDays: (n) => `${n}일째 열려 있음`,
+  transitionLine: (f, t) => `  전환: ${f} → ${t}`,
+  closedSuffix: '완료됨',
+  escalatedSuffix: '에스컬레이션됨',
+  needsReviewSuffix: '확인 필요',
+  lowConfidence: '낮은 신뢰도',
+  dueLabel: (d) => `, 마감 ${d}`,
+  safetyLine1: 'externalWrite:false',
+  safetyLine2: '이메일, 초안, 캘린더 일정, Slack 메시지 또는 외부 시스템을 변경하지 않았습니다.',
+  suppPromo: '홍보성 / 조치 불필요',
+  suppNegative: '조치 불필요',
+  field: {
+    from: '보낸 사람', subject: '제목', event: '일정', when: '시간',
+    location: '장소', why: '이유', evidence: '근거', action: '다음 행동',
+    adjudication: '판정', channel: '채널',
+  },
+  pReading: 'OpenClaw 해석 관측을 읽는 중입니다…',
+  pLoaded: (n) => `해석된 후보 ${n}개를 불러왔습니다.`,
+  pAdjudicating: 'WorldLoops가 후보를 판정하는 중입니다…',
+  pFound: (total, opened, tracked, ctx, sup) =>
+    `WorldLoops가 후보 ${total}개를 판정했습니다:\n` +
+    `새로 열림 ${opened}개, 이미 추적 중 ${tracked}개, 컨텍스트 ${ctx}개, 억제 ${sup}개.`,
+};
+
+function getLabels(lang: Lang): Labels {
+  return lang === 'ko' ? KO_LABELS : EN_LABELS;
+}
+
+// ── Stateful brief UX ────────────────────────────────────────────────────────
+// WorldLoops tracks open-loop lifecycle state over time — it is not a snapshot
+// summary bot. The brief persists the timestamp of the last brief so it can
+// report which loops closed since the user last looked.
+
+interface TelegramBriefState {
+  lastBriefAt: string;
+  safety: { externalWrite: false };
+}
+
+function getBriefStatePath(): string {
+  const dir = process.env.WORLDLOOPS_DIR ?? path.join(process.cwd(), '.worldloops');
+  return path.join(dir, 'telegram_brief_state.json');
+}
+
+function loadLastBriefAt(): string | null {
+  const p = getBriefStatePath();
+  if (!fs.existsSync(p)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Partial<TelegramBriefState>;
+    return typeof parsed.lastBriefAt === 'string' ? parsed.lastBriefAt : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLastBriefAt(at: string): void {
+  const p = getBriefStatePath();
+  const dir = path.dirname(p);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const state: TelegramBriefState = { lastBriefAt: at, safety: { externalWrite: false } };
+  fs.writeFileSync(p, JSON.stringify(state, null, 2) + '\n', 'utf8');
+}
+
+// ── Lifecycle helpers ────────────────────────────────────────────────────────
+
+function fmtDateShort(iso: string | null | undefined, lang: Lang): string {
+  if (!iso) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return '';
+  const mon = parseInt(m[2], 10);
+  const day = parseInt(m[3], 10);
+  if (lang === 'ko') return `${mon}월 ${day}일`;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[mon - 1]} ${day}`;
+}
+
+// Calendar-day difference (UTC). Returns -1 for an unparseable timestamp so it
+// can be filtered out — we never invent an age we cannot derive.
+function dayDiff(fromISO: string, now: Date): number {
+  const d = new Date(fromISO);
+  if (isNaN(d.getTime())) return -1;
+  const a = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const b = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.floor((b - a) / 86_400_000);
+}
+
+// Earliest reliable timestamp for "how long this loop has been open".
+function loopFirstSeen(loop: OpenLoopState): string | null {
+  const sig = loop.sourceSignals.find(s => typeof s.createdAt === 'string');
+  if (sig?.createdAt) return sig.createdAt;
+  if (loop.history[0]?.at) return loop.history[0].at;
+  return loop.lastObservedAt ?? null;
+}
+
+interface AgingItem { loop: OpenLoopState; age: number }
+
+function buildAgingItems(loops: OpenLoopState[], now: Date): AgingItem[] {
+  const items: AgingItem[] = [];
+  for (const loop of loops) {
+    // Only loops that are genuinely still open and unattended. Escalated loops
+    // surface in the review section; snoozed loops were deliberately deferred.
+    if (loop.status !== 'todo' && loop.status !== 'doing') continue;
+    const seen = loopFirstSeen(loop);
+    if (!seen) continue;
+    const age = dayDiff(seen, now);
+    if (age >= 2) items.push({ loop, age });
+  }
+  return items.sort((a, b) => b.age - a.age);
+}
+
+interface ClosedItem { loop: OpenLoopState; from: string; to: string }
+
+// Loops transitioned to done since the previous brief — or, per the spec,
+// "or recently": closures within a short recent window stay visible even if a
+// brief was already shown after them. The open-loop history entry is the
+// transition receipt; if no such receipt exists, the loop is not shown.
+const RECENT_CLOSE_WINDOW_MS = 3 * 86_400_000;
+
+function buildClosedItems(
+  loops: OpenLoopState[],
+  lastBriefAt: string | null,
+  now: Date
+): ClosedItem[] {
+  const recentMs = now.getTime() - RECENT_CLOSE_WINDOW_MS;
+  const lastMs = lastBriefAt ? new Date(lastBriefAt).getTime() : NaN;
+  const threshold = isNaN(lastMs) ? recentMs : Math.min(lastMs, recentMs);
+  const items: ClosedItem[] = [];
+  for (const loop of loops) {
+    if (loop.status !== 'done') continue;
+    const closeEntry = [...loop.history].reverse().find(h => h.to === 'done');
+    if (!closeEntry) continue;
+    const at = new Date(closeEntry.at).getTime();
+    if (isNaN(at) || at <= threshold) continue;
+    items.push({ loop, from: closeEntry.from ?? 'open', to: closeEntry.to });
+  }
+  return items;
+}
+
+function buildReviewLines(
+  needsReview: AdjudicationResult[],
+  loops: OpenLoopState[],
+  L: Labels
+): string[] {
+  const lines: string[] = [];
+  for (const r of needsReview) {
+    const reason = r.suppressionReason === 'weak_evidence' ? ` (${L.lowConfidence})` : '';
+    lines.push(`- ${r.observation.title} — ${L.needsReviewSuffix}${reason}`);
+  }
+  for (const loop of loops) {
+    if (loop.status !== 'escalated') continue;
+    const due = loop.dueAt ? L.dueLabel(fmtDateShort(loop.dueAt, L.lang)) : '';
+    lines.push(`- ${loop.title} — ${L.escalatedSuffix}${due}`);
+  }
+  return lines;
+}
+
+function suppressionReasonLabel(reason: SuppressionReason | undefined, L: Labels): string {
+  if (reason === 'promotional_or_informational') return L.suppPromo;
+  if (reason === 'negative_intent_no_action') return L.suppNegative;
+  if (reason === 'weak_evidence') return L.lowConfidence;
+  return reason ?? (L.lang === 'ko' ? '억제됨' : 'suppressed');
+}
+
+function contextReason(obs: OpenClawObservation): string {
+  const rc = obs.relatedContext;
+  if (rc && typeof rc.note === 'string') {
+    return rc.note.split('. ')[0].trim().slice(0, 80);
+  }
+  return '';
+}
+
+function buildLoopEntry(r: AdjudicationResult, adjLabel: string, L: Labels): string {
   const obs = r.observation;
   const ev = obs.evidence;
+  const F = L.field;
   const emoji = srcEmoji(obs.source);
   const srcLabel = obs.source.charAt(0).toUpperCase() + obs.source.slice(1);
   const lines: string[] = [`${emoji} ${srcLabel} — ${obs.title}`];
 
   if (obs.source === 'gmail' || obs.source === 'email') {
     const from = shortActor(obs.actor);
-    if (from) lines.push(`From: ${from}`);
+    if (from) lines.push(`${F.from}: ${from}`);
     const subj = evField(ev, 'subject') || evField(ev, 'title');
-    if (subj && subj !== obs.title) lines.push(`Subject: ${subj}`);
-    lines.push(`Why: ${obs.text.split('. ')[0].slice(0, 130)}`);
+    if (subj && subj !== obs.title) lines.push(`${F.subject}: ${subj}`);
+    lines.push(`${F.why}: ${obs.text.split('. ')[0].slice(0, 130)}`);
     const snippet = evField(ev, 'snippet');
-    if (snippet) lines.push(`Evidence: ${snippet.slice(0, 100)}`);
+    if (snippet) lines.push(`${F.evidence}: ${snippet.slice(0, 100)}`);
     const action = actionFromText(obs.text);
-    if (action) lines.push(`Action: ${action}`);
+    if (action) lines.push(`${F.action}: ${action}`);
   } else if (obs.source === 'calendar') {
     const evTitle = evField(ev, 'title');
-    if (evTitle && evTitle !== obs.title) lines.push(`Event: ${evTitle}`);
+    if (evTitle && evTitle !== obs.title) lines.push(`${F.event}: ${evTitle}`);
     const when = fmtDue(obs.dueAt) || evField(ev, 'start');
-    if (when) lines.push(`When: ${when}`);
+    if (when) lines.push(`${F.when}: ${when}`);
     const loc = evField(ev, 'location');
-    if (loc) lines.push(`Location: ${loc}`);
-    lines.push(`Why: ${obs.text.split('. ')[0].slice(0, 130)}`);
+    if (loc) lines.push(`${F.location}: ${loc}`);
+    lines.push(`${F.why}: ${obs.text.split('. ')[0].slice(0, 130)}`);
     const action = actionFromText(obs.text);
-    lines.push(`Action: ${action || 'Attend'}`);
+    lines.push(`${F.action}: ${action || L.attend}`);
   } else if (obs.source === 'slack') {
     const from = shortActor(obs.actor);
-    if (from) lines.push(`From: ${from}`);
+    if (from) lines.push(`${F.from}: ${from}`);
     const channel = evField(ev, 'channel');
-    if (channel) lines.push(`Channel: #${channel}`);
-    lines.push(`Why: ${obs.text.split('. ')[0].slice(0, 130)}`);
+    if (channel) lines.push(`${F.channel}: #${channel}`);
+    lines.push(`${F.why}: ${obs.text.split('. ')[0].slice(0, 130)}`);
     const snippet = evField(ev, 'snippet') || evField(ev, 'message') || evField(ev, 'text');
-    if (snippet) lines.push(`Evidence: "${snippet.slice(0, 100)}"`);
+    if (snippet) lines.push(`${F.evidence}: "${snippet.slice(0, 100)}"`);
     const action = actionFromText(obs.text);
-    if (action) lines.push(`Action: ${action}`);
+    if (action) lines.push(`${F.action}: ${action}`);
   }
 
-  lines.push(`Adjudication: ${adjLabel}`);
-  lines.push(`Safety: externalWrite:false`);
+  lines.push(`${F.adjudication}: ${adjLabel}`);
   return lines.join('\n');
 }
 
@@ -204,27 +509,33 @@ function buildContextEntry(r: AdjudicationResult): string {
   const obs = r.observation;
   const ev = obs.evidence;
   const emoji = srcEmoji(obs.source);
+  const reason = contextReason(obs);
+  let label: string;
   if (obs.source === 'gmail' || obs.source === 'email') {
-    const subj = evField(ev, 'subject') || evField(ev, 'title') || obs.title;
-    return `${emoji} ${subj}`;
-  }
-  if (obs.source === 'calendar') {
+    label = evField(ev, 'subject') || evField(ev, 'title') || obs.title;
+  } else if (obs.source === 'calendar') {
     const evTitle = evField(ev, 'title') || obs.title;
     const when = fmtDue(obs.dueAt);
-    return `${emoji} ${evTitle}${when ? ` — ${when}` : ''}`;
+    label = `${evTitle}${when ? ` — ${when}` : ''}`;
+  } else {
+    // Slack and other sources: use the synthesized title — avoids surfacing
+    // raw Slack user/channel IDs that live only in the evidence payload.
+    label = obs.title;
   }
-  if (obs.source === 'slack') {
-    const channel = evField(ev, 'channel');
-    const snippet = evField(ev, 'snippet') || obs.text.slice(0, 60);
-    return `${emoji} ${channel ? `#${channel}` : 'Slack'} — ${snippet.slice(0, 80)}`;
-  }
-  return `${emoji} ${obs.title}`;
+  return `${emoji} ${label}${reason ? ` — ${reason}` : ''}`;
 }
 
-function buildBriefOutput(summary: IntakeSummary, mode: string): string {
+function buildBriefOutput(
+  summary: IntakeSummary,
+  mode: string,
+  L: Labels,
+  loops: OpenLoopState[],
+  lastBriefAt: string | null,
+  now: Date
+): string {
   const lines: string[] = [];
-  lines.push('🛡️ WorldLoops Brief');
-  lines.push(`mode: ${mode}`);
+  lines.push(L.briefTitle);
+  lines.push(L.modeLine(mode));
 
   const newLoops = summary.results.filter(r => r.verdict === 'accepted');
   const alreadyTracked = summary.results.filter(
@@ -232,72 +543,99 @@ function buildBriefOutput(summary: IntakeSummary, mode: string): string {
          r.suppressionReason === 'duplicate_signal' &&
          r.observation.observationIntent === 'new_loop'
   );
+  const needsReview = summary.results.filter(r => r.verdict === 'needs_review');
   const contextItems = summary.results.filter(r => r.verdict === 'attached_context');
   const suppressedNoise = summary.results.filter(
     r => r.verdict === 'suppressed' && r.suppressionReason !== 'duplicate_signal'
   );
 
-  // 🧭 New open loops
-  lines.push('');
-  lines.push('🧭 New open loops');
-  if (newLoops.length === 0) {
-    lines.push('None.');
-  } else {
+  // 1. 🧭 New open loops — observations accepted in this run. Omitted entirely
+  // when nothing was newly opened, rather than shown as an empty "None."
+  if (newLoops.length > 0) {
+    lines.push('');
+    lines.push(L.secNew);
     for (const r of newLoops) {
       lines.push('');
-      lines.push(buildLoopEntry(r, 'new_loop'));
+      lines.push(buildLoopEntry(r, 'new_loop', L));
     }
   }
 
-  // 🔁 Already tracked open loops
+  // 2. 🔁 Already tracked open loops — new_loop observations suppressed as
+  // idempotent duplicates because the loop already exists in state. They stay
+  // visible: WorldLoops knows the loop, it is not re-creating it.
   if (alreadyTracked.length > 0) {
     lines.push('');
-    lines.push('🔁 Already tracked open loops');
+    lines.push(L.secTracked);
     for (const r of alreadyTracked) {
       lines.push('');
-      lines.push(buildLoopEntry(r, 'already_tracked'));
+      lines.push(buildLoopEntry(r, 'already_tracked', L));
     }
   }
 
-  // 📎 Context
+  // 3. ⏳ Aging open loops — open 2+ days, by a real timestamp only.
+  const aging = buildAgingItems(loops, now);
+  if (aging.length > 0) {
+    lines.push('');
+    lines.push(L.secAging);
+    for (const a of aging) {
+      lines.push(`- ${a.loop.title} — ${L.openForDays(a.age)}`);
+    }
+  }
+
+  // 4. ✅ Closed since last brief — backed by open-loop transition history.
+  const closed = buildClosedItems(loops, lastBriefAt, now);
+  if (closed.length > 0) {
+    lines.push('');
+    lines.push(L.secClosed);
+    for (const c of closed) {
+      lines.push(`- ${c.loop.title} — ${L.closedSuffix}`);
+      lines.push(L.transitionLine(c.from, c.to));
+    }
+  }
+
+  // 5. ⚠️ Needs review / Escalated — confirmation, low confidence, escalation.
+  const reviewLines = buildReviewLines(needsReview, loops, L);
+  if (reviewLines.length > 0) {
+    lines.push('');
+    lines.push(L.secReview);
+    lines.push(...reviewLines);
+  }
+
+  // 6. 📎 Context — related_context and evidence items.
   if (contextItems.length > 0) {
     lines.push('');
-    lines.push('📎 Context');
+    lines.push(L.secContext);
     for (const r of contextItems) {
       lines.push(`  ${buildContextEntry(r)}`);
     }
   }
 
-  // 🧹 Suppressed
+  // 7. 🧹 Suppressed — noise and no-action items, kept compact.
   if (suppressedNoise.length > 0) {
     lines.push('');
-    lines.push('🧹 Suppressed');
+    lines.push(L.secSuppressed);
     for (const r of suppressedNoise) {
-      const reason = r.suppressionReason === 'promotional_or_informational' ? 'promotional/no action' :
-                     r.suppressionReason === 'negative_intent_no_action' ? 'no action required' :
-                     (r.suppressionReason ?? 'suppressed');
-      lines.push(`  - ${r.observation.title} — ${reason}`);
+      lines.push(`  - ${r.observation.title} — ${suppressionReasonLabel(r.suppressionReason, L)}`);
     }
   }
 
-  // Footer
+  // 8. ✅ Safe — externalWrite:false is always shown.
   lines.push('');
-  lines.push('✅ Safe');
-  lines.push('externalWrite:false');
-  lines.push('No email, draft, calendar event, Slack message, or external change made.');
+  lines.push(L.secSafe);
+  lines.push(L.safetyLine1);
+  lines.push(L.safetyLine2);
 
-  return truncate(lines.join('\n'));
+  return lines.join('\n');
 }
 
 async function handleBriefWithProgress(
   token: string,
   chatId: number,
   filePath: string,
-  mode: string
+  mode: string,
+  L: Labels
 ): Promise<void> {
-  await sendMessage(token, chatId,
-    'Reading interpreted OpenClaw observations…\nexternalWrite:false'
-  );
+  await sendMessage(token, chatId, `${L.pReading}\nexternalWrite:false`);
 
   let observations;
   try {
@@ -309,14 +647,8 @@ async function handleBriefWithProgress(
     return;
   }
 
-  const n = observations.length;
-  await sendMessage(token, chatId,
-    `Loaded ${n} interpreted candidate${n !== 1 ? 's' : ''}.\nexternalWrite:false`
-  );
-
-  await sendMessage(token, chatId,
-    'WorldLoops is adjudicating candidates…\nexternalWrite:false'
-  );
+  await sendMessage(token, chatId, `${L.pLoaded(observations.length)}\nexternalWrite:false`);
+  await sendMessage(token, chatId, `${L.pAdjudicating}\nexternalWrite:false`);
 
   let summary;
   try {
@@ -328,15 +660,31 @@ async function handleBriefWithProgress(
     return;
   }
 
-  const { accepted, attached_context: context, suppressed } = summary;
+  // Adjudication breakdown — "already tracked" (idempotent new_loop duplicates)
+  // is reported separately from true noise suppression.
+  const trackedCount = summary.results.filter(
+    r => r.verdict === 'suppressed' &&
+         r.suppressionReason === 'duplicate_signal' &&
+         r.observation.observationIntent === 'new_loop'
+  ).length;
+  const noiseSuppressedCount = summary.results.filter(
+    r => r.verdict === 'suppressed' && r.suppressionReason !== 'duplicate_signal'
+  ).length;
   await sendMessage(token, chatId,
-    `WorldLoops found ${accepted} open loop${accepted !== 1 ? 's' : ''}, ${context} context item${context !== 1 ? 's' : ''}, ${suppressed} suppressed.\nexternalWrite:false`
+    `${L.pFound(summary.total, summary.accepted, trackedCount, summary.attached_context, noiseSuppressedCount)}\n` +
+    'externalWrite:false'
   );
 
-  await sendMessage(token, chatId, buildBriefOutput(summary, mode));
+  // Stateful brief: read full loop state and the previous brief timestamp,
+  // render, then record this brief so the next one knows what closed.
+  const loops = loadOpenLoopStates();
+  const lastBriefAt = loadLastBriefAt();
+  const now = new Date();
+  await sendBrief(token, chatId, buildBriefOutput(summary, mode, L, loops, lastBriefAt, now));
+  saveLastBriefAt(now.toISOString());
 }
 
-async function handleBriefCommand(token: string, chatId: number): Promise<void> {
+async function handleBriefCommand(token: string, chatId: number, L: Labels): Promise<void> {
   const filePath = path.resolve(process.cwd(), INTERPRETED_OBSERVATIONS);
 
   if (!fs.existsSync(filePath)) {
@@ -352,10 +700,10 @@ async function handleBriefCommand(token: string, chatId: number): Promise<void> 
     return;
   }
 
-  await handleBriefWithProgress(token, chatId, filePath, 'interpreted-observations');
+  await handleBriefWithProgress(token, chatId, filePath, 'interpreted-observations', L);
 }
 
-async function handleDemoCommand(token: string, chatId: number): Promise<void> {
+async function handleDemoCommand(token: string, chatId: number, L: Labels): Promise<void> {
   const filePath = path.resolve(process.cwd(), DEMO_FIXTURE_PATH);
 
   if (!fs.existsSync(filePath)) {
@@ -367,7 +715,7 @@ async function handleDemoCommand(token: string, chatId: number): Promise<void> {
     return;
   }
 
-  await handleBriefWithProgress(token, chatId, filePath, 'demo-fixture');
+  await handleBriefWithProgress(token, chatId, filePath, 'demo-fixture', L);
 }
 
 function runLiveDiagnostic(): string {
@@ -445,6 +793,9 @@ async function handleUpdate(token: string, update: Record<string, unknown>): Pro
   if (!chatId || !text) return;
 
   const trimmed = text.trim();
+  // Language is detected from the user's own message — Korean text, or an
+  // explicit "Show in Korean" / "우리말로 보여줘" request, renders in Korean.
+  const labels = getLabels(detectLang(trimmed));
 
   if (trimmed === '/start') {
     await sendMessage(
@@ -511,7 +862,7 @@ async function handleUpdate(token: string, update: Record<string, unknown>): Pro
   }
 
   if (trimmed === '/demo') {
-    await handleDemoCommand(token, chatId);
+    await handleDemoCommand(token, chatId, labels);
     return;
   }
 
@@ -527,7 +878,7 @@ async function handleUpdate(token: string, update: Record<string, unknown>): Pro
   }
 
   if (isBriefRequest(trimmed) || !trimmed.startsWith('/')) {
-    await handleBriefCommand(token, chatId);
+    await handleBriefCommand(token, chatId, labels);
     return;
   }
 
