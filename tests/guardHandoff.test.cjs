@@ -364,8 +364,8 @@ function assertAgentExecutionGuardHeader(output, label) {
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   assert.ok(
-    pkg.version === '1.9.5' || pkg.version === '1.9.4',
-    `package.json: version must be 1.9.5 (or 1.9.4), got ${pkg.version}`
+    pkg.version === '1.10.0' || pkg.version === '1.9.5' || pkg.version === '1.9.4',
+    `package.json: version must be 1.10.0, 1.9.5, or 1.9.4, got ${pkg.version}`
   );
   assert.ok(pkg.scripts['test:guard-handoff'], 'package.json: test:guard-handoff script must exist');
   console.log(`  PASS  package.json: version is ${pkg.version}`);
@@ -377,8 +377,8 @@ function assertAgentExecutionGuardHeader(output, label) {
 {
   const skill = fs.readFileSync('SKILL.md', 'utf8');
   assert.ok(
-    skill.includes('version: "1.9.5"') || skill.includes('version: "1.9.4"'),
-    'SKILL.md: version must be 1.9.5 (or 1.9.4)'
+    skill.includes('version: "1.10.0"') || skill.includes('version: "1.9.5"') || skill.includes('version: "1.9.4"'),
+    'SKILL.md: version must be 1.10.0, 1.9.5, or 1.9.4'
   );
   const skillVer = skill.match(/version: "([^"]+)"/)?.[1] ?? 'unknown';
   console.log(`  PASS  SKILL.md: version is ${skillVer}`);

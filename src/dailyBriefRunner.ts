@@ -53,17 +53,17 @@ function hasKoreanActionPhrase(text: string): boolean {
   return KOREAN_ACTION_PHRASES.some(phrase => text.includes(phrase));
 }
 
-function isPromotionalText(text: string): boolean {
+export function isPromotionalText(text: string): boolean {
   const lower = text.toLowerCase();
   return PROMOTIONAL_INDICATORS.some(phrase => lower.includes(phrase));
 }
 
-function hasNegativeIntent(text: string): boolean {
+export function hasNegativeIntent(text: string): boolean {
   const lower = text.toLowerCase();
   return NEGATIVE_INTENT_PHRASES.some(phrase => lower.includes(phrase));
 }
 
-function isTravelContextEvent(title?: string, description?: string, location?: string): boolean {
+export function isTravelContextEvent(title?: string, description?: string, location?: string): boolean {
   const combined = `${title ?? ''} ${description ?? ''} ${location ?? ''}`.toLowerCase();
   return TRAVEL_CONTEXT_KEYWORDS.some(kw => combined.includes(kw));
 }

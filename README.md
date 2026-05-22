@@ -82,6 +82,94 @@ Redacted payload examples: [`examples/handoff/`](./examples/handoff/)
 
 ---
 
+## OpenClaw + WorldLoops
+
+OpenClaw is excellent at observing possible signals from user-facing queries such as "What did I miss?" or "What should I do today?"
+
+WorldLoops starts after observation.
+
+It takes OpenClaw-observed candidate signals and adjudicates whether they are real open loops, suppressing noise such as promotional messages, FYI-only updates, duplicates, and weak evidence. Accepted signals become stateful open loops that can move through To Do, Doing, Done, Snoozed, or Escalated.
+
+```
+OpenClaw observes candidate signals
+    ↓
+OpenClaw Observation Intake (WorldLoops)
+    ↓
+adjudicate: accepted | suppressed | attached_context | needs_review | state_transition
+    ↓
+accepted → open loop (todo)
+state_transition → existing loop updated (done | escalated | snoozed)
+suppressed → receipt saved, no open loop created
+    ↓
+Morning Brief: loop lifecycle summary
+externalWrite:false
+```
+
+### Run
+
+```bash
+npm run openclaw:intake -- --input scripts/fixtures/openclaw-signal-intake/mixed-observations.json
+```
+
+### Example output
+
+```
+OpenClaw observed 14 candidate signals.
+
+WorldLoops adjudication:
+- 3 accepted as new open loops
+- 2 state transitions applied
+- 6 suppressed as noise / no-action / promotional
+- 2 attached as related context
+- 1 needs review
+
+Open loops created:
+- Review MCP deck for LG partnership by Friday
+- Follow up with David Kim on MCP proposal (closed_by_new_evidence)
+- Confirm invoice extension request with Google Collections (escalated_due_to_deadline)
+
+Morning Brief:
+- 1 loop still open
+- 1 loop closed by new evidence
+- 1 loop escalated
+- 6 observed signals suppressed as noise
+
+externalWrite:false
+```
+
+### Adjudication verdicts
+
+| Verdict | Meaning |
+|---|---|
+| `accepted` | Real open loop — created in `.worldloops/open_loop_states.json` |
+| `suppressed` | Noise — promotional, FYI-only, duplicate, or weak evidence |
+| `attached_context` | Travel event or supporting document — linked as context, no new loop |
+| `needs_review` | Low-confidence signal — flagged for human review |
+| `state_transition` | New evidence updates an existing loop's status |
+
+### OpenClaw Observation format
+
+```json
+{
+  "id": "obs-001",
+  "source": "gmail",
+  "sourceId": "gmail-mcp-followup-001",
+  "observedBy": "openclaw",
+  "userQuery": "What did I miss?",
+  "observationIntent": "new_loop",
+  "title": "Follow up with David Kim on MCP proposal",
+  "text": "Can you send me the updated specs by Friday?",
+  "timestamp": "2026-05-22T09:15:00Z",
+  "actor": "david.kim@example.com",
+  "dueAt": "2026-05-24T17:00:00Z",
+  "evidence": { "subject": "Re: MCP Proposal", "snippet": "..." },
+  "confidence": 0.92,
+  "relatedContext": null
+}
+```
+
+---
+
 ## 📋 Daily Brief
 
 Get one compact Agent Execution Guard summary from all three local handoff sources.

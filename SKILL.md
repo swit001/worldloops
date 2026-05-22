@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.5"
+version: "1.10.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -150,6 +150,60 @@ Host agents should place payloads here:
 The `.worldloops/inbox/` directory is created automatically on first run and is gitignored by default.
 
 Redacted payload examples are in `examples/handoff/`.
+
+---
+
+## OpenClaw + WorldLoops
+
+OpenClaw is excellent at observing possible signals from user-facing queries such as "What did I miss?" or "What should I do today?"
+
+WorldLoops starts after observation.
+
+It takes OpenClaw-observed candidate signals and adjudicates whether they are real open loops, suppressing noise such as promotional messages, FYI-only updates, duplicates, and weak evidence. Accepted signals become stateful open loops that can move through To Do, Doing, Done, Snoozed, or Escalated.
+
+### Run
+
+```bash
+npm run openclaw:intake -- --input scripts/fixtures/openclaw-signal-intake/mixed-observations.json
+```
+
+### OpenClaw Observation Adapter contract
+
+```
+observedBy        "openclaw"
+observationIntent new_loop | state_transition | noise | related_context | evidence
+source            gmail | slack | calendar | github | manual
+sourceId          source-unique identifier for deduplication
+title             human-readable signal title
+text              full signal text
+timestamp         ISO 8601
+actor             sender / requester (optional)
+dueAt             deadline (optional)
+evidence          source-specific fields (subject, snippet, channel, location…)
+confidence        0.0–1.0 (optional; < 0.4 → needs_review)
+relatedContext    null | { existingLoopKey, type, note } | { observationId, type }
+```
+
+### Adjudication verdicts
+
+```
+accepted          → open loop created (todo)
+suppressed        → receipt saved, no loop
+attached_context  → context noted, no loop
+needs_review      → flagged, no loop
+state_transition  → existing loop updated (done | escalated | snoozed)
+```
+
+### Morning Brief — state-management surface
+
+The intake run produces a morning brief showing loop lifecycle:
+
+```
+- 1 loop still open
+- 1 loop closed by new evidence
+- 1 loop escalated
+- 6 observed signals suppressed as noise
+```
 
 ---
 

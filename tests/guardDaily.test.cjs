@@ -170,8 +170,8 @@ function assertExternalWriteFalse(output, label) {
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   assert.ok(
-    pkg.version === '1.9.5' || pkg.version === '1.9.4',
-    `package.json: version must be 1.9.5 (or 1.9.4), got ${pkg.version}`
+    pkg.version === '1.10.0' || pkg.version === '1.9.5' || pkg.version === '1.9.4',
+    `package.json: version must be 1.10.0, 1.9.5, or 1.9.4, got ${pkg.version}`
   );
   assert.ok(pkg.scripts['guard:daily'], 'package.json: guard:daily script must exist');
   assert.ok(pkg.scripts['brief:daily'], 'package.json: brief:daily script must exist');
@@ -1507,8 +1507,11 @@ function assertExternalWriteFalse(output, label) {
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.5', `v1.9.5: package.json version must be 1.9.5, got ${pkg.version}`);
-  console.log('  PASS  v1.9.5: package.json version is 1.9.5');
+  assert.ok(
+    pkg.version === '1.10.0' || pkg.version === '1.9.5',
+    `v1.9.5: package.json version must be 1.9.5 or later, got ${pkg.version}`
+  );
+  console.log(`  PASS  v1.9.5: package.json version is ${pkg.version}`);
 }
 
 // ── v1.9.5: CHANGELOG.md has v1.9.5 entry ────────────────────────────────────

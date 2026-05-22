@@ -1,5 +1,8 @@
 import type { ProposalCandidate } from './types';
 export declare const DEFAULT_INBOX_DIR = ".worldloops/inbox";
+export declare function isPromotionalText(text: string): boolean;
+export declare function hasNegativeIntent(text: string): boolean;
+export declare function isTravelContextEvent(title?: string, description?: string, location?: string): boolean;
 export declare const SOURCES: ({
     id: "gmail";
     file: string;

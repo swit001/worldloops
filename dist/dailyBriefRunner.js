@@ -34,6 +34,9 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SOURCES = exports.DEFAULT_INBOX_DIR = void 0;
+exports.isPromotionalText = isPromotionalText;
+exports.hasNegativeIntent = hasNegativeIntent;
+exports.isTravelContextEvent = isTravelContextEvent;
 exports.buildSummaryLines = buildSummaryLines;
 exports.processSource = processSource;
 exports.processAllSources = processAllSources;

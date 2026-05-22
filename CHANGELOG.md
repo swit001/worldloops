@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.10.0 — OpenClaw Signal Intake and WorldLoops Adjudication
+
+v1.10.0 implements the OpenClaw Signal Intake pipeline and WorldLoops Adjudication engine. OpenClaw observes candidate signals from user queries. WorldLoops adjudicates whether each one is a real open loop.
+
+**Core product sentence: "OpenClaw observes. WorldLoops adjudicates."**
+
+### New
+
+- `src/openclawIntake.ts` — intake engine module: adjudicates OpenClaw-observed candidate signals into `accepted`, `suppressed`, `attached_context`, `needs_review`, or `state_transition` verdicts; persists accepted signals as open loops; saves suppression receipts for auditability; generates morning brief lines
+- `src/scripts/openclawIntake.ts` — CLI entry point: `npm run openclaw:intake -- --input <file>`
+- `scripts/fixtures/openclaw-signal-intake/mixed-observations.json` — 14-signal fixture covering all verdict types: real follow-up requests, no-action/FYI, promotional, duplicate, weak evidence, travel context, related context, and state transitions
+- `tests/openclawIntake.test.cjs` — test suite: unit adjudication tests, integration fixture tests, CLI exit tests
+- `ObservationIntent` type: `new_loop | state_transition | noise | related_context | evidence`
+- `AdjudicationVerdict` type: `accepted | suppressed | attached_context | needs_review | state_transition`
+- `SuppressionReason` type: `promotional_or_informational | negative_intent_no_action | duplicate_signal | weak_evidence | context_only`
+- `StateTransitionInfo` type: tracks `fromStatus`, `toStatus`, `transitionApplied`, `note` (closed_by_new_evidence, escalated_due_to_deadline, snoozed_by_observation)
+- `IntakeSummary` type: includes `morningBriefLines` — a daily-brief-style state-management surface showing loops still open, closed by evidence, escalated, suppressed, and needing review
+- Suppression receipts saved to `.worldloops/openclaw_suppression_receipts.json` for auditability
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — exported `isPromotionalText`, `hasNegativeIntent`, `isTravelContextEvent` for reuse in the intake engine
+- `package.json` — version 1.9.5 → 1.10.0; added `openclaw:intake` and `test:openclaw-intake` scripts
+- `README.md` — added OpenClaw + WorldLoops section
+- `SKILL.md` — added OpenClaw + WorldLoops section; version 1.9.5 → 1.10.0
+
+### Architecture
+
+- `state_transition` observations (identified by `observationIntent: "state_transition"`) are dispatched to `transitionOpenLoopState()` before heuristic checks run. A loop can move: `todo → done` (closed_by_new_evidence), `todo → escalated` (escalated_due_to_deadline), or `todo → snoozed`.
+- Morning Brief is treated as a state-management surface. It shows what changed in the intake run: new loops, closures, escalations, suppressions — not just a static count.
+- `externalWrite:false` preserved throughout. No external API calls. No OAuth. Local fixtures only.
+
+### Architecture rules preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+Suppression is local phrase matching only — no AI inference.
+`externalWrite:false` preserved throughout.
+
+---
+
 ## v1.9.5 — Live Daily Brief False-Positive and Travel-Context Polish
 
 v1.9.5 reduces live Daily Brief false positives by suppressing promotional and "no action required" Gmail messages, and improves Calendar travel/airport important context so flight events are surfaced without becoming approval-required tasks.
