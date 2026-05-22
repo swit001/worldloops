@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.11.0 — Telegram Demo Wrapper with Inbox Priority and Source Inspection
+
+v1.11.0 upgrades the Telegram test wrapper into a full demo interface. The bot now resolves its input from a priority-ordered inbox, shows which source is active, and is ready for live demo without connecting to any external API.
+
+**Core invariant preserved: "OpenClaw observes. WorldLoops adjudicates." This wrapper only consumes already-observed local payloads.**
+
+### New
+
+- `src/scripts/telegramTestBot.ts` — Telegram demo wrapper (was a fixed-fixture test bot; now a priority-aware demo bot)
+- `resolveInputFile()` — priority resolver: (A) `.worldloops/inbox/openclaw-observations.json`, (B) `.worldloops/inbox/telegram-observations.json`, (C) `scripts/fixtures/openclaw-signal-intake/mixed-observations.json`
+- `/source` command — replies with all three candidate paths, their existence status, and the active mode (`inbox-openclaw-observations`, `inbox-telegram-observations`, or `demo-fixture`)
+- `/help` command — lists `/status`, `/source`, `/brief`, `/worldloops`, and Korean natural language examples
+- `/reset-demo` command — refused with explanation (`.worldloops/` holds real user state; no isolated demo directory introduced)
+- `mode:` line in `/brief` reply — clearly indicates which input source was used
+- `scripts/seed-demo.mjs` — helper: copies `mixed-observations.json` → `.worldloops/inbox/openclaw-observations.json` for one-command demo setup
+- `scripts/fixtures/openclaw-signal-intake/demo-observations.json` — minimal 3-signal sample payload (1 actionable follow-up, 1 pending review, 1 suppressed promotional)
+- `README.md` — Telegram demo wrapper section: input priority, setup steps, command table, sample payload note
+
+### Changed
+
+- `package.json` — version 1.10.0 → 1.11.0; added `telegram:seed-demo` script
+- `/brief` reply now includes `mode: <mode>` line so demo audience can see which input is active
+- `/start` reply updated to reference `/help`
+- Startup log updated to reference `/help`
+- `BRIEF_TRIGGERS` extended with `'어제 열린 루프 중 닫힌 거 있어'`
+- Unknown command reply updated to reference `/help`
+
+### Architecture rules preserved
+
+No Gmail, Calendar, Slack, GitHub, or any external API connected.
+No OAuth added.
+No external fetch added.
+This wrapper only consumes local OpenClaw-observed JSON payloads.
+`externalWrite:false` preserved throughout.
+`.worldloops/` remains gitignored; no real user state committed.
+
+---
+
 ## v1.10.0 — OpenClaw Signal Intake and WorldLoops Adjudication
 
 v1.10.0 implements the OpenClaw Signal Intake pipeline and WorldLoops Adjudication engine. OpenClaw observes candidate signals from user queries. WorldLoops adjudicates whether each one is a real open loop.

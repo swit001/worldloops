@@ -4,8 +4,38 @@ import * as path from 'node:path';
 import { loadObservations, runIntake } from '../openclawIntake';
 
 const FIXTURE_PATH = 'scripts/fixtures/openclaw-signal-intake/mixed-observations.json';
+const INBOX_OPENCLAW = '.worldloops/inbox/openclaw-observations.json';
+const INBOX_TELEGRAM = '.worldloops/inbox/telegram-observations.json';
 const MAX_LENGTH = 4096;
 const TRUNCATION_SUFFIX = '\n… truncated for Telegram test output';
+
+type InputMode = 'inbox-openclaw-observations' | 'inbox-telegram-observations' | 'demo-fixture';
+
+interface ResolvedInput {
+  filePath: string;
+  relativePath: string;
+  mode: InputMode;
+}
+
+function resolveInputFile(): ResolvedInput {
+  const cwd = process.cwd();
+
+  const inboxOpenclawAbs = path.resolve(cwd, INBOX_OPENCLAW);
+  if (fs.existsSync(inboxOpenclawAbs)) {
+    return { filePath: inboxOpenclawAbs, relativePath: INBOX_OPENCLAW, mode: 'inbox-openclaw-observations' };
+  }
+
+  const inboxTelegramAbs = path.resolve(cwd, INBOX_TELEGRAM);
+  if (fs.existsSync(inboxTelegramAbs)) {
+    return { filePath: inboxTelegramAbs, relativePath: INBOX_TELEGRAM, mode: 'inbox-telegram-observations' };
+  }
+
+  return {
+    filePath: path.resolve(cwd, FIXTURE_PATH),
+    relativePath: FIXTURE_PATH,
+    mode: 'demo-fixture',
+  };
+}
 
 function loadToken(): string {
   if (process.env.TELEGRAM_BOT_TOKEN) {
@@ -108,16 +138,22 @@ function truncate(text: string): string {
 }
 
 function runBrief(): string {
-  const fixturePath = path.resolve(process.cwd(), FIXTURE_PATH);
-  if (!fs.existsSync(fixturePath)) {
-    return `Error: fixture not found at ${fixturePath}`;
+  const { filePath, relativePath, mode } = resolveInputFile();
+
+  if (!fs.existsSync(filePath)) {
+    return [
+      'Error: input file not found',
+      `path: ${relativePath}`,
+      '',
+      'Run: npm run telegram:seed-demo',
+    ].join('\n');
   }
 
   let observations;
   try {
-    observations = loadObservations(fixturePath);
+    observations = loadObservations(filePath);
   } catch (err) {
-    return `Error loading fixture: ${String(err)}`;
+    return `Error loading input: ${String(err)}`;
   }
 
   let summary;
@@ -129,6 +165,7 @@ function runBrief(): string {
 
   const lines: string[] = [];
   lines.push('WorldLoops Morning Brief');
+  lines.push(`mode: ${mode}`);
   lines.push('');
   lines.push(`OpenClaw observed ${summary.total} candidate signals.`);
   lines.push('');
@@ -174,7 +211,40 @@ function runBrief(): string {
   return truncate(lines.join('\n'));
 }
 
-const BRIEF_TRIGGERS = ['/brief', '/worldloops', '오늘 내가 할 일이 뭐야', '뭐 빠진 거 없어'];
+function runSource(): string {
+  const cwd = process.cwd();
+  const candidates: Array<{ rel: string; abs: string; mode: InputMode }> = [
+    { rel: INBOX_OPENCLAW, abs: path.resolve(cwd, INBOX_OPENCLAW), mode: 'inbox-openclaw-observations' },
+    { rel: INBOX_TELEGRAM, abs: path.resolve(cwd, INBOX_TELEGRAM), mode: 'inbox-telegram-observations' },
+    { rel: FIXTURE_PATH, abs: path.resolve(cwd, FIXTURE_PATH), mode: 'demo-fixture' },
+  ];
+
+  const lines: string[] = ['WorldLoops input source check', '', 'Priority order:'];
+  let activeMode: InputMode | null = null;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const { rel, abs, mode } = candidates[i];
+    const exists = fs.existsSync(abs);
+    lines.push(`${i + 1}. ${rel}  ${exists ? 'exists' : 'not found'}`);
+    if (exists && activeMode === null) {
+      activeMode = mode;
+    }
+  }
+
+  lines.push('');
+  lines.push(`Active: ${activeMode ?? 'none'}`);
+  lines.push('externalWrite:false');
+
+  return lines.join('\n');
+}
+
+const BRIEF_TRIGGERS = [
+  '/brief',
+  '/worldloops',
+  '오늘 내가 할 일이 뭐야',
+  '뭐 빠진 거 없어',
+  '어제 열린 루프 중 닫힌 거 있어',
+];
 
 function isBriefRequest(text: string): boolean {
   const lower = text.toLowerCase().trim();
@@ -196,8 +266,28 @@ async function handleUpdate(token: string, update: Record<string, unknown>): Pro
     await sendMessage(
       token,
       chatId,
-      "WorldLoops Telegram test bot is running. Send /brief or ask '오늘 내가 할 일이 뭐야?'"
+      'WorldLoops Telegram demo wrapper is running.\nSend /help to see available commands.'
     );
+    return;
+  }
+
+  if (trimmed === '/help') {
+    await sendMessage(token, chatId, [
+      'WorldLoops Telegram demo wrapper',
+      '',
+      'Commands:',
+      '/status — bot version and status',
+      '/source — which input file would be used',
+      '/brief — run WorldLoops adjudication',
+      '/worldloops — same as /brief',
+      '',
+      'Natural language:',
+      '"오늘 내가 할 일이 뭐야?"',
+      '"뭐 빠진 거 없어?"',
+      '"어제 열린 루프 중 닫힌 거 있어?"',
+      '',
+      'externalWrite:false',
+    ].join('\n'));
     return;
   }
 
@@ -219,17 +309,36 @@ async function handleUpdate(token: string, update: Record<string, unknown>): Pro
     return;
   }
 
+  if (trimmed === '/source') {
+    await sendMessage(token, chatId, runSource());
+    return;
+  }
+
+  if (trimmed === '/reset-demo') {
+    await sendMessage(token, chatId, [
+      '/reset-demo: not implemented',
+      '',
+      '.worldloops/ contains real user state (open loops, proposals, receipts).',
+      'Deleting from this directory without isolated demo state is unsafe.',
+      '',
+      'To clear the demo inbox manually:',
+      '  rm .worldloops/inbox/openclaw-observations.json',
+      '',
+      'externalWrite:false',
+    ].join('\n'));
+    return;
+  }
+
   if (isBriefRequest(trimmed) || !trimmed.startsWith('/')) {
     const reply = runBrief();
     await sendMessage(token, chatId, reply);
     return;
   }
 
-  // Unknown command
   await sendMessage(
     token,
     chatId,
-    "Unknown command. Try /brief, /status, or send '오늘 내가 할 일이 뭐야?'"
+    "Unknown command. Send /help for available commands."
   );
 }
 
@@ -282,8 +391,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  console.log('WorldLoops Telegram test bot starting...');
-  console.log('Polling for messages. Send /brief or a message to @WorldLoops_bot.');
+  console.log('WorldLoops Telegram demo wrapper starting...');
+  console.log('Polling for messages. Send /help to your bot for available commands.');
   console.log('Press Ctrl+C to stop.\n');
 
   let offset = 0;

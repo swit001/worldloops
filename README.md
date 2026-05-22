@@ -605,6 +605,54 @@ WorldLoops keeps humans in control without making them the bottleneck.
 
 ---
 
+## 📱 Telegram demo wrapper
+
+`src/scripts/telegramTestBot.ts` is a local demo wrapper for testing WorldLoops adjudication over Telegram. It consumes local OpenClaw-observed JSON payloads and does **not** connect to Gmail, Slack, Calendar, GitHub, or any external API.
+
+OpenClaw observes. WorldLoops adjudicates. This wrapper bridges the two for live demo.
+
+### Input priority
+
+When `/brief` is sent, the bot selects its input in this order:
+
+1. `.worldloops/inbox/openclaw-observations.json` — mode: `inbox-openclaw-observations`
+2. `.worldloops/inbox/telegram-observations.json` — mode: `inbox-telegram-observations`
+3. `scripts/fixtures/openclaw-signal-intake/mixed-observations.json` — mode: `demo-fixture`
+
+### Setup
+
+If you have an OpenClaw gateway bot using the same Telegram token, stop it first to avoid a polling conflict (409).
+
+```sh
+# Seed the demo inbox with the mixed-observations fixture
+npm run telegram:seed-demo
+
+# Start the bot
+npm run telegram:test
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `/help` | List all commands and natural language examples |
+| `/status` | Bot version and status |
+| `/source` | Which input file would be used and whether it exists |
+| `/brief` | Run WorldLoops adjudication and show open loops |
+| `/worldloops` | Same as `/brief` |
+
+Natural language also triggers `/brief`:
+
+- `"오늘 내가 할 일이 뭐야?"`
+- `"뭐 빠진 거 없어?"`
+- `"어제 열린 루프 중 닫힌 거 있어?"`
+
+### Sample payload
+
+`scripts/fixtures/openclaw-signal-intake/demo-observations.json` is a small 3-signal sample showing one actionable loop, one follow-up, and one suppressed promotional email.
+
+---
+
 ## 🔗 Links
 
 - Website: https://worldloops.ai
