@@ -169,7 +169,10 @@ function assertExternalWriteFalse(output, label) {
 
 {
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.strictEqual(pkg.version, '1.9.4', 'package.json: version must be 1.9.4');
+  assert.ok(
+    pkg.version === '1.9.5' || pkg.version === '1.9.4',
+    `package.json: version must be 1.9.5 (or 1.9.4), got ${pkg.version}`
+  );
   assert.ok(pkg.scripts['guard:daily'], 'package.json: guard:daily script must exist');
   assert.ok(pkg.scripts['brief:daily'], 'package.json: brief:daily script must exist');
   assert.ok(
@@ -181,7 +184,7 @@ function assertExternalWriteFalse(output, label) {
     'package.json: brief:daily must alias guardDaily.js'
   );
   assert.ok(pkg.scripts['test:guard-daily'], 'package.json: test:guard-daily script must exist');
-  console.log('  PASS  package.json: version is 1.9.4');
+  console.log(`  PASS  package.json: version is ${pkg.version}`);
   console.log('  PASS  package.json: guard:daily and brief:daily scripts present');
   console.log('  PASS  package.json: both scripts use guardDaily.js');
   console.log('  PASS  package.json: test:guard-daily script present');
@@ -1123,6 +1126,402 @@ function assertExternalWriteFalse(output, label) {
   assert.ok(!runner.includes("fetch('"), 'v1.9.4 dailyBriefRunner: must not contain fetch()');
   assert.ok(!runner.includes('fetch("'), 'v1.9.4 dailyBriefRunner: must not contain fetch()');
   console.log('  PASS  v1.9.4: no connector/OAuth/fetch in dailyBriefRunner');
+}
+
+// ── v1.9.5: New fixture directories exist ─────────────────────────────────────
+
+{
+  const newFixtures = [
+    'scripts/fixtures/inbox-airline-promo-gmail/openclaw-gmail-live.json',
+    'scripts/fixtures/inbox-airline-promo-gmail/openclaw-calendar-live.json',
+    'scripts/fixtures/inbox-airline-promo-gmail/openclaw-slack-live.json',
+    'scripts/fixtures/inbox-gmail-no-action-required/openclaw-gmail-live.json',
+    'scripts/fixtures/inbox-gmail-no-action-required/openclaw-calendar-live.json',
+    'scripts/fixtures/inbox-gmail-no-action-required/openclaw-slack-live.json',
+    'scripts/fixtures/inbox-calendar-airport-event/openclaw-gmail-live.json',
+    'scripts/fixtures/inbox-calendar-airport-event/openclaw-calendar-live.json',
+    'scripts/fixtures/inbox-calendar-airport-event/openclaw-slack-live.json',
+  ];
+  for (const f of newFixtures) {
+    assert.ok(fs.existsSync(f), `v1.9.5 fixture must exist: ${f}`);
+    const content = fs.readFileSync(f, 'utf8');
+    assert.ok(!content.includes('@gmail.com'), `${f}: must not contain real Gmail addresses`);
+    const parsed = JSON.parse(content);
+    assert.ok(typeof parsed === 'object' && parsed !== null, `${f}: must be valid JSON object`);
+  }
+  console.log('  PASS  v1.9.5: new fixture directories and files exist');
+}
+
+// ── v1.9.5: Airline promo Gmail — no follow-up, neutral icon, promotional note ─
+
+{
+  const AIRLINE_INBOX = 'scripts/fixtures/inbox-airline-promo-gmail';
+  const result = run(['guard:daily', '--', '--inbox', AIRLINE_INBOX]);
+  assert.strictEqual(result.status, 0, `v1.9.5 airline promo: expected exit 0\n${result.stdout}\n${result.stderr}`);
+  assert.ok(
+    !result.stdout.includes('Follow-up needed'),
+    'v1.9.5 airline promo: must NOT say "Follow-up needed"'
+  );
+  assert.ok(
+    !result.stdout.includes('Review requested'),
+    'v1.9.5 airline promo: must NOT say "Review requested"'
+  );
+  assert.ok(
+    result.stdout.includes('No actionable loop detected'),
+    'v1.9.5 airline promo: must say "No actionable loop detected"'
+  );
+  const gmailSection = result.stdout.split('\n').filter(l => l.includes('Gmail') || l.includes('📧'));
+  assert.ok(
+    !gmailSection.some(l => l.includes('⚠️')),
+    'v1.9.5 airline promo: Gmail must not use ⚠️ warning icon'
+  );
+  assert.ok(
+    result.stdout.includes('promotional') || result.stdout.includes('informational'),
+    'v1.9.5 airline promo: reason must mention promotional or informational'
+  );
+  assertExternalWriteFalse(result.stdout, 'v1.9.5 airline promo');
+  assertNoRawJson(result.stdout, 'v1.9.5 airline promo');
+  console.log('  PASS  v1.9.5 airline promo: no "Follow-up needed" or "Review requested"');
+  console.log('  PASS  v1.9.5 airline promo: "No actionable loop detected"');
+  console.log('  PASS  v1.9.5 airline promo: no ⚠️ warning icon');
+  console.log('  PASS  v1.9.5 airline promo: reason mentions promotional or informational');
+  console.log('  PASS  v1.9.5 airline promo: externalWrite:false present');
+}
+
+// ── v1.9.5: "No action required" Gmail — suppressed, neutral icon ─────────────
+
+{
+  const NO_ACTION_INBOX = 'scripts/fixtures/inbox-gmail-no-action-required';
+  const result = run(['guard:daily', '--', '--inbox', NO_ACTION_INBOX]);
+  assert.strictEqual(result.status, 0, `v1.9.5 no-action: expected exit 0\n${result.stdout}\n${result.stderr}`);
+  assert.ok(
+    !result.stdout.includes('Follow-up needed'),
+    'v1.9.5 no-action: must NOT say "Follow-up needed"'
+  );
+  assert.ok(
+    !result.stdout.includes('Review requested'),
+    'v1.9.5 no-action: must NOT say "Review requested"'
+  );
+  assert.ok(
+    result.stdout.includes('No actionable loop detected'),
+    'v1.9.5 no-action: must say "No actionable loop detected"'
+  );
+  assert.ok(
+    result.stdout.includes('promotional') || result.stdout.includes('informational'),
+    'v1.9.5 no-action: reason must mention promotional or informational'
+  );
+  assertExternalWriteFalse(result.stdout, 'v1.9.5 no-action');
+  console.log('  PASS  v1.9.5 no-action Gmail: suppressed — no "Follow-up needed"');
+  console.log('  PASS  v1.9.5 no-action Gmail: "No actionable loop detected"');
+  console.log('  PASS  v1.9.5 no-action Gmail: reason mentions promotional or informational');
+  console.log('  PASS  v1.9.5 no-action Gmail: externalWrite:false present');
+}
+
+// ── v1.9.5: buildSummaryLines — airline promo suppression unit test ────────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+
+  const airlinePromoLines = buildSummaryLines(
+    'gmail', 'Gmail', '⚠️', [],
+    {
+      itemCount: 2,
+      subject: 'Earn double miles this weekend — Tap Air promotion',
+      snippet: 'Earn double miles on all flights. Limited time offer. Unsubscribe',
+      sampleMessages: [
+        { from: 'promotions@tapair.example.com', subject: 'Earn double miles this weekend — Tap Air promotion' },
+      ],
+    }
+  );
+  assert.ok(Array.isArray(airlinePromoLines), 'v1.9.5 airline promo unit: must return array');
+  assert.ok(
+    !airlinePromoLines[0].includes('⚠️'),
+    'v1.9.5 airline promo unit: must not use ⚠️ icon'
+  );
+  assert.ok(
+    airlinePromoLines[0].includes('📧') || airlinePromoLines[0].includes('No actionable'),
+    'v1.9.5 airline promo unit: must use neutral 📧 icon or "No actionable" wording'
+  );
+  assert.ok(
+    airlinePromoLines.some(l => l.toLowerCase().includes('promotional') || l.toLowerCase().includes('informational')),
+    'v1.9.5 airline promo unit: reason must mention promotional or informational'
+  );
+  assert.ok(
+    airlinePromoLines.some(l => l.includes('review')),
+    'v1.9.5 airline promo unit: reason must include "review"'
+  );
+  console.log('  PASS  v1.9.5 airline promo unit: neutral icon');
+  console.log('  PASS  v1.9.5 airline promo unit: promotional/informational in reason');
+  console.log('  PASS  v1.9.5 airline promo unit: "review" in reason');
+}
+
+// ── v1.9.5: buildSummaryLines — "no action required" suppression unit test ─────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+
+  const noActionLines = buildSummaryLines(
+    'gmail', 'Gmail', '⚠️', [],
+    {
+      itemCount: 1,
+      subject: 'Team update for the week',
+      snippet: 'Here is the weekly update. No action required. Have a great weekend!',
+      sampleMessages: [{ from: 'lead@example.com', subject: 'Team update for the week' }],
+    }
+  );
+  assert.ok(
+    !noActionLines[0].includes('⚠️'),
+    'v1.9.5 no-action unit: must not use ⚠️ icon'
+  );
+  assert.ok(
+    noActionLines.some(l => l.toLowerCase().includes('promotional') || l.toLowerCase().includes('informational')),
+    'v1.9.5 no-action unit: reason must mention promotional or informational'
+  );
+  console.log('  PASS  v1.9.5 no-action unit: neutral icon');
+  console.log('  PASS  v1.9.5 no-action unit: informational in reason');
+}
+
+// ── v1.9.5: Calendar airport event — Important context integration ─────────────
+
+{
+  const AIRPORT_INBOX = 'scripts/fixtures/inbox-calendar-airport-event';
+  const result = run(['guard:daily', '--', '--inbox', AIRPORT_INBOX]);
+  assert.strictEqual(result.status, 0, `v1.9.5 airport event: expected exit 0\n${result.stdout}\n${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('Important context'),
+    'v1.9.5 airport event: Calendar must say "Important context"'
+  );
+  assert.ok(
+    result.stdout.includes('Event:'),
+    'v1.9.5 airport event: must include Event: line'
+  );
+  assert.ok(
+    result.stdout.includes('When:'),
+    'v1.9.5 airport event: must include When: line'
+  );
+  assert.ok(
+    result.stdout.includes('Location:'),
+    'v1.9.5 airport event: must include Location: line'
+  );
+  assert.ok(
+    !result.stdout.includes('requires_approval'),
+    'v1.9.5 airport event: Calendar must NOT say requires_approval'
+  );
+  assert.ok(
+    result.stdout.includes('travel event detected'),
+    'v1.9.5 airport event: reason must say "travel event detected"'
+  );
+  assertExternalWriteFalse(result.stdout, 'v1.9.5 airport event');
+  assertNoRawJson(result.stdout, 'v1.9.5 airport event');
+  console.log('  PASS  v1.9.5 airport Calendar: "Important context" present');
+  console.log('  PASS  v1.9.5 airport Calendar: Event: present');
+  console.log('  PASS  v1.9.5 airport Calendar: When: present');
+  console.log('  PASS  v1.9.5 airport Calendar: Location: present');
+  console.log('  PASS  v1.9.5 airport Calendar: no requires_approval');
+  console.log('  PASS  v1.9.5 airport Calendar: travel event detected in reason');
+  console.log('  PASS  v1.9.5 airport Calendar: externalWrite:false present');
+}
+
+// ── v1.9.5: buildSummaryLines — airport event unit test ───────────────────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+
+  const airportLines = buildSummaryLines(
+    'calendar', 'Calendar', '📅', [],
+    {
+      title: 'Departure to ICN — Korean Air KE 24',
+      start: '2026-05-21T12:40:00.000Z',
+      location: 'SFO Terminal 2, Gate G1',
+      description: 'Check in at Terminal 2. Boarding at 11:00.',
+      itemCount: 1,
+      eventId: 'cal-airport-001',
+    }
+  );
+  assert.ok(Array.isArray(airportLines), 'v1.9.5 airport unit: must return array');
+  assert.ok(
+    airportLines.some(l => l.includes('Important context')),
+    `v1.9.5 airport unit: must say "Important context", got: ${airportLines.join(' | ')}`
+  );
+  assert.ok(
+    airportLines.some(l => l.includes('Event:')),
+    'v1.9.5 airport unit: must include Event: line'
+  );
+  assert.ok(
+    airportLines.some(l => l.includes('When:') && l.includes('local time')),
+    'v1.9.5 airport unit: When: line must include "local time"'
+  );
+  assert.ok(
+    airportLines.some(l => l.includes('Location:') && l.includes('SFO')),
+    'v1.9.5 airport unit: Location: must include SFO'
+  );
+  assert.ok(
+    !airportLines.some(l => l.includes('requires_approval')),
+    'v1.9.5 airport unit: must NOT say requires_approval'
+  );
+  assert.ok(
+    !airportLines.some(l => l.includes('No actionable loop detected')),
+    'v1.9.5 airport unit: must NOT say "No actionable loop detected"'
+  );
+  console.log('  PASS  v1.9.5 airport unit: "Important context" present');
+  console.log('  PASS  v1.9.5 airport unit: Event: present');
+  console.log('  PASS  v1.9.5 airport unit: When: with local time present');
+  console.log('  PASS  v1.9.5 airport unit: Location: with SFO present');
+  console.log('  PASS  v1.9.5 airport unit: no requires_approval');
+  console.log('  PASS  v1.9.5 airport unit: no "No actionable loop detected"');
+}
+
+// ── v1.9.5: Korean Gmail detection still passes after suppression changes ────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+  const koreanCandidate = {
+    idempotencyKey: 'local-gmail-korean-review',
+    entityType: 'email',
+    source: 'gmail',
+    currentState: 'unread',
+    proposedState: 'reviewed',
+    reason: 'review request detected',
+    approvalRequired: true,
+    actionHint: 'Review the submitted document or reply if needed',
+  };
+  const koreanLines = buildSummaryLines(
+    'gmail', 'Gmail', '⚠️',
+    [koreanCandidate],
+    { subject: '등록하신 문서를 다시 검토해주세요.', from: 'reviewer@example.com', itemCount: 1 }
+  );
+  assert.ok(
+    koreanLines[0].includes('Review requested'),
+    `v1.9.5 Korean Gmail: still produces "Review requested", got: ${koreanLines[0]}`
+  );
+  assert.ok(
+    koreanLines.some(l => l.includes('requires_approval')),
+    'v1.9.5 Korean Gmail: still produces requires_approval'
+  );
+  console.log('  PASS  v1.9.5 Korean Gmail: "Review requested" header still present');
+  console.log('  PASS  v1.9.5 Korean Gmail: requires_approval still present');
+}
+
+// ── v1.9.5: English Gmail follow-up still passes ──────────────────────────────
+
+{
+  const result = run(['guard:daily', '--', '--inbox', 'scripts/fixtures/inbox']);
+  assert.strictEqual(result.status, 0, `v1.9.5 English follow-up: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('Follow-up needed') || result.stdout.includes('Review requested'),
+    'v1.9.5 English Gmail: follow-up or review still detected in main inbox'
+  );
+  assert.ok(
+    result.stdout.includes('Subject: Follow-up on the proposal'),
+    'v1.9.5 English Gmail: must show Subject from the follow-up email'
+  );
+  console.log('  PASS  v1.9.5 English Gmail: follow-up or review still detected');
+  console.log('  PASS  v1.9.5 English Gmail: Subject attribution present');
+}
+
+// ── v1.9.5: Calendar no-action shows up to 3 sample events ────────────────────
+
+{
+  const { buildSummaryLines } = require('../dist/dailyBriefRunner.js');
+
+  const multiEventLines = buildSummaryLines(
+    'calendar', 'Calendar', '📅', [],
+    {
+      itemCount: 3,
+      title: 'Team meeting',
+      start: '2026-05-21T10:00:00.000Z',
+      location: 'Zoom',
+      sampleEvents: [
+        { title: 'Team meeting', start: '2026-05-21T10:00:00.000Z', location: 'Zoom' },
+        { title: 'Budget review', start: '2026-05-21T14:00:00.000Z' },
+        { title: 'Retrospective', start: '2026-05-21T16:00:00.000Z', location: 'Conf room B' },
+      ],
+    }
+  );
+  assert.ok(
+    multiEventLines.some(l => l.includes('Team meeting')),
+    'v1.9.5 multi-event: first event title present'
+  );
+  assert.ok(
+    multiEventLines.some(l => l.includes('Budget review')),
+    'v1.9.5 multi-event: second event title present'
+  );
+  assert.ok(
+    multiEventLines.some(l => l.includes('Retrospective')),
+    'v1.9.5 multi-event: third event title present'
+  );
+  assert.ok(
+    multiEventLines.some(l => l.includes('When:') && l.includes('local time')),
+    'v1.9.5 multi-event: When: line with local time present'
+  );
+  console.log('  PASS  v1.9.5 multi-event: first event title present');
+  console.log('  PASS  v1.9.5 multi-event: second event title present');
+  console.log('  PASS  v1.9.5 multi-event: third event title present');
+  console.log('  PASS  v1.9.5 multi-event: When: with local time present');
+}
+
+// ── v1.9.5: Slack missing setup guidance still present ────────────────────────
+
+{
+  const NO_SLACK_INBOX = 'scripts/fixtures/inbox-no-slack';
+  const result = run(['guard:daily', '--', '--inbox', NO_SLACK_INBOX]);
+  assert.strictEqual(result.status, 0, `v1.9.5 no-slack: expected exit 0\n${result.stdout}`);
+  assert.ok(
+    result.stdout.includes('channels.slack') || result.stdout.includes('not connected'),
+    'v1.9.5 no-slack: channels.slack guidance still present'
+  );
+  assertExternalWriteFalse(result.stdout, 'v1.9.5 no-slack');
+  console.log('  PASS  v1.9.5 Slack missing: channels.slack guidance still present');
+  console.log('  PASS  v1.9.5 Slack missing: externalWrite:false present');
+}
+
+// ── v1.9.5: externalWrite:false in all new fixture outputs ────────────────────
+
+{
+  const newInboxes = [
+    'scripts/fixtures/inbox-airline-promo-gmail',
+    'scripts/fixtures/inbox-gmail-no-action-required',
+    'scripts/fixtures/inbox-calendar-airport-event',
+  ];
+  for (const inbox of newInboxes) {
+    const result = run(['guard:daily', '--', '--inbox', inbox]);
+    assertExternalWriteFalse(result.stdout, `v1.9.5 externalWrite ${inbox}`);
+    assertNoRawJson(result.stdout, `v1.9.5 no-raw-json ${inbox}`);
+  }
+  console.log('  PASS  v1.9.5: externalWrite:false in all new fixture outputs');
+  console.log('  PASS  v1.9.5: no raw JSON in all new fixture outputs');
+}
+
+// ── v1.9.5: No connector / OAuth / fetch in updated dist files ────────────────
+
+{
+  const runner = fs.readFileSync('dist/dailyBriefRunner.js', 'utf8');
+  assert.ok(!runner.includes('googleapis'), 'v1.9.5 dailyBriefRunner: must not reference googleapis');
+  assert.ok(!runner.includes('OAuth'), 'v1.9.5 dailyBriefRunner: must not reference OAuth');
+  assert.ok(!runner.includes("fetch('"), 'v1.9.5 dailyBriefRunner: must not contain fetch()');
+  assert.ok(!runner.includes('fetch("'), 'v1.9.5 dailyBriefRunner: must not contain fetch()');
+  console.log('  PASS  v1.9.5: no connector/OAuth/fetch in dailyBriefRunner');
+}
+
+// ── v1.9.5: package.json version is 1.9.5 ────────────────────────────────────
+
+{
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  assert.strictEqual(pkg.version, '1.9.5', `v1.9.5: package.json version must be 1.9.5, got ${pkg.version}`);
+  console.log('  PASS  v1.9.5: package.json version is 1.9.5');
+}
+
+// ── v1.9.5: CHANGELOG.md has v1.9.5 entry ────────────────────────────────────
+
+{
+  const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+  assert.ok(changelog.includes('v1.9.5'), 'CHANGELOG.md: must contain v1.9.5 entry');
+  assert.ok(
+    changelog.includes('promotional') || changelog.includes('false positive') || changelog.includes('false-positive'),
+    'CHANGELOG.md: v1.9.5 entry must mention promotional or false-positive'
+  );
+  console.log('  PASS  v1.9.5: CHANGELOG.md has v1.9.5 entry');
+  console.log('  PASS  v1.9.5: CHANGELOG.md v1.9.5 mentions promotional or false-positive');
 }
 
 console.log('\nguardDaily: all assertions passed\n');

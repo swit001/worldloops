@@ -153,14 +153,25 @@ Daily Brief schedule: 09:00 local time — Delivery channel: local
 
 ### Example output — Gmail no-action with samples
 
+Promotional emails (airline offers, newsletters, discount campaigns, rewards updates) and messages containing "no action required" are automatically suppressed. They appear as no-action with an informational reason:
+
 ```
 📧 Gmail — No actionable loop detected
-Checked: 3 messages
+Checked: 2 messages
 Sample:
-- From: deals@shop.example.com / Subject: 50% off this weekend only — limited offer!
-- From: noreply@digest.example.com / Subject: Your daily digest — top stories
-Reason: no reply, deadline, approval, review, or follow-up request detected
-Note: messages appear informational or promotional
+- From: promotions@airline.example.com / Subject: Earn double miles this weekend — promotion
+- From: noreply@rewards.example.com / Subject: Your rewards balance: 12,450 miles
+Reason: promotional or informational message; no reply, approval, review, deadline, or follow-up request detected
+```
+
+Flight, airport, and travel calendar events appear as important context without requiring approval:
+
+```
+📅 Calendar — Important context
+Event: Departure to ICN — Korean Air KE 24
+When: May 21, 12:40 PM local time
+Location: SFO Terminal 2, Gate G1
+Reason: travel event detected, no action proposed
 ```
 
 ### Example output — Slack not connected

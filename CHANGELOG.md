@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.9.5 — Live Daily Brief False-Positive and Travel-Context Polish
+
+v1.9.5 reduces live Daily Brief false positives by suppressing promotional and "no action required" Gmail messages, and improves Calendar travel/airport important context so flight events are surfaced without becoming approval-required tasks.
+
+### Changed
+
+- `src/dailyBriefRunner.ts` — added `NEGATIVE_INTENT_PHRASES` constant and `hasNegativeIntent()` function; expanded `PROMOTIONAL_INDICATORS` with airline/travel promo patterns (earn miles, earn double, limited time, save up to, manage subscription, etc.); expanded `TRAVEL_CONTEXT_KEYWORDS` with airport/departure/arrival/terminal/gate/SFO/ICN/boarding/itinerary; updated `isTravelContextEvent()` to also check event location; added post-detection suppression in `processSource()` that clears Gmail candidates when negative-intent or promotional text is present; updated `buildSummaryLines()` Gmail no-action reason to say "promotional or informational message; no reply, approval, review, deadline, or follow-up request detected" when appropriate; updated Calendar no-action to show up to 3 event samples with Event/When/Location; added `CalendarEventSample` interface and `sampleEvents` field to `EvidenceData`
+- `package.json` — version 1.9.4 → 1.9.5
+- `CHANGELOG.md` — this entry
+- `tests/guardDaily.test.cjs` — v1.9.5 assertions: airline/Tap-Air promo does not become Follow-up needed; "No action required" does not become action requested; neutral icon and promotional/informational reason; Korean and English detection preserved; airport/flight Calendar event becomes Important context; no requires_approval for travel; Event/When/Location shown; multi-event sample display; externalWrite:false in all new fixtures; no raw JSON; no connector/OAuth/fetch
+- `scripts/fixtures/inbox-airline-promo-gmail/` — new fixture: Tap Air promotional email with double-miles offer
+- `scripts/fixtures/inbox-gmail-no-action-required/` — new fixture: team update with "No action required" in snippet
+- `scripts/fixtures/inbox-calendar-airport-event/` — new fixture: departure to ICN at SFO Terminal 2 with boarding details
+
+### Architecture rule preserved
+
+No Gmail, Calendar, or Slack connector added.
+No OAuth added.
+No external fetch added.
+Suppression is local phrase matching only — no AI inference.
+`externalWrite:false` preserved throughout.
+
+---
+
 ## v1.9.4 — Calendar Time Formatting and Public Example Cleanup
 
 v1.9.4 improves Calendar time formatting and ClawHub-facing example polish. Calendar event times now display as human-readable local time instead of raw ISO timestamps, public Daily Brief examples are English-first, and Korean action phrase detection remains supported and tested.

@@ -23,6 +23,11 @@ interface SampleMessage {
     user?: string;
     text?: string;
 }
+interface CalendarEventSample {
+    title?: string;
+    start?: string;
+    location?: string;
+}
 interface EvidenceData {
     snippet?: string;
     subject?: string;
@@ -43,6 +48,7 @@ interface EvidenceData {
     thread_ts?: string;
     permalink?: string;
     sampleMessages?: SampleMessage[];
+    sampleEvents?: CalendarEventSample[];
 }
 export interface SourceResult {
     id: SourceId;

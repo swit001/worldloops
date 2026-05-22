@@ -53,15 +53,33 @@ const KOREAN_ACTION_PHRASES = [
     '보내주세요', '수정해주세요', '확인 요청', '검토 요청',
     '요청드립니다', '부탁드립니다',
 ];
+const NEGATIVE_INTENT_PHRASES = [
+    'no action required',
+    'no reply needed',
+    'no response needed',
+    'no need to reply',
+    'fyi only',
+    'for your information',
+    'informational only',
+    'no action needed',
+];
 const PROMOTIONAL_INDICATORS = [
     'unsubscribe', 'discount', '% off', 'sale ends', 'limited offer',
     'promo code', 'special offer', 'free shipping', 'daily digest',
     'newsletter', 'weekly digest', 'opt out', 'manage preferences',
+    'earn double', 'earn miles', 'earn points', 'earn bonus',
+    'save up to', 'limited time', 'exclusive deal', 'exclusive offer',
+    'reward points', 'rewards program', 'miles offer',
+    'view in browser', 'manage subscription', 'manage email preferences',
 ];
 const TRAVEL_CONTEXT_KEYWORDS = [
     'flight', 'travel', 'hotel', 'airport', 'workshop',
     'board meeting', 'interview', 'customer meeting', 'executive meeting',
     '항공', '비행편', '출장', '호텔',
+    'departure', 'arrival', 'airline', 'boarding',
+    'itinerary', 'reservation', 'trip',
+    'terminal', 'gate',
+    'sfo', 'icn', 'jfk', 'lax', 'korean air',
 ];
 function hasKoreanActionPhrase(text) {
     return KOREAN_ACTION_PHRASES.some(phrase => text.includes(phrase));
@@ -70,9 +88,13 @@ function isPromotionalText(text) {
     const lower = text.toLowerCase();
     return PROMOTIONAL_INDICATORS.some(phrase => lower.includes(phrase));
 }
-function isTravelContextEvent(title, description) {
-    const combined = `${title ?? ''} ${description ?? ''}`.toLowerCase();
-    return TRAVEL_CONTEXT_KEYWORDS.some(kw => combined.includes(kw.toLowerCase()));
+function hasNegativeIntent(text) {
+    const lower = text.toLowerCase();
+    return NEGATIVE_INTENT_PHRASES.some(phrase => lower.includes(phrase));
+}
+function isTravelContextEvent(title, description, location) {
+    const combined = `${title ?? ''} ${description ?? ''} ${location ?? ''}`.toLowerCase();
+    return TRAVEL_CONTEXT_KEYWORDS.some(kw => combined.includes(kw));
 }
 function formatCalendarTime(isoString) {
     try {
@@ -170,6 +192,17 @@ function extractEvidence(sourceId, raw) {
     }
     if (sourceId === 'calendar') {
         const events = Array.isArray(obj.events) ? obj.events : [];
+        const sampleEvents = events.slice(0, 3).map((e) => {
+            if (typeof e !== 'object' || e === null)
+                return {};
+            const ev = e;
+            return {
+                title: typeof ev.summary === 'string' ? ev.summary :
+                    typeof ev.title === 'string' ? ev.title : undefined,
+                start: typeof ev.start === 'string' ? ev.start : undefined,
+                location: typeof ev.location === 'string' ? ev.location : undefined,
+            };
+        });
         const first = events[0];
         if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
             const evt = first;
@@ -181,9 +214,9 @@ function extractEvidence(sourceId, raw) {
             const raw_description = typeof evt.description === 'string' ? evt.description : undefined;
             const description = raw_description ? truncate(raw_description) : undefined;
             const eventId = typeof evt.id === 'string' ? evt.id : undefined;
-            return { title, start, end, location, description, eventId, itemCount: events.length };
+            return { title, start, end, location, description, eventId, itemCount: events.length, sampleEvents };
         }
-        return { itemCount: events.length };
+        return { itemCount: events.length, sampleEvents };
     }
     if (sourceId === 'slack') {
         const messages = Array.isArray(obj.messages) ? obj.messages :
@@ -220,7 +253,7 @@ function buildSummaryLines(sourceId, label, _emoji, candidates, evidence, detail
             return lines;
         }
         // Calendar important context — travel/flight events
-        if (sourceId === 'calendar' && isTravelContextEvent(evidence.title, evidence.description)) {
+        if (sourceId === 'calendar' && isTravelContextEvent(evidence.title, evidence.description, evidence.location)) {
             lines.push(`📅 ${label} — Important context`);
             if (evidence.title)
                 lines.push(`Event: ${evidence.title}`);
@@ -241,8 +274,20 @@ function buildSummaryLines(sourceId, label, _emoji, candidates, evidence, detail
             const plural = evidence.itemCount === 1 ? unit : `${unit}s`;
             lines.push(`Checked: ${evidence.itemCount} ${plural}`);
         }
-        if (sourceId === 'calendar' && evidence.title) {
-            lines.push(`Event: ${evidence.title}`);
+        if (sourceId === 'calendar') {
+            if (evidence.sampleEvents && evidence.sampleEvents.length > 0) {
+                for (const evt of evidence.sampleEvents) {
+                    if (evt.title)
+                        lines.push(`Event: ${evt.title}`);
+                    if (evt.start)
+                        lines.push(`When: ${formatCalendarTime(evt.start)}`);
+                    if (evt.location)
+                        lines.push(`Location: ${evt.location}`);
+                }
+            }
+            else if (evidence.title) {
+                lines.push(`Event: ${evidence.title}`);
+            }
         }
         if (sourceId === 'gmail' && evidence.sampleMessages && evidence.sampleMessages.length > 0) {
             lines.push(`Sample:`);
@@ -257,13 +302,16 @@ function buildSummaryLines(sourceId, label, _emoji, candidates, evidence, detail
             }
         }
         if (sourceId === 'gmail') {
-            lines.push(`Reason: no reply, deadline, approval, review, or follow-up request detected`);
             const promoText = [
+                evidence.subject ?? '',
                 evidence.snippet ?? '',
                 ...(evidence.sampleMessages ?? []).map(m => `${m.from ?? ''} ${m.subject ?? ''}`),
             ].join(' ');
-            if (isPromotionalText(promoText)) {
-                lines.push(`Note: messages appear informational or promotional`);
+            if (isPromotionalText(promoText) || hasNegativeIntent(promoText)) {
+                lines.push(`Reason: promotional or informational message; no reply, approval, review, deadline, or follow-up request detected`);
+            }
+            else {
+                lines.push(`Reason: no reply, deadline, approval, review, or follow-up request detected`);
             }
         }
         else {
@@ -432,6 +480,17 @@ async function processSource(sourceId, file, label, emoji, inboxDir, details = f
             const localCandidate = detectLocalCandidate(sourceId, evidence);
             if (localCandidate)
                 candidates = [localCandidate];
+        }
+        // Gmail: suppress false positives for negative-intent and promotional content
+        if (sourceId === 'gmail' && candidates.length > 0) {
+            const suppressText = [
+                evidence.subject ?? '',
+                evidence.snippet ?? '',
+                ...(evidence.sampleMessages ?? []).map(m => `${m.subject ?? ''} ${m.from ?? ''}`),
+            ].join(' ');
+            if (hasNegativeIntent(suppressText) || isPromotionalText(suppressText)) {
+                candidates = [];
+            }
         }
         return {
             id: sourceId, label, emoji, file, found: true, ok: result.ok, candidates,

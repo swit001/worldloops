@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.9.4"
+version: "1.9.5"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -272,15 +272,25 @@ To change: npm run brief:preferences:set -- --time HH:MM
 
 ### Example output — Gmail no-action with samples
 
+Promotional emails (airline offers, newsletters, discount campaigns, rewards updates) and messages with "no action required" are automatically suppressed and do not generate open loops:
+
 ```
 📧 Gmail — No actionable loop detected
-Checked: 3 messages
+Checked: 2 messages
 Sample:
-- From: deals@shop.example.com / Subject: 50% off this weekend only — limited offer!
-- From: noreply@digest.example.com / Subject: Your daily digest — top stories
-- From: rewards@points.example.com / Subject: You earned 50 reward points
-Reason: no reply, deadline, approval, review, or follow-up request detected
-Note: messages appear informational or promotional
+- From: promotions@airline.example.com / Subject: Earn double miles this weekend — promotion
+- From: noreply@rewards.example.com / Subject: Your rewards balance: 12,450 miles
+Reason: promotional or informational message; no reply, approval, review, deadline, or follow-up request detected
+```
+
+Flight and airport calendar events appear as important context without becoming approval-required tasks:
+
+```
+📅 Calendar — Important context
+Event: Departure to ICN — Korean Air KE 24
+When: May 21, 12:40 PM local time
+Location: SFO Terminal 2, Gate G1
+Reason: travel event detected, no action proposed
 ```
 
 ### Example output — Slack not connected
