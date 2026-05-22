@@ -212,7 +212,7 @@ function buildLoopEntry(r, adjLabel) {
         if (channel)
             lines.push(`Channel: #${channel}`);
         lines.push(`Why: ${obs.text.split('. ')[0].slice(0, 130)}`);
-        const snippet = evField(ev, 'snippet') || evField(ev, 'message');
+        const snippet = evField(ev, 'snippet') || evField(ev, 'message') || evField(ev, 'text');
         if (snippet)
             lines.push(`Evidence: "${snippet.slice(0, 100)}"`);
         const action = actionFromText(obs.text);

@@ -20,6 +20,10 @@ WorldLoops guards execution.
 WorldLoops does not need to own every connector.
 If a host agent can read a signal, it can pass it to Agent Execution Guard.
 
+OpenClaw observes and interprets source signals (Gmail, Calendar, Slack, GitHub) into `ObservedSignal[]`.
+WorldLoops reads those OpenClaw-authored interpreted observations and adjudicates their lifecycle state — into active open loops, attached context, suppression receipts, and transitions.
+WorldLoops does not connect to Gmail, Calendar, or Slack directly. `externalWrite:false` is preserved throughout.
+
 ```
 OpenClaw (reads Gmail, Calendar, Slack, GitHub)
     ↓

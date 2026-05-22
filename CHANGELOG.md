@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.12.0 — Slack Interpreted Observation Path and Positioning Clarity
+
+v1.12.0 completes the OpenClaw interpreted-observation flow across all three signal sources. OpenClaw observes and interprets Gmail, Calendar, and Slack signals into `ObservedSignal[]`; WorldLoops reads those OpenClaw-authored observations and adjudicates their lifecycle state.
+
+**Core invariant: "OpenClaw observes. WorldLoops adjudicates." WorldLoops does not connect to Gmail, Calendar, or Slack directly.**
+
+### Verified in this release
+
+- **Gmail + Calendar interpreted observation path** — verified with real connector-backed observation during internal testing. OpenClaw-authored `ObservedSignal[]` were adjudicated through `observations:write` → `openclaw:intake`.
+- **Slack interpreted observation path** — verified through the existing OpenClaw live handoff. Recent Slack messages were interpreted into `ObservedSignal[]` (`new_loop` for direct asks / review / approval / blocked / deadline; `related_context` / `evidence` for useful background; `noise` for channel joins / system / FYI), then adjudicated.
+- WorldLoops adjudicates OpenClaw-authored observations into active open loops, attached context, suppression receipts, state transitions, and Telegram brief output.
+
+### Changed
+
+- `src/scripts/telegramTestBot.ts` — the Slack brief entry now reads `evidence.text` in addition to `evidence.snippet` / `evidence.message`, so interpreted Slack observations render their message text in `/brief` output.
+- `package.json` / `package-lock.json` — version 1.11.1 → 1.12.0.
+- `SKILL.md` — version 1.11.0 → 1.12.0; clarified that OpenClaw observes/interprets source signals into `ObservedSignal[]` and WorldLoops adjudicates lifecycle state, with no direct connector ownership.
+- `README.md` — clarified the interpreted observation handoff: OpenClaw authors `ObservedSignal[]`, WorldLoops adjudicates lifecycle state.
+
+### Positioning
+
+- WorldLoops does **not** directly connect to Gmail, Calendar, or Slack. OpenClaw observes and interprets source signals; WorldLoops reads the OpenClaw-authored interpreted `ObservedSignal[]` and adjudicates lifecycle state.
+- The Slack OAuth connector was **not** verified in this release. Slack was verified only through the existing OpenClaw live handoff.
+
+### Architecture rules preserved
+
+No Gmail, Calendar, Slack, or GitHub connector added.
+No OAuth added.
+No external fetch added.
+`externalWrite:false` preserved throughout.
+`.worldloops/` remains gitignored; no real user state committed.
+
+---
+
 ## v1.11.0 — Telegram Demo Wrapper with Inbox Priority and Source Inspection
 
 v1.11.0 upgrades the Telegram test wrapper into a full demo interface. The bot now resolves its input from a priority-ordered inbox, shows which source is active, and is ready for live demo without connecting to any external API.

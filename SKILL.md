@@ -1,7 +1,7 @@
 ---
 name: worldloops
 description: Agent Execution Guard by WorldLoops — a safe-by-default responsibility layer for AI agents that turns scattered work signals into governed open loops while preserving externalWrite:false.
-version: "1.11.0"
+version: "1.12.0"
 homepage: https://github.com/swit001/worldloops
 metadata: {"openclaw":{"requires":{"bins":["node","npm"]},"envVars":[{"name":"WORLDLOOPS_API_BASE_URL","required":false,"description":"Optional WorldLoops API base URL override. Defaults to https://api.worldloops.ai."},{"name":"WORLDLOOPS_API_KEY","required":false,"description":"Optional bearer token for hosted WorldLoops API."}],"emoji":"🌐","homepage":"https://github.com/swit001/worldloops","skillKey":"worldloops","tags":["openclaw","clawhub","agentic-ai","world-model","executable-world","open-loops","open-loop-management","workflow","human-in-the-loop","safe-by-default","auditable-runtime","stateful-loop-management","agent-execution-guard","execution-governance","execution-contracts","proposal-engine","workflow-governance"]}}
 ---
@@ -93,6 +93,10 @@ WorldLoops guards execution.
 
 WorldLoops does not need to own every connector.
 If a host agent can read a signal, it can pass it to Agent Execution Guard.
+
+OpenClaw observes and interprets source signals (Gmail, Calendar, Slack, GitHub) into `ObservedSignal[]`.
+WorldLoops reads those OpenClaw-authored interpreted observations and adjudicates their lifecycle state — into active open loops, attached context, suppression receipts, and transitions.
+WorldLoops does not connect to Gmail, Calendar, or Slack directly. `externalWrite:false` is preserved throughout.
 
 ---
 
