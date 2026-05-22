@@ -193,7 +193,26 @@ export function adjudicateObservation(
     return { verdict: 'state_transition', stateTransition };
   }
 
-  // Steps 1–7: heuristic adjudication
+  // Step 0.5: explicit observationIntent is authoritative — skip heuristics that would override it
+  if (obs.observationIntent !== undefined) {
+    if (obs.observationIntent === 'noise') {
+      return { verdict: 'suppressed', suppressionReason: 'promotional_or_informational' };
+    }
+    if (obs.observationIntent === 'related_context' || obs.observationIntent === 'evidence') {
+      return { verdict: 'attached_context', suppressionReason: 'context_only' };
+    }
+    // new_loop: still guard against duplicates and low confidence
+    const key = canonicalKeyForObservation(obs);
+    if (acceptedKeysInBatch.has(key) || existingLoopKeys.has(key)) {
+      return { verdict: 'suppressed', suppressionReason: 'duplicate_signal' };
+    }
+    if (typeof obs.confidence === 'number' && obs.confidence < 0.4) {
+      return { verdict: 'needs_review', suppressionReason: 'weak_evidence' };
+    }
+    return { verdict: 'accepted' };
+  }
+
+  // Steps 1–7: heuristic adjudication (for observations without explicit intent)
   const evidenceTitle = typeof obs.evidence.title === 'string' ? obs.evidence.title : obs.title;
   const evidenceDesc = typeof obs.evidence.description === 'string' ? obs.evidence.description :
                        typeof obs.evidence.snippet === 'string' ? obs.evidence.snippet : obs.text;

@@ -566,6 +566,80 @@ npm run --silent guard:slack -- --input <payload.json> --compact
 npm run --silent guard:github -- --input <payload.json> --compact
 ```
 
+### OpenClaw observation write-back
+
+When the user asks any of the following — or anything with the same intent:
+- "What should I do today?"
+- "What did I miss?"
+- "Any follow-ups I'm missing?"
+- daily brief, morning brief, open loops check
+
+Perform your normal high-quality observation: read full message content, search memory for existing open loops, resolve actor identities, extract deadlines from natural language, and prioritize what matters to the user.
+
+After surfacing candidates, write them as `ObservedSignal[]` to:
+
+```
+.worldloops/inbox/openclaw-observations.json
+```
+
+This is a local workspace file write only. No external system is called.
+
+**Do not tell WorldLoops to reinterpret raw Gmail, Calendar, or Slack payloads.** WorldLoops adjudicates the interpreted observations you write here — it does not re-read source inboxes.
+
+**Shape of each item (`ObservedSignal`):**
+
+```json
+{
+  "id": "openclaw-<source>-<sourceId>",
+  "source": "gmail" | "slack" | "calendar" | "github" | "manual",
+  "sourceId": "<message or event ID from the source>",
+  "observedBy": "openclaw",
+  "userQuery": "<the question the user asked>",
+  "observationIntent": "new_loop" | "state_transition" | "noise" | "related_context" | "evidence",
+  "title": "<your interpreted action title — not a copy of the raw subject line>",
+  "text": "<one-sentence synthesis of why this matters to the user>",
+  "timestamp": "<ISO 8601>",
+  "actor": "<resolved name or email — not a raw Slack user ID>",
+  "dueAt": "<ISO 8601 deadline extracted from natural language, else omit>",
+  "evidence": {
+    "<raw field from source>": "<value>"
+  },
+  "confidence": 0.0–1.0,
+  "relatedContext": null
+}
+```
+
+For `state_transition` intent, set `relatedContext`:
+
+```json
+"relatedContext": {
+  "existingLoopKey": "openclaw-<source>-<sourceId of existing loop>",
+  "proposedTransition": "done" | "escalated" | "snoozed",
+  "note": "<why this closes or escalates the loop>"
+}
+```
+
+**What you must decide before writing — your interpretation, not shallow heuristics:**
+- `observationIntent`: classify using full message content, your memory of open loops, and conversation context
+- `title`: a human-readable action title synthesized from the full message — not a copy of the subject line
+- `text`: one sentence on why this matters to the user right now
+- `dueAt`: extract from natural language ("by Friday" → ISO date of that Friday at 17:00 local)
+- `actor`: resolve Slack user IDs and display names to real identities where known
+- `confidence`: your assessed certainty given full context, not field presence
+- `relatedContext.existingLoopKey`: search memory for existing open loops before marking `state_transition`
+
+**Include noise explicitly.** Promotional email, automated notifications, and informational-only items should be written with `observationIntent: "noise"` rather than omitted — WorldLoops records suppression receipts for them.
+
+To write and validate observations, use the helper command from the skill directory:
+
+```bash
+npm run observations:write -- --input <path/to/your-observations.json>
+```
+
+This validates the `ObservedSignal[]` shape, creates `.worldloops/inbox/` if needed, and writes to `.worldloops/inbox/openclaw-observations.json`. It will refuse invalid JSON or missing required fields and exit non-zero on error.
+
+After writing, WorldLoops `openclaw:intake` handles all lifecycle management: deduplication, open loop creation, state transitions, suppression receipts.
+
 ### Default API
 
 By default, WorldLoops uses:
